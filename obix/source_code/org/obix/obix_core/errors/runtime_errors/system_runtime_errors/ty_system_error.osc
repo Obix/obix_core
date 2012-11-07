@@ -1,0 +1,22 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type system_error default_factory:yes
+
+	inherit runtime_error
+		attribute a_id default:"system_error" end
+	end
+
+	attribute_list voidable:yes
+
+		attribute java_stack_trace type:java_stack_trace default:se_java_utilities.get_current_stack_trace ( low_levels_to_skip = 4 ) end 
+
+		attribute java_exception type:java_exception default:void end
+
+	end
+
+end type

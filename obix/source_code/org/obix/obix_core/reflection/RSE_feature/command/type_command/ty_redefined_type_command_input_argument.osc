@@ -1,0 +1,21 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type redefined_type_command_input_argument default_factory:yes
+
+	inherit command_input_argument end
+
+	attribute_list type:yes_no
+
+		attribute object_type_is_redefined end
+		attribute voidable_is_redefined end
+		attribute check_script_is_redefined end
+		attribute default_value_script_is_redefined end
+
+	end
+
+end type

@@ -1,0 +1,36 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type library
+
+	inherit !simple_tree_node < &
+		branch_node_type: library &
+		leaf_node_type: RSE > end
+
+	inherit type_with_id
+		attribute a_id type:library_id kind:readonly_constant end
+	end
+
+	attribute id_path type:library_id_path end
+	
+	attribute child_library_list type:child_library_list end
+
+	attribute RSE_list type:RSE_list end
+	
+	attribute_list voidable:yes kind:readonly_constant
+		attribute type_map type:id_type_map end
+		attribute factory_map type:id_factory_map end
+		attribute service_map type:id_service_map end
+
+		attribute generic_type_map type:id_generic_type_map end
+		attribute generic_factory_map type:id_generic_factory_map end
+		attribute generic_service_map type:id_generic_service_map end
+
+		attribute source_code_template_map type:id_source_code_template_map end
+	end
+		
+end type

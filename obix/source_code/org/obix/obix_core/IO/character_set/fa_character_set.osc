@@ -1,0 +1,13 @@
+factory character_set type:character_set
+
+	attribute is_supported
+		get
+			script
+				o_is_supported = se_character_set.is_supported ( a_value.to_string )
+			end
+		end
+	end
+	
+	creator create kind:in_all end
+
+end

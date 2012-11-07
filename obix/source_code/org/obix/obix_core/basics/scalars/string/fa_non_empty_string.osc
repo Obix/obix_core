@@ -1,0 +1,58 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory non_empty_string type:non_empty_string
+
+	java_header
+		import org.obix.obix_core.basics.scalars.string.string_value.fa_string_value;
+	end java_header
+
+	java
+		public String java_value() { return a_value.java_value(); }
+
+		public fa_non_empty_string ( String i_java_value ) {
+			if (i_java_value.length() == 0) {
+				throw new RuntimeException ("new fa_non_empty_string(): i_java_value is empty");
+			}
+
+			this.a_value = new fa_string_value ( i_java_value ) ;
+		}
+	end java
+
+	attribute item_count
+		get
+			script
+				o_item_count = fa_positive32.co_create(a_value.item_count.a_value)
+			end
+		end
+	end
+
+	%te_string_value_wrapper_factory<split_item_type_suffix:string result_factory:fa_non_empty_string>
+
+	command to_non_empty_string
+		script
+			o_result = this
+		end
+	end
+
+	creator create kind:in_all end
+
+	%create_from_string_creator_for_simple_string<non_empty_string>
+
+	creator create_from_character
+		in character type:simple_character end
+
+		out result type:non_empty_string end
+		
+		script
+			java
+				o_result.a_value = new fa_string_value ( String.valueOf ( i_character.getValue().java_value() ) ) ;
+			end java
+		end
+	end
+
+end factory

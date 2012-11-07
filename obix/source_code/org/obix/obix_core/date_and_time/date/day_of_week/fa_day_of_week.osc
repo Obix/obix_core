@@ -1,0 +1,94 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory day_of_week type:day_of_week
+
+	attribute is_first_day_of_week
+		get
+			script
+				o_is_first_day_of_week = a_value =v 1~
+			end
+		end
+	end
+
+	attribute is_last_day_of_week
+		get
+			script
+				o_is_last_day_of_week = a_value =v 7~
+			end
+		end
+	end
+
+	attribute is_monday
+		get
+			script
+				o_is_monday = a_value =v 1~
+			end
+		end
+	end
+
+	attribute is_tuesday
+		get
+			script
+				o_is_tuesday = a_value =v 2~
+			end
+		end
+	end
+
+	attribute is_wednesday
+		get
+			script
+				o_is_wednesday = a_value =v 3~
+			end
+		end
+	end
+
+	attribute is_thursday
+		get
+			script
+				o_is_thursday = a_value =v 4~
+			end
+		end
+	end
+
+	attribute is_friday
+		get
+			script
+				o_is_friday = a_value =v 5~
+			end
+		end
+	end
+
+	attribute is_saturday
+		get
+			script
+				o_is_saturday = a_value =v 6~
+			end
+		end
+	end
+
+	attribute is_sunday
+		get
+			script
+				o_is_sunday = a_value =v 7~
+			end
+		end
+	end
+
+	attribute is_weekend
+		get
+			script
+				o_is_weekend = a_value >= 6~
+			end
+		end
+	end
+
+	%scalar_comparable_factory_code
+
+	creator create kind:in_all end
+
+end

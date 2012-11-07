@@ -1,0 +1,67 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type yes_no
+
+	java
+		public boolean java_value() ;
+	end java
+	
+	inherit scalar
+
+		attribute value type:yes_no_value end
+		
+		///
+		command to_string
+			out result type:non_empty_string end
+		end
+		end ///
+
+	end
+
+	inherit !equalable<yes_no> end
+	
+	// following line creates errors, because generic types return 'in_any_type' objects, and Java code generator does not cast them to 'ty_yes_no'
+	// inherit !booleanable<operand: yes_no; result: yes_no> end
+
+	command and
+		in operand type:yes_no end
+
+		out result type:yes_no end
+	end
+
+	command or
+		in operand type:yes_no end
+
+		out result type:yes_no end
+	end
+
+	command xor
+		in operand type:yes_no end
+
+		out result type:yes_no end
+	end
+
+	command not
+		out result type:yes_no end
+	end
+
+	// conversion
+	
+	command to_integer
+		out result type:zero_positive32 end // TD type zero_or_one
+	end
+	
+	command to_character
+		out result type:character end
+	end
+	
+	command to_true_false
+		out result type:string end
+	end
+	
+end type

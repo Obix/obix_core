@@ -1,0 +1,5 @@
+factory constant_id type:constant_id
+
+	%prefixed_id_child_factory<type_of_factory:"constant_id"; prefix:"se_id_prefix.a_constant">
+
+end factory

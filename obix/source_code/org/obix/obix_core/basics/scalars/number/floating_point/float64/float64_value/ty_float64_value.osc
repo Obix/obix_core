@@ -1,0 +1,52 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type float64_value
+
+	java
+		public double java_value() ;
+	end java
+
+	inherit scalar_value end
+
+	inherit !extended_comparable<other:float64_value; min_max_result:float64_value> end
+
+	// inherit !arithmeticable<operand:float64_value; result:float64_value> end
+	
+	// inherit integer_to_string_converter end
+
+	command add
+		in operand type:float64_value end
+
+		out result type:float64_value end
+	end
+
+	command subtract
+		in operand type:float64_value end
+
+		out result type:float64_value end
+	end
+
+	command multiply
+		in operand type:float64_value end
+
+		out result type:float64_value end
+	end
+
+	command divide
+		in operand type:float64_value end // check: i_operand #v se_float64_value.a_zero error_message: "Division by zero." error_id: division_by_zero_error end
+
+		out result type:float64_value end
+	end
+
+	command abs
+		// in_check check: i_object_ > se_float64_value.a_min_value end
+					
+		out result type:float64_value end
+	end
+	
+end type

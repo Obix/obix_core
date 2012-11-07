@@ -1,0 +1,276 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory file type:file
+
+	java_header
+		import java.io.File;
+		import java.lang.SecurityException;
+
+		import org.obix.obix_core.java.fa_java_exception;
+		import org.obix.obix_core.date_and_time.date_time.*;
+		import org.obix.obix_core.basics.scalars.string.string_value.fa_string_value;
+	end java_header
+
+	java
+		private File a_file ;
+		public File java_value() {return a_file;}
+	end java
+
+	%te_directory_or_file_factory_attributes < "file_name" >
+
+	attribute directory
+		get
+			script
+				var string_value value
+				java
+					v_value = new fa_string_value ( a_file.getParent() ) ;
+				end java
+				o_directory = fa_directory.co_create ( v_value )
+				// TD ? o_directory = fa_directory.co_create ( v_value & se_directory.current_OS_directory_separator.value )
+			end
+		end
+	end
+
+	attribute file_name_without_extension
+		get
+			script
+				o_file_name_without_extension = a_name.name_without_extension
+			end
+		end
+	end
+
+	attribute file_name_extension
+		get
+			script
+				o_file_name_extension = a_name.extension
+			end
+		end
+	end
+
+	%te_directory_or_file_factory_commands<"file">
+
+	command delete_on_device
+		script
+			var yes_no success
+			var java_exception java_exception
+			
+			section delete_file
+			
+				if i_ask_confirmation_in_system_console then
+					const yes_no confirmation = se_system.console.ask_yes_no.result ( &
+						message = """Delete file '{{this}}' (y/n) ?""" &
+						default_value = no &
+						error_handler = i_error_handler )
+					if c_confirmation =r void or not c_confirmation then
+						v_success = no
+						exit section
+					end if
+				end if
+
+				java
+					try {
+						v_success = a_file.delete() ? fa_yes_no.a_yes : fa_yes_no.a_no;
+					} catch ( SecurityException e ) {
+						v_java_exception = new fa_java_exception ( e );
+					}
+				end java
+
+			end section
+
+			if not v_success or v_java_exception #r void then
+				var string error_description = """File '{{this}}' could not be deleted."""
+				if v_java_exception #r void then
+					v_error_description = v_error_description & """ The following security problem was reported:
+{{v_java_exception.message}}"""
+				end if
+				o_error = fa_delete_file_error.create ( &
+					description = v_error_description &
+					java_exception = v_java_exception &
+					resource = this )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+	
+	command create_on_device
+		script
+			// TD4 error handling
+			java
+				try {
+					a_file.createNewFile() ;
+				}
+				catch ( java.io.IOException e ) {
+					// error is caught by out_check
+				}
+			end java
+		end
+	end
+	
+	command rename_on_device
+		script
+			o_renamed_file = fa_file.create_from_directory_and_name ( &
+				directory = a_directory &
+				name = i_new_file_name )
+
+			var yes_no success
+			var java_exception java_exception
+			java
+				try {
+					if ( a_file.renameTo ( new File ( o_renamed_file.getValue().java_value() ) ) ) {
+						v_success = fa_yes_no.a_yes;
+					} else {
+						v_success = fa_yes_no.a_no;
+					}
+				} catch ( Exception e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+			end java
+
+			if not v_success or v_java_exception #r void then
+				o_renamed_file = void
+				o_error = fa_rename_file_error.create ( &
+					description = "File '" & this & "' could not be renamed to '" & i_new_file_name & "'." &
+					java_exception = v_java_exception &
+					resource = this )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+	
+	command make_relative_file
+		script
+			const string_value relative_path = to_current_OS_path.value.extract_from ( 1 + i_root_directory.to_current_OS_path.value.item_count )
+			o_result = fa_relative_file.create ( relative_path )
+		end
+	end
+
+	command set_Unix_executable_permission
+		script
+			var yes_no success
+			var java_exception java_exception
+
+			java
+				try {
+					if ( a_file.setExecutable ( i_executable_permission.java_value(), i_only_for_owner.java_value() ) ) {
+						v_success = fa_yes_no.a_yes;
+					} else {
+						v_success = fa_yes_no.a_no;
+					}
+				} catch ( SecurityException e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+			end java
+
+			if not v_success or v_java_exception #r void then
+				o_error = fa_file_security_error.create ( &
+					description = """The executable permission could not be set for file '{{this}}'. The following error occured: {{v_java_exception.message}}""" &
+					java_exception = v_java_exception &
+					resource = this )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+	
+	creator create kind:in_all
+		script
+			java
+				o_result.a_file = new File ( i_value.java_value() ) ;
+			end java
+			o_result.a_value = i_value
+		end
+	end
+	
+	%create_from_string_creator_for_simple_string<file>
+
+	creator create_from_directory_and_name
+		in directory type:directory end
+		in name type:file_name end
+
+		out result type:file end
+
+		script
+			o_result = co_create ( i_directory.value & i_name.value )
+		end
+	end
+
+	creator create_from_directory_and_relative_file
+		in directory type:directory end
+		in relative_file type:relative_file end
+
+		out result type:file end
+
+		script
+			o_result = co_create ( i_directory.value & i_relative_file.value )
+		end
+	end
+
+	creator create_from_directory_and_id
+		in directory type:directory end
+		in i_id type:id end
+		in file_name_extension type:file_name_extension end
+
+		out result type:file end
+
+		script
+			o_result = co_create ( i_directory.value & i_id.value & se_file.file_name_extension_separator.value & i_file_name_extension.value )
+		end
+	end
+
+	///
+//
+
+	test
+		script
+			// tests are currently only valid for Windows
+			var ty_file v_file = co_create ( "c:\\level_1\\level_2\\file_name.ext" )
+			verify v_file.a_path compare =v "c:\\level_1\\level_2\\file_name.ext"
+			verify v_file.co_file_name_with_extension compare =v "file_name.ext"
+			verify v_file.co_file_name_without_extension compare =v "file_name"
+			verify v_file.co_file_name_extension.a_value compare =v "ext"
+			verify v_file.co_directory.a_path compare =v "c:\\level_1\\level_2"
+
+			v_file = co_create ( "c:\\file_name" )
+			verify v_file.a_path compare =v "c:\\file_name"
+			verify v_file.co_file_name_with_extension compare =v "file_name"
+			verify v_file.co_file_name_without_extension compare =v "file_name"
+			verify v_file.co_file_name_extension compare =r void
+			verify v_file.co_directory.a_path compare =v "c:\\"
+
+			v_file = co_create ( "c:/level.1/level_2/file.name.ext" )
+			verify v_file.a_path compare =v "c:/level.1/level_2/file.name.ext"
+			verify v_file.co_file_name_with_extension compare =v "file.name.ext"
+			verify v_file.co_file_name_without_extension compare =v "file.name"
+			verify v_file.co_file_name_extension.a_value compare =v "ext"
+			verify v_file.co_directory.a_path compare =v "c:\\level.1\\level_2"
+
+			v_file = co_create ( i_path = "d:\\wsertiuzweriwiurqwezr\\ieurfiweriufwierwf.txt" )
+			verify not v_file.exists
+
+			v_file = se_file.co_create_temporary_file.o_file
+			verify v_file.exists
+				
+			v_file.co_delete_file
+			verify not v_file.exists
+
+			v_file.co_create_file
+			verify v_file.exists
+
+			v_file.co_create_file on_error:continue
+			verify v_program_error_ #r void
+
+			v_file.co_delete_file
+			verify not v_file.exists
+
+			v_file.co_delete_file on_error:continue
+			verify v_program_error_ #r void
+		end script
+	end test
+	end ///
+	
+end factory

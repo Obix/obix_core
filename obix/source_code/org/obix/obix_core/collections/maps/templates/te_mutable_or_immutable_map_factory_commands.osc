@@ -1,0 +1,86 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template mutable_or_immutable_map_factory_commands
+
+	param key_type end
+	param item_type end
+
+		command item_iterator
+			script
+				var java_collection_wrapper java_collection_wrapper
+				java
+					v_java_collection_wrapper = new fa_java_collection_wrapper ( a_map.values() ) ;
+				end java
+				o_result = !iterator_factory<{item_type}>.create ( v_java_collection_wrapper )
+			end
+		end
+		
+		command key_iterator
+			script
+				var java_collection_wrapper java_collection_wrapper
+				java
+					// v_java_collection_wrapper = new fa_java_collection_wrapper ( a_map.keySet() ) ;
+					v_java_collection_wrapper = new fa_java_collection_wrapper ( new ArrayList<in_any_type> ( a_map.keySet() ) ) ;
+				end java
+				o_result = !iterator_factory<{key_type}>.create ( v_java_collection_wrapper )
+			end
+		end
+		
+		command key_list
+			script
+				var java_unmodifiable_list_wrapper wrapper
+				java
+					List<in_any_type> key_list = new ArrayList<in_any_type> ( a_map.keySet() );
+					v_wrapper = new fa_java_unmodifiable_list_wrapper ( Collections.unmodifiableList ( key_list ) );
+				end java
+				o_result = !indexed_list_factory<{key_type}>.create_from_unmodifiable_java_list ( v_wrapper )
+			end
+		end
+		
+		command item_list
+			script
+				var java_unmodifiable_list_wrapper wrapper
+				java
+					List<in_any_type> item_list = new ArrayList<in_any_type> ( a_map.values() );
+					v_wrapper = new fa_java_unmodifiable_list_wrapper ( Collections.unmodifiableList ( item_list ) );
+				end java
+				o_result = !indexed_list_factory<{item_type}>.create_from_unmodifiable_java_list ( v_wrapper )
+			end
+		end
+		
+		command contains_key
+			script
+				java
+					o_result = a_map.containsKey ( i_key ) ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+				end java
+			end
+		end
+		
+		command get_item_if_contained
+			script
+				var any_type temp
+				java
+					v_temp = (in_any_type) a_map.get ( i_key ) ;
+				end java
+				if v_temp #r void then
+					o_result = v_temp type_check:no
+				end if
+			end
+		end
+
+		command require_item
+			script
+				var any_type temp
+				java
+					v_temp = (in_any_type) a_map.get ( i_key ) ;
+				end java
+				o_result = v_temp type_check:no
+			end
+		end
+
+end template

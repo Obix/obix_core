@@ -1,0 +1,75 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template prefixed_id_map_factory_code
+
+		attribute is_empty
+			get
+				script
+					o_is_empty = a_map.is_empty
+				end
+			end
+		end
+
+		attribute item_count
+			get
+				script
+					o_item_count = a_map.item_count
+				end
+			end
+		end
+
+		command item_iterator
+			script
+				o_result = a_map.item_iterator
+			end
+		end
+
+		command contains_id
+			script
+				o_result = a_map.contains_key ( i_id.suffix )
+			end
+		end
+
+		command item_by_id
+			script
+				o_result = a_map.get_item_if_contained ( i_id.suffix )
+			end
+		end
+
+		command item_by_prefixed_id_string
+			script
+				if i_prefixed_id.value.item_count > a_id_prefix_with_terminator.value.item_count then
+					o_result = a_map.get_item_if_contained ( i_prefixed_id.to_string.extract_from ( 1 + a_id_prefix_with_terminator.value.item_count ) )
+				else
+					o_result = void
+				end if
+			end
+		end
+
+		command item_by_unprefixed_id_string
+			script
+				o_result = a_map.get_item_if_contained ( i_unprefixed_id )
+			end
+		end
+
+		command item_by_prefixed_or_unprefixed_id_string
+			script
+				if i_prefixed_or_unprefixed_id.value.starts_with ( a_id_prefix_with_terminator.value ) then
+					o_result = co_item_by_prefixed_id_string ( i_prefixed_or_unprefixed_id )
+				else
+					o_result = co_item_by_unprefixed_id_string ( i_prefixed_or_unprefixed_id )
+				end if
+			end
+		end
+
+		command unprefixed_id_list
+			script
+				o_result = a_map.key_list
+			end
+		end
+end

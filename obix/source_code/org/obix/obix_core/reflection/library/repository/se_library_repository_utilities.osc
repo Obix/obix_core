@@ -1,0 +1,33 @@
+service library_repository_utilities
+
+	command add_libraries_in_file_to_list
+		in file type:file end
+		in library_list type:!mutable_indexed_list<library> end
+		%message_handler_input_argument
+		%system_error_handler_input_argument
+		
+		%resource_error_output_argument
+		
+		script
+			i_message_handler.co_info_message ( """Restoring library repository from file '{{i_file}}'""" )
+
+			var any_type object
+			se_binary_file_IO.co_restore_object_from_file ( &
+				file = i_file &
+				file_content_is_zipped = yes &
+				error_handler = i_error_handler ) &
+				( v_object = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			const !collection<library> library_collection = v_object type_check:no
+			
+			repeat for each library root_library in c_library_collection
+				i_library_list.append ( c_root_library )
+			end
+		end
+	end
+	
+end

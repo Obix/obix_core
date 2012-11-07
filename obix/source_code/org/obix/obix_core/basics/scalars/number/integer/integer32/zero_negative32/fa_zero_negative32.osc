@@ -1,0 +1,33 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory zero_negative32 type:zero_negative32
+
+	java_header
+		import org.obix.obix_core.basics.scalars.number.integer.integer32.*;
+	end java_header
+
+	java
+		public int java_value() { return a_value.java_value(); }
+
+		public fa_zero_negative32 ( int i_java_value ) {
+			if (i_java_value > 0) {
+				throw new RuntimeException ("new fa_zero_negative32(): i_java_value > 0 (" + i_java_value + ")");
+			}
+			this.a_value = new fa_integer32_value ( i_java_value ) ;
+		}
+
+		public static in_zero_negative32 create_from_signed_integer32 ( in_signed_integer32 signed_integer32 ) {
+			return signed_integer32 == null ? null : new fa_zero_negative32(signed_integer32.java_value());
+		}
+	end java
+
+	%te_integer_wrapper_factory<remainder_factory:"fa_signed_integer32"; unary_minus_factory:"fa_zero_positive32"; abs_factory:"fa_zero_positive32">
+
+	creator create kind:in_all end
+
+end factory

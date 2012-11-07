@@ -1,0 +1,60 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template prefixed_id_child_factory
+
+	param type_of_factory end
+	param prefix end
+
+	%prefixed_id_child_factory_commands
+
+	creator create kind:in_all end
+	
+	%create_from_string_creator_for_simple_string<{type_of_factory}>
+
+	creator create_from_suffix
+		//in suffix type:non_empty_string end
+		in suffix type:id end
+		
+		out result type:{type_of_factory} end
+		
+		script
+			//o_result = co_create_from_string ( {prefix_as_string} & i_suffix )
+			//o_result = co_create ( {prefix_as_string}.value & i_suffix.value )
+			o_result = co_create ( {prefix}.append_terminator.value & i_suffix.value )
+		end script
+	end creator
+
+	// TD error handling
+	creator create_from_suffix_string
+		in suffix type:simple_non_empty_string end
+		
+		out result type:{type_of_factory} end
+		
+		script
+			//o_result = co_create_from_string ( {prefix_as_string} & i_suffix )
+			//o_result = co_create ( {prefix_as_string}.value & i_suffix.value )
+			o_result = co_create ( {prefix}.append_terminator.value & i_suffix.value )
+		end script
+	end creator
+
+	// TD error handling
+	creator create_from_string_with_optional_prefix
+		in string type:simple_non_empty_string end
+		
+		out result type:{type_of_factory} end
+		
+		script
+			if i_string.value.starts_with ( {prefix}.append_terminator.value ) then
+				o_result = co_create ( i_string.value )
+			else
+				o_result = co_create_from_suffix_string ( i_string )
+			end if
+		end script
+	end creator
+
+end template

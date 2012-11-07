@@ -1,0 +1,32 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory string_to_absolute_or_relative_file_converter type:string_to_absolute_or_relative_file_converter
+
+	command convert
+		script
+			if se_directory_or_file.is_absolute_path ( i_input ) then
+				fa_file.create_from_string ( &
+					string = i_input &
+					config = a_config &
+					error_handler = i_error_handler ) &
+					( o_result = result &
+					o_error = error )
+			else
+				fa_relative_file.create_from_string ( &
+					string = i_input &
+					config = a_config &
+					error_handler = i_error_handler ) &
+					( o_result = result &
+					o_error = error )
+			end if
+		end
+	end
+	
+	creator create kind:in_all end
+	
+end

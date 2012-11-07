@@ -1,0 +1,79 @@
+service indexed_list_tests
+
+	test
+		script
+			var !mutable_indexed_list<string> list
+			var string item
+			var !iterator<string> iterator
+
+			v_list = !mutable_indexed_list_factory<string>.create
+			verify v_list.is_empty
+			verify v_list.item_count =v 0
+			v_iterator = v_list.item_iterator
+			verify not v_iterator.has_next
+			v_item = v_list.item_at_index ( 1 ) on_error: continue
+			verify v_program_error_ #r void
+
+			var string mozart = "Mozart"
+			v_list.append ( v_mozart )
+			verify not v_list.is_empty
+			verify v_list.item_count =v 1
+			v_iterator = v_list.item_iterator
+			verify v_iterator.has_next
+			v_iterator.next
+			verify not v_iterator.has_next
+			v_item = v_list.item_at_index ( 1 )
+			verify v_item =r v_mozart
+
+			v_list.remove_at_index ( 1 )
+			verify v_list.is_empty
+///
+			v_list.co_append ( v_mozart )
+			var ty_non_empty_string v_vivaldi = "Vivaldi"
+			v_list.co_insert_before_index ( i_index = 1 i_item = v_vivaldi )
+			v_list.co_append ( void )
+			verify v_list.item_count =v 3
+			verify v_list.co_item_at_index ( 1 ) =r v_vivaldi
+			verify v_list.co_item_at_index ( 2 ) =r v_mozart
+			verify v_list.co_item_at_index ( 3 ) =r void
+
+			v_iterator = v_list.co_item_iterator
+			verify v_iterator.co_next =r v_vivaldi
+			verify v_iterator.co_next =r v_mozart
+			verify v_iterator.co_next =r void
+			verify not v_iterator.has_next
+
+			v_list.co_replace_at_index ( i_index = 3 i_new_item = v_vivaldi )
+			verify v_list.co_item_at_index ( 3 ) =r v_vivaldi
+
+			var ty_indexed_list v_immutable_list = v_list.co_copy_to_immutable
+			verify v_immutable_list.item_count =v 3
+			verify v_immutable_list.co_item_at_index ( 1 ) =r v_vivaldi
+			verify v_immutable_list.co_item_at_index ( 2 ) =r v_mozart
+			verify v_immutable_list.co_item_at_index ( 3 ) =r v_vivaldi
+
+			v_list.co_remove_all
+			verify v_list.is_empty
+			verify v_list.item_count =v 0
+end ///
+			// copy_to_immutable, make_immutable
+			
+			v_list = !mutable_indexed_list_factory<string>.create
+			v_list.append ( "foo" )
+			v_list.append ( "bar" )
+
+			var !indexed_list<string> ilist = v_list.copy_to_immutable
+			verify ilist.item_count =v 2
+
+			v_list.append ( "zar" )
+			verify v_list.item_count =v 3
+			verify ilist.item_count =v 2
+
+			var !indexed_list<string> ilist2 = v_list.make_immutable
+			verify ilist2.item_count =v 3
+			v_list.append ( "yar" ) on_error:continue
+			verify v_program_error_ #r void
+		end
+	end test
+	
+end

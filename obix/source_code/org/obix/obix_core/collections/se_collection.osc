@@ -1,0 +1,80 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service collection
+
+	java
+		public static void mutable_operation_violation() {
+			co_mutable_operation_violation_command();
+		}
+	end java
+
+	attribute_list type:template_parameter_id
+
+		attribute item_type_generic_parameter_id default:fa_template_parameter_id.create_from_suffix_string ( "item_type" ) end
+
+		attribute key_type_generic_parameter_id default:fa_template_parameter_id.create_from_suffix_string ( "key_type" ) end
+		
+	end
+	
+	command mutable_operation_violation private:yes
+		script
+			error "After making a mutable collection immutable (with command 'make_immutable') any command that modifies the list can no more be executed."
+		end
+	end
+
+	command contains_item_by_reference
+		// TD check if item's type is compatible to collection's type, i.e.
+		// in collection type:!collection<ft_collection_type> end
+		// in item type:ft_item_type end
+		// compile_in_check ft_item_type compatible to ft_collection_type end
+
+		in collection type:!collection<*> end
+		in item type:any_type end
+
+		out result type:yes_no end
+		
+		script
+			o_result = no
+			repeat for each any_type collection_item in i_collection
+				if collection_item #r void and collection_item =r i_item then
+					o_result = yes
+					exit script
+				end if
+			end repeat
+		end
+	end
+	
+	command all_items_to_string
+		in iteratable type:!iteratable<*> voidable:yes end
+		in item_separator type:string default:se_string_constants.current_OS_new_line end
+
+		out result type:string end
+		
+		script
+			if i_iteratable =r void then
+				o_result = se_string_constants.void
+				exit script
+			end if
+			
+			const mutable_string mutable_string = fa_mutable_string.create
+			const !iterator<*> c_iterator = i_iteratable.item_iterator
+
+			repeat for each any_type item in c_iterator
+				c_mutable_string.append ( se_any_type.force_object_to_string ( c_item ) )
+
+				if c_iterator.has_next then
+					c_mutable_string.append ( i_item_separator )
+				end if
+			end repeat
+			
+			o_result = c_mutable_string.to_string
+		end
+	end
+	
+
+end service

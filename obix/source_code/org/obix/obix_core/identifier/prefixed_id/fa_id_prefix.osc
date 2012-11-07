@@ -1,0 +1,28 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory id_prefix type:id_prefix
+
+	%scalar_is_equal_to_factory_command
+
+	command append
+		script
+			o_result = fa_non_empty_string.create ( a_value & i_string.value )
+		end
+	end
+	
+	command append_terminator
+		script
+			o_result = fa_non_empty_string.create ( a_value & se_prefixed_id.prefix_terminator.value )
+		end
+	end
+	
+	creator create kind:in_all end
+	
+	%create_from_string_creator_for_simple_string<id_prefix>
+
+end factory

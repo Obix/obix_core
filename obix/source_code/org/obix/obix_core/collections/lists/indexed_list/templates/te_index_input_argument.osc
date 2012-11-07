@@ -1,0 +1,15 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template index_input_argument
+
+	in index type:positive32 &
+		check: i_index <= i_object_.a_item_count &
+		error_message: "Index (" & i_index.co_to_string & ") exeeds maximum (" & i_object_.a_item_count.co_to_string & ")." &
+		error_id: max_index_exceeded end
+
+end template

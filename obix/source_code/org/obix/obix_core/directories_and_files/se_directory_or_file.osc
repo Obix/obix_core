@@ -1,0 +1,135 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service directory_or_file
+
+	java_header
+		import java.io.File;
+		import java.lang.SecurityException;
+
+		import org.obix.obix_core.java.fa_java_exception;
+	end java_header
+
+	// TD to be verified
+	// rules for valid file or directory name:
+	//   1 to 255 characters
+	//   following characters are not allowed: \/*?:<>|"
+	attribute directory_or_file_name_regex type:regex default: fa_regex.create ( '''[^\\/\*\?:<>\|"]{1,255}'''~ ) end
+
+	// TD to be verified
+	// rule for valid file or directory name:
+	//   following characters are not allowed: *?<>|"
+	attribute directory_or_file_path_regex type:regex default: fa_regex.create ( '''[^\*\?<>\|"]+'''~ ) end
+
+	command is_absolute_path
+		in path type:simple_string end
+		
+		out result type:yes_no end
+		
+		script
+			java
+				File file = new File ( i_path.getValue().java_value() );
+				o_result = file.isAbsolute() ? fa_yes_no.a_yes : fa_yes_no.a_no;
+			end java
+		end
+	end
+	
+	command is_relative_path
+		in path type:simple_string end
+		
+		out result type:yes_no end
+		
+		script
+			o_result = not is_absolute_path ( i_path )
+		end
+	end
+	
+	command to_Unix_path
+		in path type:simple_string end
+		
+		out result type:string end
+		
+		script
+			o_result = fa_string.create ( i_path.value.replace_all ( &
+				to_replace = se_directory.Windows_directory_separator.value &
+				replace_by = se_directory.Unix_directory_separator.value ) )
+		end
+	end
+	
+	command to_Windows_path
+		in path type:simple_string end
+		
+		out result type:string end
+		
+		script
+			o_result = fa_string.create ( i_path.value.replace_all ( &
+				to_replace = se_directory.Unix_directory_separator.value &
+				replace_by = se_directory.Windows_directory_separator.value ) )
+		end
+	end
+	
+	command is_existing_directory
+		in path type:simple_string end
+		%system_error_handler_input_argument
+		
+		%result_xor_error_output < &
+			result_type: yes_no &
+			error_type: resource_security_error >
+		
+		script
+			var java_exception java_exception
+			java
+				File file = new File ( i_path.getValue().java_value() );
+				try {
+					o_result = file.isDirectory() ? fa_yes_no.a_yes : fa_yes_no.a_no;
+				} catch ( SecurityException e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+			end java
+
+			if v_java_exception #r void then
+				o_result = void
+				o_error = fa_resource_security_error.create ( &
+					description = v_java_exception.message &
+					java_exception = v_java_exception &
+					resource = void )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+	
+	command is_existing_file
+		in path type:simple_string end
+		%system_error_handler_input_argument
+		
+		%result_xor_error_output < &
+			result_type: yes_no &
+			error_type: resource_security_error >
+		
+		script
+			var java_exception java_exception
+			java
+				File file = new File ( i_path.getValue().java_value() );
+				try {
+					o_result = file.isFile() ? fa_yes_no.a_yes : fa_yes_no.a_no;
+				} catch ( SecurityException e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+			end java
+
+			if v_java_exception #r void then
+				o_result = void
+				o_error = fa_resource_security_error.create ( &
+					description = v_java_exception.message &
+					java_exception = v_java_exception &
+					resource = void )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+	
+end

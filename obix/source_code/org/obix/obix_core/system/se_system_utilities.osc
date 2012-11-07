@@ -1,0 +1,141 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service system_utilities
+
+	java_header
+		import java.awt.datatransfer.Clipboard;
+		import java.awt.datatransfer.DataFlavor;
+		import java.awt.datatransfer.StringSelection;
+		import java.awt.datatransfer.Transferable;
+		import java.awt.datatransfer.UnsupportedFlavorException;
+		import java.awt.Toolkit;
+		
+		import java.io.IOException;
+	end java_header
+
+	java
+		private static void _co_set_clipboard_string_content ( String i_string ) {
+		
+			// TD this works on Windows
+			// but on Unix:
+			// the string seams to be written into a clipboard of the current process
+			// subsequent retrieval of the clipboard in the same process works, 
+			// but the string is not available in the 
+			// X systems clipboard - hence cannot be retrieved by typing Ctrl-V
+			
+			StringSelection string_selection = new StringSelection ( i_string );
+			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard() ;
+			clipboard.setContents ( string_selection, null ) ;
+		}
+
+		/*
+		private static void _co_set_clipboard_content ( Transferable i_transferable ) {
+		
+			Clipboard v_clipboard = Toolkit.getDefaultToolkit().getSystemClipboard() ;
+			v_clipboard.setContents ( i_transferable, null ) ;
+		} */
+
+		// If a string is on the system clipboard, this method returns it;
+		// otherwise it returns null.
+		public static String _co_get_clipboard_string_content() {
+
+			/*
+			Transferable transferable = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
+			if ( transferable != null && transferable.isDataFlavorSupported ( DataFlavor.stringFlavor) ) {
+				try {
+					String text = (String) transferable.getTransferData ( DataFlavor.stringFlavor );
+					return text;
+				} catch ( UnsupportedFlavorException e ) {
+				} catch ( IOException e ) {
+				}
+				return null;
+			} else {
+				return null;
+			} */
+
+			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+			try {
+				return (String) clipboard.getData ( DataFlavor.stringFlavor );
+			} catch ( Exception e ) {
+				return null;
+			}
+		}
+
+	end java
+
+	attribute_list kind:variable setable:all
+
+		attribute program_error_handler type:program_error_handler default: fa_system_err_program_error_handler.create end
+	
+		// attribute default_system_error_handler type:system_error_handler default: fa_system_err_system_error_handler.create end
+		attribute default_system_error_handler type:system_error_handler default: fa_error_log_file_system_error_handler.create end
+	
+		attribute do_nothing_system_error_handler type:system_error_handler default: fa_do_nothing_system_error_handler.create end
+	
+		// attribute default_user_input_error_handler type:user_input_error_handler default: fa_console_output_user_input_error_handler.create end
+	
+		attribute default_message_handler type:message_handler default: fa_console_output_message_handler.create end
+		
+	end attribute_list
+
+	command copy_string_to_clipboard
+		in string type:string end
+		
+		script
+			java
+				_co_set_clipboard_string_content ( i_string.getValue().java_value() );
+			end java
+		end
+	end
+	
+	command get_string_from_clipboard
+		out result type:string voidable:yes end
+		
+		script
+			java
+				String result = _co_get_clipboard_string_content();
+				if ( result != null ) {
+					o_result = new fa_string ( result );
+				}
+			end java
+		end
+	end
+
+	// TD2:
+	// - use java.lang.Runtime.exec(String[] cmdarray, String[] envp, File dir)
+	//   to set environment variables
+
+	command total_memory_in_mb
+		out result type:zero_positive32 end
+		
+		script
+			java
+				o_result = new fa_zero_positive32 ( (int) (Runtime.getRuntime().totalMemory() / 1048576) ) ;
+			end java
+		end
+	end
+	
+	command free_memory_in_mb
+		out result type:zero_positive32 end
+		
+		script
+			java
+				o_result = new fa_zero_positive32 ( (int) (Runtime.getRuntime().freeMemory() / 1048576) ) ;
+			end java
+		end
+	end
+	
+	command run_garbage_collector
+		script
+			java
+				Runtime.getRuntime().gc() ;
+			end java
+		end
+	end
+	
+end service

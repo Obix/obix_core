@@ -1,0 +1,739 @@
+service java_reflection
+
+	java_header
+		import java.lang.ClassNotFoundException;
+		import java.lang.IllegalAccessException;
+		import java.lang.IllegalArgumentException;
+		import java.lang.NoSuchMethodException;
+
+		import java.lang.reflect.Field;
+		import java.lang.reflect.InvocationTargetException;
+		import java.lang.reflect.Method;
+
+		import java.io.File;
+
+		import java.net.MalformedURLException;
+		import java.net.URL;
+		import java.net.URLClassLoader;
+
+		import org.obix.obix_core.basics.scalars.number.integer.integer32.positive32.fa_positive32;
+		import org.obix.obix_core.basics.scalars.string.simple_string.in_simple_non_empty_string;
+		import org.obix.obix_core.basics.scalars.string.string_value.in_string_value;
+		import org.obix.obix_core.basics.scalars.yes_no.in_yes_no;
+		import org.obix.obix_core.collections.maps.in_mutable_map_base_;
+		import org.obix.obix_core.collections.maps.generified.fa_string_any_type_mutable_map;
+		import org.obix.obix_core.directories_and_files.directories.absolute_directory.in_directory;
+		import org.obix.obix_core.errors.runtime_errors.system_runtime_errors.in_system_error;
+		import org.obix.obix_core.java.fa_java_exception;
+		import org.obix.obix_core.reflection.root_software_element.nongeneric_RSE.type.se_type;
+	end java_header
+	
+	java
+		// utilities
+
+		private static String _a_interface_prefix = "in_";
+		private static String _a_interface_start = "." + _a_interface_prefix;
+
+		private static String _a_type_start = "." + se_type.getId_prefix_with_terminator().getValue().java_value();
+
+		public static Class[] _a_empty_class_array = new Class[]{};
+		private static Object[] _a_empty_object_array = new Object[]{};
+		
+		private static ClassLoader _a_obix_system_class_loader = se_string_constants.getEmpty_string().getClass().getClassLoader();
+		
+		private static String _a_result_output_argument_id = se_reflection.getResult_output_argument_id().getValue().java_value();
+		private static String _a_error_output_argument_id = se_reflection.getError_output_argument_id().getValue().java_value();
+		
+		private static String _a_base_type_for_generic_type_suffix = se_reflection.getBase_type_for_generic_type_suffix().getValue().java_value();
+
+		
+		// get class
+		
+		private static Class<?> _co_require_class ( String i_class_path, boolean i_reload_class, File i_root_directory_of_class_files )
+			throws ClassNotFoundException, MalformedURLException {
+
+			if ( i_reload_class ) {
+				return _co_require_reloaded_class ( i_class_path, i_root_directory_of_class_files );
+			} else {
+				return Class.forName ( i_class_path );
+			}
+		}
+
+		private static Class<?> _co_require_reloaded_class ( String i_class_path, File i_root_directory_of_class_files )
+			throws ClassNotFoundException, MalformedURLException {
+
+			/* a_my_class_loader = new my_class_loader ( 
+					i_root_directory_of_class_files.getValue().java_value(),
+					i_reload_class.getClass().getClassLoader() ) ;
+				//v_class = a_my_class_loader.findClass ( i_class_path.getValue().java_value() ) ;
+				v_class = a_my_class_loader.loadClass ( i_class_path.getValue().java_value() ) ;
+				// the JVM will invoke the loadClass method of a_my_class_loader for each class referred to from i_class_path (see Java API doc. of ClassLoader)
+			*/
+
+			ClassLoader loader = new URLClassLoader(
+				new URL[] {i_root_directory_of_class_files.toURI().toURL()},
+				_a_obix_system_class_loader);
+			return loader.loadClass ( i_class_path );
+		}
+		
+		
+		// get method
+
+		public static Method _co_require_method ( Class<?> i_class, String i_method_name, Class[] i_input_classes, boolean i_private_method_allowed )
+			throws NoSuchMethodException {
+
+			if ( i_input_classes != null ) {
+				Method result = i_class.getMethod ( i_method_name, i_input_classes ); // finds only public methods
+				if ( result == null && i_private_method_allowed ) {
+					result = i_class.getDeclaredMethod ( i_method_name, i_input_classes ); // finds also private methods, but no inherited methods
+				}
+				return result;
+			} else {
+				return _co_require_method_by_name ( i_class, i_method_name, i_private_method_allowed );
+			}
+		}
+
+		public static Method _co_require_method_by_name ( Class i_class, String i_method_name, boolean i_private_method_allowed )
+			throws NoSuchMethodException {
+
+			Method[] v_method_array = i_class.getMethods();
+			for (int i=0; i < v_method_array.length; i++) {
+				if (v_method_array[i].getName().equals(i_method_name)) {
+					return v_method_array[i];
+				}
+			}
+			
+			if ( i_private_method_allowed ) {
+				// use also getDeclaredMethods in order to find also private methods
+				v_method_array = i_class.getDeclaredMethods();
+				for (int i=0; i < v_method_array.length; i++) {
+					if (v_method_array[i].getName().equals(i_method_name)) {
+						return v_method_array[i];
+					}
+				}
+			}
+
+			throw new NoSuchMethodException ( "Method '" + i_method_name + "' doesn't exist in class '" + i_class + "'" );
+		}
+
+		// conversions
+
+		public static in_string_value _interface_class_to_type_id_path ( Class<?> clazz ) {
+
+			String class_name = clazz.getName();
+			
+			// TD4 doesn't work for generified types
+			// possible solution: if in_xxx_base_ then the type_id_path should be a static field in in_xxx_base_
+			if ( class_name.endsWith ( _a_base_type_for_generic_type_suffix ) ) {
+				throw new IllegalArgumentException ( "Class '" + class_name + "' ends with '" + _a_base_type_for_generic_type_suffix + "'." );
+			}
+
+			int in_index = class_name.lastIndexOf ( _a_interface_start );
+			if ( in_index == -1 ) {
+				throw new IllegalArgumentException ( "Class '" + class_name + "' doesn't contain '" + _a_interface_start + "'." );
+			}
+
+			return new fa_string_value ( class_name.substring ( 0, in_index ) + _a_type_start + class_name.substring ( in_index + 4 ) );
+		}
+
+		// attributes
+
+		static in_any_type _co_get_public_attribute_value ( Class i_class, in_any_type i_object, String i_attribute_id )
+			throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+
+			Method getter_method = _co_require_method_by_name ( i_class, "get" + _co_get_capitalized_attribute_suffix ( i_attribute_id ), false );
+			return (in_any_type) getter_method.invoke ( i_object, _a_empty_object_array ) ;
+		}
+
+		static void _co_set_public_attribute_value ( Class i_class, in_any_type i_object, String i_attribute_id, in_any_type i_value )
+			throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+
+			Method setter_method = _co_require_method_by_name ( i_class, "set" + _co_get_capitalized_attribute_suffix ( i_attribute_id ), false );
+			setter_method.invoke ( i_object, new java.lang.Object[]{i_value} ) ;
+		}
+
+		static in_attribute_check_error _co_check_public_attribute_value ( Class i_class, String i_attribute_id, in_any_type i_value )
+			throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+
+			// TD add attribute_list check
+			Method v_check_method = _co_require_method_by_name ( i_class, i_attribute_id + "_check", false ) ;
+			return (in_attribute_check_error) v_check_method.invoke ( null, new java.lang.Object[]{i_value} ) ;
+		}
+		
+		static String _co_get_capitalized_attribute_suffix ( String i_attribute_id ) {
+
+			String suffix = i_attribute_id.substring(2);
+			return suffix.substring(0,1).toUpperCase() + suffix.substring(1);
+		}
+		
+		
+		// execute method
+		
+		static Object _co_execute_static_class_method_1 ( 
+			in_simple_non_empty_string i_class_path,
+			in_yes_no i_reload_class,
+			in_directory i_root_directory_of_class_files,
+			in_simple_non_empty_string i_method_name, 
+			Object[] i_input_objects )
+			throws ClassNotFoundException, MalformedURLException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+			
+			return _co_execute_static_class_method_2 (
+				i_class_path.getValue().java_value(),
+				i_reload_class.java_value(),
+				i_root_directory_of_class_files == null ? null : new File ( i_root_directory_of_class_files.getValue().java_value() ),
+				i_method_name.getValue().java_value(),
+				i_input_objects );
+		}
+
+		static Object _co_execute_static_class_method_2 ( 
+			String i_class_path, 
+			boolean i_reload_class, 
+			File i_root_directory_of_class_files, 
+			String i_method_name, 
+			Object[] i_input_objects )
+			throws ClassNotFoundException, MalformedURLException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+
+			Class<?> v_class = _co_require_class ( i_class_path, i_reload_class, i_root_directory_of_class_files );
+			Method v_method = _co_require_method ( v_class, i_method_name, null, false );
+			return v_method.invoke ( null, i_input_objects );
+		}
+	end java
+
+	attribute interface_prefix type:non_empty_string
+		default
+			script
+				java
+					o_interface_prefix = new fa_non_empty_string ( _a_interface_prefix );
+				end java
+			end
+		end
+	end
+
+	command execute_static_class_method
+		///
+		the method has:
+		   any number of input arguments
+		   any number of output arguments
+		if:
+		   the command has no output arguments: o_result will be void
+		   the command has one output argument: o_result will contain the result
+		   the command has more than one output argument: o_result will contain a string_any_type map with the output argument ids as keys
+		   
+		if a program error or exception occurs during execution of 'i_method_name' then the exception propagates to the caller (i.e. it is not reported in o_error; o_result and o_error are both void). this behavior should not be changed, in order to keep the general behavior of program errors always propagating to the caller.
+		if 'i_method_name' cannot be executed (because of wrong reflection data, such as an inexistant class or method name) then an error is reported in o_error
+		end ///
+
+		in class_path type:simple_non_empty_string end
+		in method_name type:simple_non_empty_string end
+		in method_input type:!indexed_list<*> voidable:yes end
+		in reload_class type:yes_no default:no end
+		in root_directory_of_class_files type:directory voidable:yes default:void end
+		%system_error_handler_input_argument
+		in_check check: not ( i_reload_class and i_root_directory_of_class_files =r void ) end
+		
+		%result_or_system_error_void_output < any_type >
+
+		script
+			var java_exception java_exception = void
+			const zero_positive32 input_argument_count = iif i_method_input #r void then i_method_input.item_count else 0 end if
+
+			java
+				try {
+					int input_argument_count = c_input_argument_count.getValue().java_value();
+					
+					Object[] input_objects = null;
+					
+					if ( input_argument_count > 0 ) {
+						input_objects = new Object[input_argument_count];
+						for ( int i = 0; i < input_argument_count; i++ ) {
+							input_objects[i] = i_method_input.co_item_at_index_command ( new fa_positive32 ( i + 1 ) );
+						}
+					}
+					
+					Object java_result = _co_execute_static_class_method_1 ( i_class_path, i_reload_class, i_root_directory_of_class_files, i_method_name, input_objects );
+
+					if ( java_result == null ) {
+						o_result = null;
+
+					} else {
+						if ( java_result instanceof in_any_type ) {
+							o_result =  (in_any_type) java_result;
+
+						} else {
+							// there are more than 1 output arguments
+							// store java_result values in a map
+							in_mutable_map_base_ map = fa_string_any_type_mutable_map.co_create_command ( fa_yes_no.a_no );
+
+							Field[] fields = java_result.getClass().getFields();
+							for (int i=0; i < fields.length; i++) {
+								Field field = fields[i];
+								String field_name = field.getName();
+								in_any_type field_value = (in_any_type) field.get(java_result);
+								map.co_add_command ( new fa_non_empty_string ( field_name ), field_value );
+							}
+
+							o_result = map.co_make_immutable_command();
+						}
+					}
+
+				} catch ( Exception e ) {
+					// InvocationTargetException is thrown if the underlying method throws an exception in Method.invoke (see Java doc.)
+					if ( e instanceof in_program_error || e instanceof InvocationTargetException ) {
+						throw e;
+					} else {
+						v_java_exception = new fa_java_exception ( e );
+					}
+				}
+			end java
+
+			if v_java_exception #r void then
+				o_result = void
+				o_error = fa_reflection_execution_error.create ( &
+					id = "execute_static_class_method_error" &
+					description = """Method '{{i_method_name}}' in class '{{i_class_path}}' could not be executed. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+	command execute_static_class_method_2a
+		///
+		the method has:
+		   3 input arguments:
+		      - ty_string
+			  - ty_string_to_object_converter_config
+		      - ty_system_error_handler
+		   2 output arguments:
+		      - o_result ty_any_type
+		      - o_error ty_system_error
+		   
+		if a program error or exception occurs during execution of 'i_method_name' then the exception propagates to the caller (i.e. it is not reported in o_error; o_result and o_error are both void)
+		if 'i_method_name' cannot be executed (because of wrong reflection data, such as an inexistant class or method name) then an error is reported in o_error
+		end ///
+
+		in class_path type:simple_non_empty_string end
+		in method_name type:simple_non_empty_string end
+		in method_string_input type:simple_string voidable:yes end
+		in method_config_input type:string_to_object_converter_config end
+		in reload_class type:yes_no default:no end
+		in root_directory_of_class_files type:directory voidable:yes default:void end
+		%system_error_handler_input_argument
+		in_check check: not ( i_reload_class and i_root_directory_of_class_files =r void ) end
+		
+		%result_or_system_error_void_output < any_type >
+		
+		script
+			var java_exception java_exception = void
+
+			java
+				try {
+					Object java_result = _co_execute_static_class_method_1 ( i_class_path, i_reload_class, i_root_directory_of_class_files, i_method_name, 
+						new Object[]{i_method_string_input, i_method_config_input, i_error_handler} );
+					if ( java_result == null ) {
+						throw new RuntimeException ( "The method doesn't return a result." );
+					}
+
+					Class<?> multiple_output_class = java_result.getClass();
+
+					Field[] fields = multiple_output_class.getFields();
+					if ( fields.length != 2 ) {
+						throw new RuntimeException ( "The method doesn't return a result composed of 2 objects" );
+					}
+
+					for (int i=0; i < fields.length; i++) {
+						Field field = fields[i];
+						String field_name = field.getName();
+						Object field_value = field.get(java_result);
+						if ( field_name.equals(_a_result_output_argument_id) ) {
+							o_result = (in_any_type) field_value;
+						} else if ( field_name.equals(_a_error_output_argument_id) ) {
+							o_error = (in_system_error) field_value;
+						} else {
+							throw new RuntimeException ( "Output argument name '" + field_value + "' is invalid." );
+						}
+					}
+				} catch ( Exception e ) {
+					// InvocationTargetException is thrown if the underlying method throws an exception in Method.invoke (see Java doc.)
+					if ( e instanceof in_program_error || e instanceof InvocationTargetException ) {
+						throw e;
+					} else {
+						v_java_exception = new fa_java_exception ( e );
+					}
+				}
+			end java
+
+			if v_java_exception #r void then
+				o_result = void
+				o_error = fa_reflection_execution_error.create ( &
+					id = "execute_static_class_method_2a_error" &
+					description = """Method '{{i_method_name}}' in class '{{i_class_path}}' could not be executed. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+	command execute_static_class_method_2b
+		///
+		the method has:
+		   2 input arguments:
+		      - ty_indexed_string_list
+		      - ty_system_error_handler
+		   2 output arguments:
+		      - o_result ty_any_type
+		      - o_error ty_system_error
+		   
+		if a program error or exception occurs during execution of 'i_method_name' then the exception propagates to the caller (i.e. it is not reported in o_error; o_result and o_error are both void)
+		if 'i_method_name' cannot be executed (because of wrong reflection data, such as an inexistant class or method name) then an error is reported in o_error
+		end ///
+
+		in class_path type:simple_non_empty_string end
+		in method_name type:simple_non_empty_string end
+		in method_string_list_input type:indexed_string_list voidable:yes end
+		in reload_class type:yes_no default:no end
+		in root_directory_of_class_files type:directory voidable:yes default:void end
+		%system_error_handler_input_argument
+		in_check check: not ( i_reload_class and i_root_directory_of_class_files =r void ) end
+		
+		%result_or_system_error_void_output < any_type >
+		
+		script
+			var java_exception java_exception = void
+
+			java
+				try {
+					Object java_result = _co_execute_static_class_method_1 ( i_class_path, i_reload_class, i_root_directory_of_class_files, i_method_name, new Object[]{i_method_string_list_input, i_error_handler} );
+					if ( java_result == null ) {
+						throw new RuntimeException ( "The method doesn't return a result." );
+					}
+
+					Class<?> multiple_output_class = java_result.getClass();
+
+					Field[] fields = multiple_output_class.getFields();
+					if ( fields.length != 2 ) {
+						throw new RuntimeException ( "The method doesn't return a result composed of 2 objects" );
+					}
+
+					for (int i=0; i < fields.length; i++) {
+						Field field = fields[i];
+						String field_name = field.getName();
+						Object field_value = field.get(java_result);
+						if ( field_name.equals(_a_result_output_argument_id) ) {
+							o_result = (in_any_type) field_value;
+						} else if ( field_name.equals(_a_error_output_argument_id) ) {
+							o_error = (in_system_error) field_value;
+						} else {
+							throw new RuntimeException ( "Output argument name '" + field_value + "' is invalid." );
+						}
+					}
+				} catch ( Exception e ) {
+					// InvocationTargetException is thrown if the underlying method throws an exception in Method.invoke (see Java doc.)
+					if ( e instanceof in_program_error || e instanceof InvocationTargetException ) {
+						throw e;
+					} else {
+						v_java_exception = new fa_java_exception ( e );
+					}
+				}
+			end java
+
+			if v_java_exception #r void then
+				o_result = void
+				o_error = fa_reflection_execution_error.create ( &
+					id = "execute_static_class_method_2b_error" &
+					description = """Method '{{i_method_name}}' in class '{{i_class_path}}' could not be executed. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+	command execute_static_class_method_3
+		///
+		the method has:
+		   no input arguments:
+		   1 output argument:
+		      - o_result ty_any_type
+		   
+		if a program error or exception occurs during execution of 'i_method_name' then the exception propagates to the caller (i.e. it is not reported in o_error; o_result and o_error are both void)
+		if 'i_method_name' cannot be executed (because of wrong reflection data, such as an inexistant class or method name) then an error is reported in o_error
+		end ///
+
+		in class_path type:simple_non_empty_string end
+		in method_name type:simple_non_empty_string end
+		in reload_class type:yes_no default:no end
+		in root_directory_of_class_files type:directory voidable:yes default:void end
+		%system_error_handler_input_argument
+		in_check check: not ( i_reload_class and i_root_directory_of_class_files =r void ) end
+		
+		%result_or_system_error_void_output < any_type >
+		
+		script
+			var java_exception java_exception = void
+
+			java
+				try {
+					Object java_result = _co_execute_static_class_method_1 ( i_class_path, i_reload_class, i_root_directory_of_class_files, i_method_name, null );
+					if ( java_result != null ) {
+						o_result = (in_any_type) java_result;
+					}
+				} catch ( Exception e ) {
+					// InvocationTargetException is thrown if the underlying method throws an exception in Method.invoke (see Java doc.)
+					if ( e instanceof in_program_error || e instanceof InvocationTargetException ) {
+						throw e;
+					} else {
+						v_java_exception = new fa_java_exception ( e );
+					}
+				}
+			end java
+
+			if v_java_exception #r void then
+				o_result = void
+				o_error = fa_reflection_execution_error.create ( &
+					id = "execute_static_class_method_3_error" &
+					description = """Method '{{i_method_name}}' in class '{{i_class_path}}' could not be executed. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+	command execute_static_class_method_4
+		///
+		the method has no input arguments and no output arguments:
+		   
+		if a program error or exception occurs during execution of 'i_method_name' then the exception propagates to the caller (i.e. it is not reported in o_error; o_result and o_error are both void)
+		if 'i_method_name' cannot be executed (because of wrong reflection data, such as an inexistant class or method name) then an error is reported in o_error
+		end ///
+		
+		in class_path type:simple_non_empty_string end
+		in method_name type:simple_non_empty_string end
+		in reload_class type:yes_no default:no end
+		in root_directory_of_class_files type:directory voidable:yes default:void end
+		%system_error_handler_input_argument
+		in_check check: not ( i_reload_class and i_root_directory_of_class_files =r void ) end
+		
+		%system_error_output_argument
+		
+		script
+			var java_exception java_exception = void
+
+			java
+				try {
+					_co_execute_static_class_method_1 ( i_class_path, i_reload_class, i_root_directory_of_class_files, i_method_name, null );
+				} catch ( Exception e ) {
+					// InvocationTargetException is thrown if the underlying method throws an exception in Method.invoke (see Java doc.)
+					if ( e instanceof in_program_error || e instanceof InvocationTargetException ) {
+						throw e;
+					} else {
+						v_java_exception = new fa_java_exception ( e );
+					}
+				}
+			end java
+
+			if v_java_exception #r void then
+				o_error = fa_reflection_execution_error.create ( &
+					id = "execute_static_class_method_4_error" &
+					description = """Method '{{i_method_name}}' in class '{{i_class_path}}' could not be executed. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+	command execute_static_class_method_5
+		///
+		the method has:
+		   1 input argument:
+		      - ty_any_type
+		   no output arguments
+		   
+		if a program error or exception occurs during execution of 'i_method_name' then the exception propagates to the caller (i.e. it is not reported in o_error; o_result and o_error are both void)
+		if 'i_method_name' cannot be executed (because of wrong reflection data, such as an inexistant class or method name) then an error is reported in o_error
+		end ///
+
+		in class_path type:simple_non_empty_string end
+		in method_name type:simple_non_empty_string end
+		in method_input type:any_type voidable:yes end
+		in reload_class type:yes_no default:no end
+		in root_directory_of_class_files type:directory voidable:yes default:void end
+		%system_error_handler_input_argument
+		in_check check: not ( i_reload_class and i_root_directory_of_class_files =r void ) end
+		
+		%system_error_output_argument
+		
+		script
+			var java_exception java_exception = void
+
+			java
+				try {
+					_co_execute_static_class_method_1 ( i_class_path, i_reload_class, i_root_directory_of_class_files, i_method_name, new Object[]{i_method_input} );
+				} catch ( Exception e ) {
+					// InvocationTargetException is thrown if the underlying method throws an exception in Method.invoke (see Java doc.)
+					if ( e instanceof in_program_error || e instanceof InvocationTargetException ) {
+						throw e;
+					} else {
+						v_java_exception = new fa_java_exception ( e );
+					}
+				}
+			end java
+
+			if v_java_exception #r void then
+				o_error = fa_reflection_execution_error.create ( &
+					id = "execute_static_class_method_5_error" &
+					description = """Method '{{i_method_name}}' in class '{{i_class_path}}' could not be executed. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+	command execute_static_class_method_6
+		///
+		the method has:
+		   1 input argument: ty_any_type
+		   1 output argument: ty_any_type
+		   
+		if a program error or exception occurs during execution of 'i_method_name' then the exception propagates to the caller (i.e. it is not reported in o_error; o_result and o_error are both void)
+		if 'i_method_name' cannot be executed (because of wrong reflection data, such as an inexistant class or method name) then an error is reported in o_error
+		end ///
+
+		in class_path type:simple_non_empty_string end
+		in method_name type:simple_non_empty_string end
+		in method_input type:any_type voidable:yes end
+		in reload_class type:yes_no default:no end
+		in root_directory_of_class_files type:directory voidable:yes default:void end
+		%system_error_handler_input_argument
+		in_check check: not ( i_reload_class and i_root_directory_of_class_files =r void ) end
+		
+		%result_or_system_error_void_output < any_type >
+		
+		script
+			var java_exception java_exception = void
+
+			java
+				try {
+					Object java_result = _co_execute_static_class_method_1 ( i_class_path, i_reload_class, i_root_directory_of_class_files, i_method_name, new Object[]{i_method_input} );
+					if ( java_result != null ) {
+						o_result = (in_any_type) java_result;
+					}
+				} catch ( Exception e ) {
+					// InvocationTargetException is thrown if the underlying method throws an exception in Method.invoke (see Java doc.)
+					if ( e instanceof in_program_error || e instanceof InvocationTargetException ) {
+						throw e;
+					} else {
+						v_java_exception = new fa_java_exception ( e );
+					}
+				}
+			end java
+
+			if v_java_exception #r void then
+				o_result = void
+				o_error = fa_reflection_execution_error.create ( &
+					id = "execute_static_class_method_6_error" &
+					description = """Method '{{i_method_name}}' in class '{{i_class_path}}' could not be executed. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+
+end service
+
+///
+		private static my_class_loader a_my_class_loader = null ;
+
+		static class my_class_loader extends ClassLoader {
+
+			// The standard Java class loader has the following problem:
+			// Once a class has been loaded (read from the .class file), it isn't reread from file after the file changes and a loadClass() is executed (by Class.forName(String); ClassLoader.getSystemClassLoader().loadClass(String) or java.net.URLClassLoader.loadClass(String))
+			// This class loader solves the problem
+			//
+			// class files loaded by this class loader nust not be in the classpath of the JVM
+			// or else loadClass must be overriden in this Class
+			// (in order to avoid that the system class loader loads the class, but never reloads it)
+			// see Java API doc. of ClassLoader
+			
+			private String a_root_directory_of_class_files ;
+			private ClassLoader a_parent_class_loader;
+			
+			my_class_loader ( String i_root_directory_of_class_files, ClassLoader i_parent_class_loader ) {
+				// super() ;
+				super(i_parent_class_loader) ;
+				a_parent_class_loader = i_parent_class_loader;
+
+				a_root_directory_of_class_files = i_root_directory_of_class_files ;
+			}
+			
+			//
+			public Class<?> loadClass(String i_class_path) throws ClassNotFoundException {
+				// Java API doc says:
+				// The default implementation of this method searches for classes in the following order:
+				// 	1. Invoke findLoadedClass(String) to check if the class has already been loaded.
+				// 	2. Invoke the loadClass method on the parent class loader.
+				// 	3. If the parent is null the class loader built-in to the virtual machine is used, instead. 
+					
+				// This method changes the order:
+				// 	1. Invoke findLoadedClass
+				// 	2. Invoke findClass
+				// 	3. Invoke the loadClass method on the parent class loader.
+				
+				Class v_class = findLoadedClass(i_class_path);
+				if (v_class == null) {
+					try {
+						v_class = findClass(i_class_path);
+					} catch (ClassNotFoundException e) {
+						//v_class = a_parent_class_loader.loadClass(i_class_path);
+						v_class = getParent().loadClass(i_class_path);
+					}
+				}
+				return v_class;
+			}
+			//
+
+			protected Class findClass ( String i_class_path ) throws ClassNotFoundException {
+				
+				String v_directory_separator = se_directory.getCurrent_OS_directory_separator().getValue().java_value() ;
+				String v_file_name = a_root_directory_of_class_files + v_directory_separator +
+					i_class_path.replace ( '.', v_directory_separator.charAt(0) ) + ".class" ;
+
+				File v_class_file = new File ( v_file_name ) ;
+				java.io.FileInputStream v_stream ;
+				try {
+					v_stream = new java.io.FileInputStream ( v_class_file ) ;
+				}
+				catch ( java.io.FileNotFoundException e ) {
+				//	throw new RuntimeException ( e.toString() ) ;
+					//throw new RuntimeException ( e ) ;
+					throw new ClassNotFoundException("Class '" + i_class_path + "' not found.", e);
+				//catch (RuntimeException e ) {
+				//	throw e;
+				}
+
+				// TD should check if file fits in memory
+				int v_byte_count = (int) v_class_file.length() ;
+				byte[] buffer = new byte [v_byte_count] ;
+				try {
+					v_stream.read ( buffer ) ;
+					v_stream.close() ;
+				}
+				catch ( java.io.IOException e ) {
+				//	throw new RuntimeException ( e.toString() ) ;
+					//throw new RuntimeException ( e ) ;
+					throw new ClassNotFoundException("Class '" + i_class_path + "' not found.", e);
+				//catch (RuntimeException e ) {
+				//	throw e;
+				}
+
+				return defineClass ( i_class_path, buffer, 0, v_byte_count ) ;
+			}
+		}
+end ///

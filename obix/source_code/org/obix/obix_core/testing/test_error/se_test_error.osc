@@ -1,0 +1,177 @@
+service test_error
+
+	java_header
+		import org.obix.obix_core.testing.in_test_context;
+	end java_header
+
+	java
+		private static void test_code() {
+			in_test_context i_context = null;
+			String _a_RSE_path = "li_tests.date_new";
+			String _a_RSE_id = "fa_simple_date_new";
+			in_any_type i_left_value = null;
+			in_any_type i_right_value = null;
+			Throwable i_throwable = null;
+			
+			se_test_error._handle_test_verify_fail ( _a_RSE_path, _a_RSE_id, "co_create_from_integers", 214, null, i_context, null, null, null, i_left_value, i_right_value );
+
+			se_test_error._handle_test_verify_error_fail ( _a_RSE_path, _a_RSE_id, "co_create_from_integers", 214, null, i_context, null, null, null );
+			
+			se_test_error._handle_test_program_error ( _a_RSE_path, _a_RSE_id, "co_create_from_integers", 214, null, i_context, i_throwable, false );
+
+			se_test_error._handle_test_program_error ( _a_RSE_path, _a_RSE_id, "co_create_from_integers", 214, null, i_context, i_throwable, true );
+		}
+		
+		public static void _handle_test_verify_fail ( String i_RSE_path, String i_RSE_id, String i_feature_id, int i_script_line_number, String i_script_instruction, in_test_context i_context, String i_error_id, String i_description, in_any_type i_data, in_any_type i_left_value, in_any_type i_right_value ) {
+			co_handle_test_verify_fail_command (
+				i_context,
+				i_error_id == null ? null : new fa_string ( i_error_id ),
+				i_description == null ? null : new fa_string ( i_description ),
+				new fa_non_empty_string ( i_RSE_path ),
+				new fa_non_empty_string ( i_RSE_id ),
+				new fa_non_empty_string ( i_feature_id ),
+				i_script_line_number == 0 ? null : new fa_positive32 ( i_script_line_number ),
+				i_script_instruction == null ? null : new fa_non_empty_string ( i_script_instruction ),
+				i_data,
+				i_left_value,
+				i_right_value );
+		}
+
+		public static void _handle_test_verify_error_fail ( String i_RSE_path, String i_RSE_id, String i_feature_id, int i_script_line_number, String i_script_instruction, in_test_context i_context, String i_error_id, String i_description, in_any_type i_data ) {
+			co_handle_test_verify_error_fail_command (
+				i_context,
+				i_error_id == null ? null : new fa_string ( i_error_id ),
+				i_description == null ? null : new fa_string ( i_description ),
+				new fa_non_empty_string ( i_RSE_path ),
+				new fa_non_empty_string ( i_RSE_id ),
+				new fa_non_empty_string ( i_feature_id ),
+				i_script_line_number == 0 ? null : new fa_positive32 ( i_script_line_number ),
+				i_script_instruction == null ? null : new fa_non_empty_string ( i_script_instruction ),
+				i_data );
+		}
+
+		public static void _handle_test_program_error ( String i_RSE_path, String i_RSE_id, String i_feature_id, int i_script_line_number, String i_script_instruction, in_test_context i_context, Throwable i_throwable, boolean i_caught_in_test_instruction ) {
+		
+			in_program_error program_error;
+			if ( i_throwable instanceof in_program_error ) {
+				program_error = (in_program_error) i_throwable;
+			} else {
+				program_error = se_program_error._co_create_java (i_RSE_path, i_RSE_id, i_feature_id, "test_script", i_script_line_number, i_script_instruction, null, i_throwable);
+			}
+			
+			co_handle_test_program_error_command (
+				i_caught_in_test_instruction ? fa_yes_no.a_yes : fa_yes_no.a_no,
+				i_context,
+				new fa_non_empty_string ( i_RSE_path ),
+				new fa_non_empty_string ( i_RSE_id ),
+				new fa_non_empty_string ( i_feature_id ),
+				i_script_line_number == 0 ? null : new fa_positive32 ( i_script_line_number ),
+				i_script_instruction == null ? null : new fa_non_empty_string ( i_script_instruction ),
+				program_error );
+		}
+
+	end java
+	
+	command handle_test_verify_fail
+		in test_context type:test_context end
+		in error_id type:string voidable:yes end
+		in error_description type:string voidable:yes end
+		in RSE_path type:non_empty_string end
+		in RSE_id type:non_empty_string end
+		in feature_id type:non_empty_string end
+		in script_line_number type:positive32 voidable:yes end
+		in script_instruction type:non_empty_string voidable:yes end
+		in data type:any_type voidable:yes end
+		in left_value type:any_type voidable:yes end
+		in right_value type:any_type voidable:yes end
+		
+		script
+			const bug_source_code_location source_code_location = fa_bug_source_code_location.create ( &
+				root_software_element_path = i_RSE_path &
+				root_software_element_id = i_RSE_id &
+				feature_id = i_feature_id &
+				script_kind = "test_script" &
+				script_line_number = i_script_line_number &
+				script_instruction = i_script_instruction )
+	
+			const test_verify_fail test_verify_fail = fa_test_verify_fail.create ( &
+				id = iif i_error_id #r void then i_error_id else ty_test_verify_fail.id.default end if &
+				description =  iif i_error_description #r void then i_error_description else ty_test_verify_fail.description.default end if &
+				date_time = se_date_time.current_local_date_time &
+				source_code_location = c_source_code_location &
+				data = i_data &
+				left_value = i_left_value &
+				right_value = i_right_value )
+
+			i_test_context.handle_test_error ( c_test_verify_fail )
+		end
+	end
+
+	command handle_test_verify_error_fail
+		in test_context type:test_context end
+		in error_id type:string voidable:yes end
+		in error_description type:string voidable:yes end
+		in RSE_path type:non_empty_string end
+		in RSE_id type:non_empty_string end
+		in feature_id type:non_empty_string end
+		in script_line_number type:positive32 voidable:yes end
+		in script_instruction type:non_empty_string voidable:yes end
+		in data type:any_type voidable:yes end
+		
+		script
+			const bug_source_code_location source_code_location = fa_bug_source_code_location.create ( &
+				root_software_element_path = i_RSE_path &
+				root_software_element_id = i_RSE_id &
+				feature_id = i_feature_id &
+				script_kind = "test_script" &
+				script_line_number = i_script_line_number &
+				script_instruction = i_script_instruction )
+	
+			const test_verify_error_fail test_verify_error_fail = fa_test_verify_error_fail.create ( &
+				id = iif i_error_id #r void then i_error_id else ty_test_verify_error_fail.id.default end if &
+				description =  iif i_error_description #r void then i_error_description else ty_test_verify_error_fail.description.default end if &
+				date_time = se_date_time.current_local_date_time &
+				source_code_location = c_source_code_location &
+				data = i_data )
+
+			i_test_context.handle_test_error ( c_test_verify_error_fail )
+		end
+	end
+
+	command handle_test_program_error
+		in caught_in_test_instruction type:yes_no end
+		in test_context type:test_context end
+		in RSE_path type:non_empty_string end
+		in RSE_id type:non_empty_string end
+		in feature_id type:non_empty_string end
+		in script_line_number type:positive32 voidable:yes end
+		in script_instruction type:non_empty_string voidable:yes end
+		in program_error type:program_error end
+		
+		script
+			const bug_source_code_location source_code_location = fa_bug_source_code_location.create ( &
+				root_software_element_path = i_RSE_path &
+				root_software_element_id = i_RSE_id &
+				feature_id = i_feature_id &
+				script_kind = "test_script" &
+				script_line_number = i_script_line_number &
+				script_instruction = i_script_instruction )
+	
+			var test_program_error test_program_error
+			if i_caught_in_test_instruction then
+				v_test_program_error = fa_test_instruction_program_error.create ( &
+					date_time = se_date_time.current_local_date_time &
+					source_code_location = c_source_code_location &
+					program_error = i_program_error )
+			else
+				v_test_program_error = fa_test_script_program_error.create ( &
+					date_time = se_date_time.current_local_date_time &
+					source_code_location = c_source_code_location &
+					program_error = i_program_error )
+			end if
+
+			i_test_context.handle_test_error ( v_test_program_error )
+		end
+	end
+
+end

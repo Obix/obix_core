@@ -1,0 +1,5 @@
+template supported_character_set_attribute
+
+	attribute character_set type:supported_character_set voidable:yes default:void end
+
+end

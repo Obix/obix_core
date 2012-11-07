@@ -1,0 +1,122 @@
+service enumerated
+
+	java_header
+		import java.lang.Class;
+		import java.lang.reflect.Field;
+		
+		import org.obix.obix_core.basics.scalars.enumerated.in_enumerated;
+	end java_header
+
+	command string_to_enumerated
+		in string type:simple_string voidable:yes end
+		in enumerated_type_id type:type_id end
+		in config type:string_to_object_converter_config default:se_string_to_object_converter_config.default_value end
+		%system_error_handler_input_argument
+		
+		%result_or_system_error_void_output < enumerated >
+		
+		script
+			const type type = se_reflection.library_repository.type_by_id ( i_enumerated_type_id )
+			if c_type =r void then
+				o_error = fa_invalid_data_error.create ( &
+					description = """Type '{{i_enumerated_type_id}}' doesn't exist.""" &
+					data = i_enumerated_type_id )
+				i_error_handler.handle_system_error ( o_error )
+				exit script
+			end if
+			
+			const enumerated_list enumerated_list = c_type.enumerated_list
+			if c_enumerated_list =r void then
+				o_error = fa_invalid_data_error.create ( &
+					description = """Type '{{i_enumerated_type_id}}' is not an enumerated type.""" &
+					data = i_enumerated_type_id )
+				i_error_handler.handle_system_error ( o_error )
+				exit script
+			end if
+			
+			if i_string =r void then
+				if i_config.void_input_allowed then
+					o_result = void
+				else
+					o_error = fa_invalid_data_error.create ( &
+						description = """A void string is invalid for enumerated type '{{i_enumerated_type_id}}'.""" &
+						data = i_enumerated_type_id )
+					i_error_handler.handle_system_error ( o_error )
+				end if
+				exit script
+			end if
+			
+			if i_string.value.is_empty then
+				if i_config.empty_string_is_void then
+					o_result = void
+				else
+					o_error = fa_invalid_data_error.create ( &
+						description = """An empty string is invalid for enumerated type '{{i_enumerated_type_id}}'.""" &
+						data = i_string )
+					i_error_handler.handle_system_error ( o_error )
+				end if
+				exit script
+			end if
+			
+			const enumerated enumerated = c_enumerated_list.get_item_if_contained ( i_string.to_string.to_non_empty_string )
+			if c_enumerated =r void then
+				if i_config.void_value_as_string #r void and i_string.value =v i_config.void_value_as_string.value then
+					o_result = void
+				else
+					o_error = fa_invalid_data_error.create ( &
+						description = """Enumerated '{{i_string}}' doesn't exist in type '{{i_enumerated_type_id}}'.""" &
+						data = i_string )
+					i_error_handler.handle_system_error ( o_error )
+				end if
+				exit script
+			end if
+			
+			// get enumerated value declared as static field in class
+			java
+				Class clazz = Class.forName ( c_type.getId_path().getValue().java_value() );
+				Field field = clazz.getDeclaredField ( "en_" + c_enumerated.getIndex().getValue().java_value() );
+				o_result = (in_enumerated) field.get(null);
+			end java
+		end
+		
+		test
+			script
+				const type_id type_id = fa_type_id.create ( "ty_comparator_result"~ )
+
+				test string = "equal"; enumerated_type_id = c_type_id
+				verify v_result =r ty_comparator_result.equal
+
+				test string = "xxx"; enumerated_type_id = c_type_id
+				verify v_result =r void
+				verify v_error #r void
+				
+				// void input
+
+				test string = void; enumerated_type_id = c_type_id
+				verify v_result =r void
+				verify v_error =r void
+				
+				test string = void; enumerated_type_id = c_type_id; config = fa_string_to_object_converter_config.create ( void_input_allowed = no )
+				verify v_result =r void
+				verify v_error #r void
+
+				test string = ""; enumerated_type_id = c_type_id
+				verify v_result =r void
+				verify v_error =r void
+
+				test string = ""; enumerated_type_id = c_type_id; config = fa_string_to_object_converter_config.create ( empty_string_is_void = no )
+				verify v_result =r void
+				verify v_error #r void
+
+				test string = se_any_type.void_object_as_string; enumerated_type_id = c_type_id
+				verify v_result =r void
+				verify v_error =r void
+
+				test string = se_any_type.void_object_as_string; enumerated_type_id = c_type_id; config = fa_string_to_object_converter_config.create ( void_value_as_string = void )
+				verify v_result =r void
+				verify v_error #r void
+			end
+		end
+	end
+
+end

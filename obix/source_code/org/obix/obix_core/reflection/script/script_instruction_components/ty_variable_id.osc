@@ -1,0 +1,5 @@
+type variable_id
+
+	%te_prefixed_id_child_type<"se_id_prefix.a_variable">
+
+end type

@@ -1,0 +1,14 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory mutable_generified_RSE_parameter_map type:mutable_generified_RSE_parameter_map
+
+	!mutable_map_factory < &
+		key_type: template_parameter_id &
+		item_type: object_type >
+
+end

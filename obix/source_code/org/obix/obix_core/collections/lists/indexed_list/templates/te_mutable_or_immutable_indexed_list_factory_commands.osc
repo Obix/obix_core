@@ -1,0 +1,57 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template mutable_or_immutable_indexed_list_factory_commands
+
+	param item_type end
+
+		command item_iterator
+			script
+				var ty_java_collection_wrapper v_java_collection_wrapper
+				java
+					v_java_collection_wrapper = new fa_java_collection_wrapper ( a_java_list ) ;
+				end java
+				o_result = !iterator_factory<{item_type}>.co_create ( v_java_collection_wrapper )
+			end
+		end
+		
+		command first_item
+			script
+				var ty_any_type v_temp
+				java
+					v_temp = (in_any_type) a_java_list.get ( 0 ) ;
+				end java
+				o_result = v_temp type_check:no
+				///
+				java
+					o_result = ({item_type}) a_java_list.get ( 0 ) ;
+				end java
+				end ///
+			end
+		end
+
+		command last_item
+			script
+				var ty_any_type v_temp
+				java
+					v_temp = (in_any_type) a_java_list.get ( a_java_list.size() - 1 ) ;
+				end java
+				o_result = v_temp type_check:no
+			end
+		end
+		
+		command item_at_index
+			script
+				var ty_any_type v_temp
+				java
+					v_temp = (in_any_type) a_java_list.get ( i_index.getValue().java_value() - 1 ) ;
+				end java
+				o_result = v_temp type_check:no
+			end
+		end
+
+end template

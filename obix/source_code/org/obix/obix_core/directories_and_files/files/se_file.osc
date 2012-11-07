@@ -1,0 +1,193 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service file
+
+	java_header
+		import java.io.File;
+
+		import org.obix.obix_core.java.fa_java_exception;
+		import org.obix.obix_core.basics.scalars.string.string_value.fa_string_value;
+	end java_header
+	
+	attribute file_name_extension_separator type:string default: "." end
+
+	attribute Unix_shell_file_name_extension type:file_name_extension default: fa_file_name_extension.create ( "sh".value ) end
+
+	attribute Windows_batch_file_name_extension type:file_name_extension default: fa_file_name_extension.create ( "bat".value ) end
+
+	attribute current_OS_script_file_name_extension type:file_name_extension &
+		default: iif se_system.OS_is_Windows &
+			then Windows_batch_file_name_extension &
+			else Unix_shell_file_name_extension end if end
+
+
+	command get_existing_file_from_absolute_or_relative_path
+		in path type:simple_string end
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output<file>
+		script
+			co_get_file_from_absolute_or_relative_path ( &
+				path = i_path &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			if not o_result.exists then
+				o_error = fa_file_inexistant_error.create ( &
+					description = """File {{o_result}} doesn't exist""" &
+					resource = o_result )
+				i_error_handler.handle_system_error ( o_error )
+				o_result = void
+			end if
+		end
+	end
+
+	command get_file_from_absolute_or_relative_path
+		in path type:simple_string end
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output<file>
+		script
+			if se_directory_or_file.is_absolute_path ( i_path ) then
+				fa_file.create_from_string ( &
+					string = i_path &
+					error_handler = i_error_handler ) &
+					( o_result = result &
+					o_error = error )
+			else
+				var relative_file relative_file
+				fa_relative_file.create_from_string ( &
+					string = i_path &
+					error_handler = i_error_handler ) &
+					( v_relative_file = result &
+					o_error = error )
+				if o_error #r void then
+					exit script
+				end if
+				
+				o_result = fa_file.create_from_directory_and_relative_file ( &
+					directory = se_system_directories.current_working_directory &
+					relative_file = v_relative_file )
+			end if
+		end
+	end
+
+	command get_Unix_shell_file_name
+		in file_name_without_extension type:simple_string end
+		
+		out result type:file_name end
+		
+		script
+			o_result = fa_file_name.create ( i_file_name_without_extension.value & a_file_name_extension_separator.value & a_Unix_shell_file_name_extension.value )
+		end
+	end
+
+	command get_Windows_batch_file_name
+		in file_name_without_extension type:simple_string end
+		
+		out result type:file_name end
+		
+		script
+			o_result = fa_file_name.create ( i_file_name_without_extension.value & a_file_name_extension_separator.value & a_Windows_batch_file_name_extension.value )
+		end
+	end
+
+	command get_current_OS_script_file_name
+		in file_name_without_extension type:simple_string end
+		
+		out result type:file_name end
+		
+		script
+			o_result = fa_file_name.create ( i_file_name_without_extension.value & a_file_name_extension_separator.value & a_current_OS_script_file_name_extension.value )
+		end
+	end
+
+	
+	command get_file_content_type
+		in file type:file end
+		
+		out result type:string end
+		
+		script
+			java
+				javax.activation.FileTypeMap file_type_map = javax.activation.FileTypeMap.getDefaultFileTypeMap();
+				o_result = new fa_string(file_type_map.getContentType(new File(i_file.getValue().java_value())));
+			end java
+		end script
+	end command
+
+	
+	command create_temporary_file
+		in directory type:directory default:se_system_directories.temporary_files_directory end
+		in file_name_extension type:file_name_extension default: fa_file_name_extension.co_create ( "tmp".value ) end
+		in delete_file_on_exit type:yes_no end
+		%system_error_handler_input_argument
+	
+		out result type:file voidable:yes end
+		out error type:directory_or_file_error voidable:yes end
+		out_check check: ( i_result #r void and i_result.exists ) xor i_error #r void end
+		
+		script
+			var string_value file_path = void
+
+			var java_exception java_exception = void
+
+			java
+				try {
+					File v_file = File.createTempFile ( 
+						"obx",
+						getFile_name_extension_separator().getValue().java_value() + i_file_name_extension.getValue().java_value(),
+						new File ( i_directory.getValue().java_value() ) ) ;
+
+					v_file_path = new fa_string_value ( v_file.getCanonicalPath() );
+
+					if ( i_delete_file_on_exit.java_value() ) {
+						v_file.deleteOnExit();
+					}
+				} catch ( Exception e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+			end java
+
+			if v_java_exception =r void then
+				o_result = fa_file.create ( v_file_path )
+			else
+				o_error = fa_directory_or_file_error.create ( &
+					id = "create_temporary_file" &
+					description = """"A temporary file could not be created. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception &
+					resource = i_directory )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+
+		end script
+		
+		test
+			script
+			/// TD
+				test
+				verify v_file.exists
+				verify v_file.co_file_name_extension.a_value compare =v "tmp"
+				v_file.co_delete_file
+
+				test i_file_name_extension = fa_file_name_extension.co_create ( "qwe".value )
+				verify v_file.exists
+				verify v_file.co_file_name_extension.a_value compare =v "qwe"
+				v_file.co_delete_file
+				end ///
+			end script
+		end test
+
+	end command
+	
+end service

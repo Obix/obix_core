@@ -1,0 +1,25 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template inherit_simple_zero_positive32_with_maximum
+
+	param max_value end
+
+	inherit simple_zero_positive32
+		attribute value
+			and_check
+				script
+					const integer32_value max_test_value = ({max_value}).value
+					check i_value <= c_max_test_value &
+						error_message: """Value must be less than or equal to {{c_max_test_value.to_string}}""" &
+						error_id: value_too_big &
+						error_data: i_value
+				end
+			end
+		end
+	end
+end

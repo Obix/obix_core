@@ -1,0 +1,203 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory date type:date
+
+	java_header
+		import java.util.Date;
+		import java.util.Calendar;
+		import java.util.GregorianCalendar;
+	end java_header
+	
+	java
+		public static in_date create_from_date ( Date i_date ) {
+			return co_create_command ( new fa_string_value ( se_date.a_java_ISO_date_format.format ( i_date ) ) );
+		}
+		
+		public static in_date create_from_calendar ( Calendar i_calendar ) {
+			return create_from_date ( i_calendar.getTime() );
+		}
+		
+		public GregorianCalendar to_calendar() {
+
+			GregorianCalendar result = new GregorianCalendar ( 
+				getYear().getValue().java_value(), 
+				getMonth().getValue().java_value() - 1, 
+				getDay_of_month().getValue().java_value() );
+
+			// result.setFirstDayOfWeek(Calendar.MONDAY);
+				
+			return result;
+		}
+	end java
+
+	attribute year
+		get
+			script
+				o_year = fa_year.create ( fa_integer32_value.create_from_string_value.result ( value = a_value.extract_to ( 4 ) ) )
+			end
+			test
+				script
+					var date d = create ( "2011-07-06"~ )
+					verify d.year.value =v 2011~
+
+					v_test_object_ = create ( "2011-07-06"~ )
+					test
+					verify d.year.value =v 2011~
+				end
+			end
+		end
+	end
+
+	attribute month
+		get
+			script
+				o_month = fa_month.create ( fa_integer32_value.create_from_string_value.result ( value = a_value.extract_from_to ( from = 6; to = 7 ) ) )
+			end
+			test
+				script
+					var date d = create ( "2011-07-06"~ )
+					verify d.month.value =v 7~
+				end
+			end
+		end
+	end
+
+	attribute day_of_week
+		get
+			script
+				var integer32_value value
+				java
+					int int_value = to_calendar().get ( Calendar.DAY_OF_WEEK ) - 1;
+					if ( int_value == 0 ) int_value = 7;
+					v_value = new fa_integer32_value ( int_value );
+				end java
+				o_day_of_week = fa_day_of_week.create ( v_value )
+			end
+			test
+				script
+					// Monday
+					var date d = create ( "2011-07-04"~ )
+					verify d.day_of_week.value =v 1~
+
+					// Wednesday
+					d = create ( "2011-07-06"~ )
+					verify d.day_of_week.value =v 3~
+
+					// Sunday
+					d = create ( "2011-07-03"~ )
+					verify d.day_of_week.value =v 7~
+				end
+			end
+		end
+	end
+
+	attribute day_of_month
+		get
+			script
+				o_day_of_month = fa_day_of_month.create ( fa_integer32_value.create_from_string_value.result ( value = a_value.extract_from ( 9 ) ) )
+			end
+			test
+				script
+					var date d = create ( "2011-07-06"~ )
+					verify d.day_of_month.value =v 6~
+				end
+			end
+		end
+	end
+
+	%scalar_comparable_factory_code
+
+
+	creator create kind:in_all end
+	
+	creator create_current_date
+		out result type:date end
+		
+		script
+			var string_value value
+			java
+				v_value = new fa_string_value ( se_date.a_java_ISO_date_format.format ( new Date() ) );
+			end java
+			
+			o_result = create ( v_value )
+		end
+		test
+			script
+				var date d = create_current_date
+				system.out.write_line ( string = "current date: " & d.to_string )
+			end
+		end
+	end
+	
+	%create_from_string_creator_for_simple_string<date>
+
+	creator create_from_integers
+		in year type:positive32 end
+		in month type:positive32 end
+		in day type:positive32 end
+		%system_error_handler_input_argument
+
+		%result_xor_error_output < &
+			result_type: date &
+			error_type: string_to_object_conversion_error >
+
+		script
+			const mutable_string string = fa_mutable_string.create
+			
+			c_string.append ( i_year.to_string )
+			c_string.append ( se_date_constants.ISO_date_separator )
+
+			if i_month < 10 then
+				c_string.append ( "0" )
+			end if
+			c_string.append ( i_month.to_string )
+			c_string.append ( se_date_constants.ISO_date_separator )
+
+			if i_day < 10 then
+				c_string.append ( "0" )
+			end if
+			c_string.append ( i_day.to_string )
+			
+			create_from_string ( &
+				string = c_string.to_string &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error )
+		end
+		test
+			script
+				test year = 2011; month = 7; day =6
+				verify v_result.year.value =v 2011~
+				verify v_result.month.value =v 7~
+				verify v_result.day_of_month.value =v 6~
+				verify v_result.value =v "2011-07-06"~
+
+				test year = 2011; month = 7; day = 40
+				verify v_result =r void
+				verify v_error #r void
+			end
+		end
+	end
+
+	test
+		script
+			const date d1 = create ( "2011-07-06"~ )
+			const date d2 = create_from_string.result ( string = "2011-07-06" )
+			const date d3 = create_from_integers.result ( year = 2011; month = 7; day =6 )
+			verify d1 =v d2
+			verify d1 =v d3
+			verify d2 =v d3
+
+			const date after = create ( "2011-07-07"~ )
+			const date before = create ( "2011-07-05"~ )
+			verify after > d1
+			verify before < d1
+		end
+	end
+
+end factory

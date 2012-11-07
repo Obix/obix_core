@@ -1,0 +1,642 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service system_commands
+
+
+	/// ============== NOTE =================
+		A console is not available in sub-processes launched with Runtime.getRuntime().exec(...) !!!
+		System.console() returns null
+		see java.lang.Process documentation
+	end ///
+
+	
+	java_header
+		import java.io.*;
+
+		import org.obix.obix_core.basics.scalars.number.integer.integer32.fa_signed_integer32;
+		import org.obix.obix_core.java.fa_java_exception;
+		import org.obix.obix_core.java.se_java_IO;
+	end java_header
+
+	java
+		private static class Stream_gobbler extends Thread {
+		
+			private InputStream a_input_stream;
+			private OutputStream a_output_stream;
+			private boolean a_close_input_stream;
+			private boolean a_close_output_stream;
+			private boolean a_use_line_mode;
+			
+			Stream_gobbler ( InputStream i_input_stream, OutputStream i_output_stream, boolean i_close_input_stream, boolean i_close_output_stream, boolean i_use_line_mode ) {
+
+				this.a_input_stream = i_input_stream;
+				this.a_output_stream = i_output_stream;
+				this.a_close_input_stream = i_close_input_stream;
+				this.a_close_output_stream = i_close_output_stream;
+				this.a_use_line_mode = i_use_line_mode;
+			}
+    
+			public void run() {
+
+				BufferedReader reader = new BufferedReader ( new InputStreamReader ( a_input_stream ) );
+				BufferedWriter writer = new BufferedWriter ( new OutputStreamWriter ( a_output_stream ) );
+				try {
+					if ( a_use_line_mode ) {
+						String line = null;
+						while ( (line = reader.readLine()) != null ) {  // not possible to interrupt!!!
+							if ( isInterrupted() ) break;
+							// writer.write ( line );
+							writer.write ( line, 0, line.length() );
+							writer.newLine();
+							writer.flush();
+						}
+					} else {
+						char[] buffer = new char[se_java_IO.default_IO_buffer_size];
+						int bytes_read;
+						while ((bytes_read = reader.read(buffer)) != -1) {
+							if ( isInterrupted() ) break;
+							writer.write ( buffer, 0, bytes_read );
+							writer.flush();
+						}
+					}
+
+				} catch (IOException e) {
+					if ( ! isInterrupted() ) {
+						e.printStackTrace();  
+					}
+				// } catch (InterruptedException e) {
+				//	return;
+				} catch ( Throwable t ) {
+					// TD2 use Obix error handling ?
+					t.printStackTrace();  
+
+				} finally {
+					if ( a_close_input_stream ) {
+						se_java_IO.close_reader ( reader );
+					}
+					if ( a_close_output_stream ) {
+						se_java_IO.close_writer ( writer );
+					}
+				}
+			}
+		}
+	end java
+
+	attribute_list type:string
+		// to verify: using single quotes causes error in Ubuntu?
+		attribute Unix_command_line_quote default: se_string_constants.single_quote end
+		attribute Windows_command_line_quote default: se_string_constants.double_quote end
+		attribute current_OS_command_line_quote default: &
+			iif se_system.OS_is_Windows &
+			then a_Windows_command_line_quote &
+			else a_Unix_command_line_quote end if end
+	end
+	
+	attribute_list type:file_name_extension
+		attribute Unix_script_file_extension default: fa_file_name_extension.create ( "sh"~ ) end
+		attribute Windows_script_file_extension default: fa_file_name_extension.create ( "bat"~ ) end
+		attribute current_OS_script_file_extension default: &
+			iif se_system.OS_is_Windows &
+			then a_Windows_script_file_extension &
+			else a_Unix_script_file_extension end if end
+	end
+	
+	command start_OS_command_in_new_process_and_continue
+		in OS_command type:simple_string end
+		in working_directory type:directory voidable:yes default:void end
+		%system_error_handler_input_argument
+		
+		%system_error_output_argument
+		
+		script
+			o_error = co_execute_OS_command.error ( &
+				OS_command = i_OS_command &
+				wait_until_execution_finished = no &
+				working_directory = i_working_directory &
+				error_handler = i_error_handler )
+		end
+	end
+
+	command start_OS_command_in_new_process_and_wait
+		in OS_command type:simple_string end
+		in working_directory type:directory voidable:yes default:void end
+		in use_system_in_device type:yes_no default:no end
+		in system_input_redirection_file type:file voidable:yes check:i_system_input_redirection_file =r void or i_system_input_redirection_file.exists default:void end
+		in system_output_redirection_file type:file voidable:yes default:void end
+		in system_error_redirection_file type:file voidable:yes default:void end
+		%system_error_handler_input_argument
+		in_check check: not ( i_use_system_in_device and i_system_input_redirection_file #r void ) end
+		
+		%result_xor_system_error_output < signed_integer32 >
+		
+		script
+			co_execute_OS_command ( &
+				OS_command = i_OS_command &
+				wait_until_execution_finished = yes &
+				working_directory = i_working_directory &
+				use_system_in_device = i_use_system_in_device &
+				system_input_redirection_file = i_system_input_redirection_file &
+				system_output_redirection_file = i_system_output_redirection_file &
+				system_error_redirection_file = i_system_error_redirection_file &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error )
+		end
+	end
+	
+	command start_OS_command_in_new_terminal_and_continue
+		in OS_command type:simple_string end
+		in working_directory type:directory voidable:yes default:void end
+		in window_title type:simple_string voidable:yes default:void end
+		%system_error_handler_input_argument
+		
+		%system_error_output_argument
+		
+		script
+			const string command = &
+				iif se_system.OS_is_Windows &
+				then co_Windows_command_execution_in_new_terminal ( &
+					command_to_execute = i_OS_command &
+					working_directory = i_working_directory &
+					window_title = i_window_title &
+					ask_press_Enter_after_command = no &
+					wait_until_finished = no ) &
+				else co_Unix_command_execution_in_new_terminal ( &
+					command_to_execute = i_OS_command &
+					working_directory = i_working_directory &
+					window_title = i_window_title &
+					ask_press_Enter_after_command = no &
+					wait_until_finished = no ) end if
+
+			o_error = co_execute_OS_command.error ( &
+				OS_command = c_command &
+				wait_until_execution_finished = no &
+				working_directory = i_working_directory &
+				error_handler = i_error_handler )
+		end
+	end
+
+	command start_OS_command_in_new_terminal_and_wait
+	
+		/// !!!!!!!!!!!!!!!!!!!!!!!!!
+			the exit code is NOT returned
+		end ///
+
+		in OS_command type:simple_string end
+		in working_directory type:directory voidable:yes default:void end
+		in window_title type:simple_string voidable:yes default:void end
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output < signed_integer32 >
+		
+		script
+			const string command = &
+				iif se_system.OS_is_Windows &
+				then co_Windows_command_execution_in_new_terminal ( &
+					command_to_execute = i_OS_command &
+					working_directory = i_working_directory &
+					window_title = i_window_title &
+					ask_press_Enter_after_command = no &
+					wait_until_finished = yes ) &
+				else co_Unix_command_execution_in_new_terminal ( &
+					command_to_execute = i_OS_command &
+					working_directory = i_working_directory &
+					window_title = i_window_title &
+					ask_press_Enter_after_command = no &
+					wait_until_finished = yes ) end if
+
+			co_execute_OS_command ( &
+				OS_command = c_command &
+				wait_until_execution_finished = yes &
+				working_directory = i_working_directory &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error )
+		end
+	end
+	
+	command start_OS_script_file_and_continue
+		%existing_file_input_argument
+		// TD should be in unescaped_command_line_argument_list type:string_list voidable:yes end
+		in command_line_parameters type:simple_string voidable:yes end
+		in working_directory type:directory voidable:yes default:void end
+		in run_in_new_terminal type:yes_no end
+		%system_error_handler_input_argument
+		
+		%system_error_output_argument
+		
+		script
+			const string OS_command = command_for_OS_script_file ( &
+				OS_script_file = i_file &
+				command_line_parameters = i_command_line_parameters )
+
+			if i_run_in_new_terminal then
+				o_error = start_OS_command_in_new_terminal_and_continue ( &
+					OS_command = c_OS_command &
+					working_directory = i_working_directory &
+					window_title = i_file.name &
+					error_handler = i_error_handler )
+			else
+				o_error = start_OS_command_in_new_process_and_continue ( &
+					OS_command = c_OS_command &
+					working_directory = i_working_directory &
+					error_handler = i_error_handler )
+			end if
+		end
+	end
+
+	command start_OS_script_file_and_wait
+		%existing_file_input_argument
+		// TD should be in unescaped_command_line_argument_list type:string_list voidable:yes end
+		in command_line_parameters type:simple_string voidable:yes end
+		in working_directory type:directory voidable:yes default:void end
+		in run_in_new_terminal type:yes_no end
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output < signed_integer32 >
+		
+		script
+			const string OS_command = command_for_OS_script_file ( &
+				OS_script_file = i_file &
+				command_line_parameters = i_command_line_parameters )
+
+			if i_run_in_new_terminal then
+				start_OS_command_in_new_terminal_and_wait ( &
+					OS_command = c_OS_command &
+					working_directory = i_working_directory &
+					window_title = i_file.name &
+					error_handler = i_error_handler ) &
+					( o_result = result &
+					o_error = error )
+			else
+				start_OS_command_in_new_process_and_wait ( &
+					OS_command = c_OS_command &
+					working_directory = i_working_directory &
+					error_handler = i_error_handler ) &
+					( o_result = result &
+					o_error = error )
+			end if
+		end
+	end
+	
+	command start_OS_script_file_instructions_and_continue
+		in OS_instructions type:string end
+		// in command_line_parameters type:simple_string voidable:yes end
+		// in working_directory type:directory voidable:yes default:void end
+		in run_in_new_terminal type:yes_no end
+		in delete_script_file_on_exit type:yes_no default:yes end
+		%system_error_handler_input_argument
+		
+		%system_error_output_argument
+		
+		script
+			var file script_file
+			co_create_temporary_OS_script_file_for_OS_instructions ( &
+				OS_instructions = i_OS_instructions &
+				delete_script_file_on_exit = i_delete_script_file_on_exit &
+				error_handler = i_error_handler ) &
+				( v_script_file = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+
+			o_error = co_start_OS_script_file_and_continue ( &
+				file = v_script_file &
+				command_line_parameters = void &
+				working_directory = void &
+				run_in_new_terminal = i_run_in_new_terminal &
+				error_handler = i_error_handler )
+		end
+	end
+
+	command start_OS_script_file_instructions_and_wait
+		in OS_instructions type:string end
+		// in command_line_parameters type:simple_string voidable:yes end
+		// in working_directory type:directory voidable:yes default:void end
+		in run_in_new_terminal type:yes_no end
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output < signed_integer32 >
+		
+		script
+			var file script_file
+			co_create_temporary_OS_script_file_for_OS_instructions ( &
+				OS_instructions = i_OS_instructions &
+				delete_script_file_on_exit = yes &
+				error_handler = i_error_handler ) &
+				( v_script_file = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+
+			co_start_OS_script_file_and_wait ( &
+				file = v_script_file &
+				command_line_parameters = void &
+				working_directory = void &
+				run_in_new_terminal = i_run_in_new_terminal &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error )
+		end
+	end
+
+	command quote_Unix_command_line_argument
+		in argument type:simple_string end
+		
+		out result type:string end
+		
+		script
+			// o_result = """$'{{i_argument.to_string.replace_all ( to_replace = "'" replace_by = '''\'''' )}}'""" // didn't work on Linux Mint 12
+			o_result = """'{{i_argument.to_string.replace_all ( to_replace = "'" replace_by = "'\\''" )}}'"""
+		end
+	end
+
+	command quote_Windows_command_line_argument
+		in argument type:simple_string end
+		
+		out result type:string end
+		
+		script
+			o_result = """"{{i_argument.to_string.replace_all ( to_replace = '''"''' replace_by = '''\"''' )}}""""
+		end
+	end
+
+	command_list private:yes
+
+		command create_temporary_OS_script_file_for_OS_instructions
+			in OS_instructions type:string end
+			in delete_script_file_on_exit type:yes_no default:yes end
+			%system_error_handler_input_argument
+			
+			%result_xor_system_error_output < file >
+			
+			script
+				se_text_file_IO.create_temporary_text_file ( &
+					file_name_extension = a_current_OS_script_file_extension &
+					delete_file_on_exit = i_delete_script_file_on_exit &
+					text = i_OS_instructions &
+					error_handler = i_error_handler ) &
+					( o_result = result &
+					o_error = error )
+				if o_error #r void then
+					exit script
+				end if
+				
+				if not se_system.OS_is_Windows then
+					o_error = o_result.set_Unix_executable_permission ( &
+						executable_permission = yes &
+						only_for_owner = no &
+						error_handler = i_error_handler )
+					if o_error #r void then
+						o_result = void
+						exit script
+					end if
+				end if
+			end
+		end
+
+ 		command Unix_command_execution_in_new_terminal
+			in command_to_execute type:simple_string end
+			in working_directory type:directory voidable:yes end
+			in window_title type:simple_string voidable:yes end
+			in ask_press_Enter_after_command type:yes_no end
+			in wait_until_finished type:yes_no end
+			
+			out result type:string end
+			
+			script
+				// Linux:
+				// xterm
+				// opens new terminal and waits until new terminal is closed
+				// xterm &
+				// opens new terminal and does not wait until new terminal is closed
+				// xterm -title 'foo bar'
+				// opens new terminal and displays foo bar in title of new terminal
+				// xterm -e 'echo Hi && read -p "Type <Enter> to continue: "'
+				// opens new terminal and displays Hi (executes echo Hi) and asks to press Enter; then returns to calling window
+				// xterm -title $'foo \'bar\'' -e $'echo Hi \'Albert\' && read -p "Type <Enter> to continue: "' &
+				// opens new terminal with title foo 'bar' and displays Hi 'Albert' and asks to press Enter, without waiting in the calling window
+			
+				const mutable_string s = fa_mutable_string.create
+
+				s.append ( "xterm" )
+				
+				if i_window_title #r void then
+					s.append ( " -title " )
+					// s.append ( quote_Unix_command_line_argument ( i_window_title ) )
+					s.append ( i_window_title )
+				end if
+
+				s.append ( " -e " )
+				var string command = ""
+				if i_working_directory #r void then
+					// TD doesn't probably work; to be checked
+					v_command = v_command & """cd {{i_working_directory}} && """
+				end if
+				v_command = v_command & i_command_to_execute.to_string
+				if i_ask_press_Enter_after_command then
+					v_command = v_command & ''' && read -p "Press <Enter> to continue: "'''
+				end if
+				// TD escape characters with \, because embedding between ' doesn't work
+				// s.append ( quote_Unix_command_line_argument ( v_command ) )
+				s.append ( v_command )
+				
+				if i_wait_until_finished then
+					s.append ( " &" )
+				end if
+				
+				o_result = s.to_string
+			end
+		end
+		
+		command Windows_command_execution_in_new_terminal
+			in command_to_execute type:simple_string end
+			in working_directory type:directory voidable:yes end
+			in window_title type:simple_string voidable:yes end
+			in ask_press_Enter_after_command type:yes_no end
+			in wait_until_finished type:yes_no end
+			
+			out result type:string end
+			
+			script
+				// """cmd.exe /c start "{{iif i_window_title #r void then i_window_title else "" end if}}" {{i_OS_command}}"""
+				// """cmd.exe /c start /wait "{{iif i_window_title #r void then i_window_title else "" end if}}" {{i_OS_command}}"""
+			
+				const mutable_string s = fa_mutable_string.create
+
+				s.append ( "cmd.exe /c start " )
+				
+				if i_working_directory #r void then
+					if i_working_directory.value.contains ( se_string_constants.space.value ) then
+						s.append ( """/d "{{i_working_directory}}" """ )
+					else
+						s.append ( """/d {{i_working_directory}} """ )
+					end if
+				end if
+
+				if i_wait_until_finished then
+					s.append ( "/wait " )
+				end if
+				
+				if i_window_title #r void then
+					s.append ( quote_Windows_command_line_argument ( i_window_title ) )
+				else
+					s.append ( quote_Windows_command_line_argument ( se_string_constants.empty_string ) )
+				end if
+
+				s.append ( " " )
+				var string command = i_command_to_execute.to_string
+				/// TD doesn't work; asks to press ENter in calling window
+				if i_ask_press_Enter_after_command then
+					c_command = c_command & " & pause"
+				end if
+				end ///
+
+				// s.append ( quote_Windows_command_line_argument ( c_command ) )
+				s.append ( v_command )
+				
+				o_result = s.to_string
+			end
+		end
+		
+		command command_for_OS_script_file
+			in OS_script_file type:file end
+			in command_line_parameters type:simple_string voidable:yes end
+			
+			out result type:string end
+			
+			script
+				if i_OS_script_file.value.contains ( se_string_constants.space.value ) then
+					o_result = """{{a_current_OS_command_line_quote}}{{i_OS_script_file}}{{a_current_OS_command_line_quote}}"""
+				else
+					o_result = i_OS_script_file.to_string
+				end if
+
+				if i_command_line_parameters #r void then
+					o_result = o_result & se_string_constants.space & i_command_line_parameters
+				end if
+			end
+		end
+
+		command execute_OS_command
+			in OS_command type:simple_string end
+			in wait_until_execution_finished type:yes_no end
+			in working_directory type:directory voidable:yes end
+			in use_system_in_device type:yes_no default:no end
+			// TD should be ty_simple_string_reader
+			in system_input_redirection_file type:file voidable:yes check:i_system_input_redirection_file =r void or i_system_input_redirection_file.exists default:void end
+			// TD should be ty_simple_string_writer
+			in system_output_redirection_file type:file voidable:yes default:void end
+			// TD should be ty_simple_string_writer
+			in system_error_redirection_file type:file voidable:yes default:void end
+			%system_error_handler_input_argument
+			
+			out result type:signed_integer32 voidable:yes end
+			%system_error_output_argument
+			
+			script
+				var java_exception java_exception
+				
+				if i_system_output_redirection_file #r void and not i_system_output_redirection_file.exists then
+					o_error = i_system_output_redirection_file.create_on_device ( i_error_handler )
+					if o_error #r void then
+						exit script
+					end if
+				end if
+
+				if i_system_error_redirection_file #r void and not i_system_error_redirection_file.exists then
+					o_error = i_system_error_redirection_file.create_on_device ( i_error_handler )
+					if o_error #r void then
+						exit script
+					end if
+				end if
+
+				java
+					Process process = null ;
+					File working_directory = i_working_directory == null ? null : new File ( i_working_directory.getValue().java_value() );
+					try {
+						String[] environment_variables = null;
+						process = Runtime.getRuntime().exec ( i_OS_command.getValue().java_value(), environment_variables, working_directory ) ;
+
+						// TD see:
+						// http://www.javaworld.com/javaworld/jw-12-2000/jw-1229-traps.html (thanks to Michael C. Daconta)
+						// http://kylecartmell.com/?p=9 (thanks to Kyle W. Cartmell)
+
+						InputStream input_gobbler_input_stream = null;
+						OutputStream input_gobbler_output_stream = null;
+						Stream_gobbler input_gobbler = null;
+						if ( i_use_system_in_device.java_value() || i_system_input_redirection_file != null ) {
+							input_gobbler_input_stream = i_system_input_redirection_file == null ? System.in : new FileInputStream ( i_system_input_redirection_file.getValue().java_value() );
+							input_gobbler_output_stream = process.getOutputStream();
+							// input_gobbler = new Stream_gobbler ( input_gobbler_input_stream, input_gobbler_output_stream, i_system_input_redirection_file != null, true, true );
+							input_gobbler = new Stream_gobbler ( input_gobbler_input_stream, input_gobbler_output_stream, i_system_input_redirection_file != null, true, false );
+							input_gobbler.start();
+						}
+
+						InputStream output_gobbler_input_stream = process.getInputStream();
+						OutputStream output_gobbler_output_stream = i_system_output_redirection_file == null ? System.out : new FileOutputStream ( i_system_output_redirection_file.getValue().java_value() );
+						Stream_gobbler output_gobbler = new Stream_gobbler ( output_gobbler_input_stream, output_gobbler_output_stream, true, i_system_output_redirection_file != null, false );
+						output_gobbler.start();
+
+						InputStream error_gobbler_input_stream = process.getErrorStream();
+						OutputStream error_gobbler_output_stream = i_system_error_redirection_file == null ? System.err : new FileOutputStream ( i_system_error_redirection_file.getValue().java_value() );
+						Stream_gobbler error_gobbler = new Stream_gobbler ( error_gobbler_input_stream, error_gobbler_output_stream, true, i_system_error_redirection_file != null, false );
+						error_gobbler.start();
+
+						if ( i_wait_until_execution_finished.java_value() ) {
+							int exit_value = process.waitFor();
+							o_result = new fa_signed_integer32 ( exit_value ) ;
+							
+							// release resourcces
+							
+							if ( input_gobbler != null ) {
+								input_gobbler.interrupt();
+								if ( i_system_input_redirection_file != null ) {
+									se_java_IO.close_input_stream ( input_gobbler_input_stream );
+								}
+								se_java_IO.close_output_stream ( input_gobbler_output_stream );
+							}
+							input_gobbler = null;
+
+							output_gobbler.interrupt();
+							se_java_IO.close_input_stream ( output_gobbler_input_stream );
+							if ( i_system_output_redirection_file != null ) {
+								se_java_IO.close_output_stream ( output_gobbler_output_stream );
+							}
+							output_gobbler = null;
+
+							error_gobbler.interrupt();
+							se_java_IO.close_input_stream ( error_gobbler_input_stream );
+							if ( i_system_error_redirection_file != null ) {
+								se_java_IO.close_output_stream ( error_gobbler_output_stream );
+							}
+							error_gobbler = null;
+						}
+					}
+					catch ( Exception e ) {
+						v_java_exception = new fa_java_exception ( e );
+					}
+				end java
+				
+				if v_java_exception #r void then
+					o_error = fa_system_error.co_create ( &
+						id = "execute_OS_command" &
+						description = """Executing OS command '{{i_OS_command}}' generated the following error:
+{{v_java_exception.message}}""" &
+						java_exception = v_java_exception )
+					i_error_handler.handle_system_error ( o_error )
+				end if
+
+			end script
+		end command
+		
+	end command_list
+	
+end service

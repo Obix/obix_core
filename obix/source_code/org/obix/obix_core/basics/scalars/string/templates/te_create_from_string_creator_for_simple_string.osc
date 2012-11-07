@@ -1,0 +1,59 @@
+template create_from_string_creator_for_simple_string
+
+	param type_id_suffix end
+
+	creator create_from_string
+		in string type:simple_string voidable:yes end
+		in config type:string_to_object_converter_config default:se_string_to_object_converter_config.default_value end
+		%system_error_handler_input_argument
+		
+		%result_or_string_to_object_conversion_error_void_output<{type_id_suffix}>
+		
+		script
+			var system_error conversion_error
+			section convert
+				if i_string =r void then
+					if i_config.void_input_allowed then
+						o_result = void
+						exit script
+					else
+						o_result = void
+						v_conversion_error = fa_system_error.create ( description = "A void string input is not allowed." )
+						exit section
+					end if
+				end if
+
+				o_result = create ( i_string.value ) on_error:continue
+
+				if v_program_error_ =r void then
+					exit script
+				end if
+				
+				if i_string.value =v se_string_constants.empty_string.value then
+					if i_config.empty_string_is_void then
+						o_result = void
+						exit script
+					end if
+
+				else if i_config.void_value_as_string #r void and i_string.value =v i_config.void_value_as_string.value then
+					o_result = void
+					exit script
+
+				end if
+
+				v_conversion_error = fa_system_error.create ( description = se_program_error.get_source_error_of_program_error ( v_program_error_ ).description )
+			end section
+			
+			o_result = void
+			o_error = fa_string_to_object_conversion_error.create ( &
+				i_id = "string_to_{type_id_suffix}_conversion_error" &
+				description = """'{{se_any_type.force_object_to_string(i_string)}}' cannot be converted to an object of type '{type_id_suffix}'. Reason:
+{{v_conversion_error.description}}'""" &
+				data = i_string &
+				type_of_result = "{type_id_suffix}" &
+				error_position = void )
+			i_error_handler.handle_system_error ( o_error )
+		end
+	end
+
+end template

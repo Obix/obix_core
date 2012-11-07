@@ -1,0 +1,8 @@
+type character_set
+
+	inherit character_set_base end
+	
+	attribute is_supported type:yes_no kind:readonly_constant end
+
+end
+

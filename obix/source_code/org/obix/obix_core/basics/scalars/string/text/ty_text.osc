@@ -1,0 +1,28 @@
+type text
+
+	inherit string end
+	
+	/// TD
+	
+	attribute_list type:zero_positive32 kind:readonly_constant
+		attribute line_count end
+		attribute word_count end
+		attribute character_count end
+	end
+	
+	command get_line_list
+		in line_separator type:string default:se_string_constants.current_OS_new_line end
+		
+		out result type:indexed_string_list end
+	end
+	
+	command get_filtered_line_list
+		in line_separator type:string default:se_string_constants.current_OS_new_line end
+		in filter type:string_filter end
+		
+		out result type:indexed_string_list end
+	end
+	
+	end ///
+	
+end

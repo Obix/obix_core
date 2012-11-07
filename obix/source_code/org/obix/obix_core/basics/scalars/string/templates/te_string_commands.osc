@@ -1,0 +1,216 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template string_commands
+
+	param input_string_type end
+	param non_empty_input_string_type end
+	param output_string_type end
+	param non_empty_output_string_type end
+
+	
+	// extract
+
+	command extract_from
+		in from type:positive32 %check_within_item_count<"i_from"> end
+
+		out result type:{non_empty_output_string_type} &
+			check: i_result.item_count compare =v i_object_.item_count + 1 - i_from end
+	end
+
+	command extract_to
+		in to type:positive32 %check_within_item_count<"i_to"> end
+
+		out result type:{non_empty_output_string_type} &
+			check: i_result.item_count compare =v i_to end
+	end
+
+	command extract_from_to
+		in from type:positive32 %check_within_item_count<"i_from"> end
+		in to type:positive32 %check_within_item_count<"i_to"> end
+		in_check check: i_to compare >= i_from &
+			error_message: "i_from (" & i_from.co_to_string & ") must be less or equal than i_to (" & i_to.co_to_string & ")" &
+			error_id: bounds_invalid end
+
+		out result type:{non_empty_output_string_type} &
+			check: i_result.item_count =v i_to + 1 - i_from end
+	end
+
+	
+	// find
+
+	command find
+		in to_find type:{non_empty_input_string_type} end
+
+		out result type:positive32 voidable:yes end
+	end
+
+	command find_from
+		in to_find type:{non_empty_input_string_type} end
+		in from type:positive32 %check_within_item_count<"i_from"> end
+
+		out result type:positive32 voidable:yes end
+	end
+
+	command find_last
+		in to_find type:{non_empty_input_string_type} end
+
+		out result type:positive32 voidable:yes end
+	end
+	
+	command find_regex
+		in regex type:regex end
+		in_check %check_not_empty<"i_object_"> end
+
+		out result type:string_find_result voidable:yes end
+	end
+
+	
+	// checks
+
+	command starts_with
+		in start type:{non_empty_input_string_type} end
+
+		out result type:yes_no end
+	end
+	
+	command ends_with
+		in i_end type:{non_empty_input_string_type} end
+
+		out result type:yes_no end
+	end
+
+	command matches_regex
+		in regex type:regex end
+
+		out result type:yes_no end
+	end
+
+	command contains
+		in string type:{non_empty_input_string_type} end
+
+		out result type:yes_no end
+	end
+	
+	
+	// modifiers
+
+	command append
+		in string type:{input_string_type} end
+
+		out result type:{output_string_type} end
+		//out result type:{output_string_type} &
+		//	check: i_result.item_count compare =v i_object_.item_count + i_string.item_count end
+	end
+
+	command repeat
+		in count type:positive32 end
+		in_check %check_not_empty<"i_object_"> end
+
+		out result type:{non_empty_output_string_type} &
+			check: i_result.item_count compare =v i_object_.item_count * i_count end
+	end
+
+	command remove_first
+		in_check %check_not_empty<"i_object_"> end
+
+		out result type:{output_string_type} &
+			check: i_result.item_count compare =v i_object_.item_count - 1 end
+	end
+
+	command remove_last
+		in_check %check_not_empty<"i_object_"> end
+
+		out result type:{output_string_type} &
+			check: i_result.item_count compare =v i_object_.item_count - 1 end
+	end
+
+	command trim
+		out result type:{output_string_type} end
+	end
+
+	command pad_left
+		in width type:positive32 check: i_object_.item_count compare <= i_width end
+		// TD in padding_character type:character default: ' ' end
+
+		out result type:{non_empty_output_string_type} check: i_result.item_count compare =v i_width end
+	end
+	
+	command pad_right
+		in width type:positive32 check: i_object_.item_count compare <= i_width end
+		// TD in padding_character type:character default: ' ' end
+
+		out result type:{non_empty_output_string_type} check: i_result.item_count compare =v i_width end
+	end
+	
+	command replace_from_to
+		in from type:positive32 %check_within_item_count<"i_from"> end
+		in to type:positive32 %check_within_item_count<"i_to"> end
+		in replace_by type:{input_string_type} end
+		in_check check: i_to compare >= i_from &
+			error_message: "i_from (" & i_from.co_to_string & ") must be less or equal than i_to (" & i_to.co_to_string & ")" &
+			error_id: bounds_invalid end
+
+		out result type:{output_string_type} end
+	end
+
+	command replace_all
+		in to_replace type:{non_empty_input_string_type} end
+		in replace_by type:{input_string_type} end
+
+		out result type:{output_string_type} end
+	end
+	
+	command replace_all_regex
+		in to_replace_regex type:regex end
+		in replace_by type:{input_string_type} end
+
+		out result type:{output_string_type} end
+	end
+	
+	command truncate
+		in width type:positive32 end
+
+		out result type:{output_string_type} check: i_result.item_count compare <= i_width end
+	end
+	
+
+	// split
+
+	command split_by_lines
+		out result type:!indexed_list<{output_string_type}> end
+	end
+	
+	command split
+		in split_by type:{non_empty_input_string_type} end
+
+		out result type:!indexed_list<{output_string_type}> end
+	end
+	
+	command split_by_regex
+		in regex type:regex end
+
+		out result type:!indexed_list<{output_string_type}> end
+	end
+	
+	
+	// transformation
+
+	command to_lower_case
+		out result type:{output_string_type} end
+	end
+
+	command to_upper_case
+		out result type:{output_string_type} end
+	end
+
+	command to_first_upper_case
+		in_check %check_not_empty<"i_object_"> end
+		out result type:{non_empty_output_string_type} end
+	end
+
+end template

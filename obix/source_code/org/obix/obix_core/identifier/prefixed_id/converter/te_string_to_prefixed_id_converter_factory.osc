@@ -1,0 +1,45 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template string_to_prefixed_id_converter_factory
+
+	param prefixed_id_type_suffix end
+	param prefix_with_terminator end
+	
+factory string_to_{prefixed_id_type_suffix}_converter type:string_to_{prefixed_id_type_suffix}_converter
+
+	command convert
+		script
+			var string_value id_value
+			if i_input.value.starts_with ( {prefix_with_terminator}.value ) then
+				v_id_value = i_input.value
+			else
+				v_id_value = {prefix_with_terminator}.value & i_input.value
+			end if
+			
+			const attribute_check_error check_error = ty_{prefixed_id_type_suffix}.a_value.check ( v_id_value )
+			if check_error =r void then
+				o_result = fa_{prefixed_id_type_suffix}.create ( v_id_value )
+			else
+				o_error = fa_string_to_object_conversion_error.create ( &
+					description = check_error.description &
+					data = i_input &
+					type_of_result = "{prefixed_id_type_suffix}" &
+					error_position = void )
+
+				if i_error_handler #r void then
+					i_error_handler.handle_system_error ( o_error )
+				end if
+			end if
+		end
+	end
+	
+	creator create kind:in_all end
+	
+end factory
+
+end template

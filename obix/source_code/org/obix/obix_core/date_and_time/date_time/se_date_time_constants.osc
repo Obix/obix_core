@@ -1,0 +1,39 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service date_time_constants
+
+	// attribute ISO_date_time_separator type:string default:se_string_constants.space end
+	attribute ISO_date_time_separator type:string default:"T" end
+
+	attribute ISO_local_date_time_format type:non_empty_string default: se_date_constants.ISO_date_format & a_ISO_date_time_separator & se_time_constants.ISO_local_time_format end
+	
+	attribute ISO_local_date_time_regex type:regex
+		default
+			script
+				o_ISO_local_date_time_regex = fa_regex.create ( se_date_constants.ISO_date_regex.value.remove_last & a_ISO_date_time_separator.value &  se_time_constants.ISO_local_time_regex.value.remove_first )
+			end
+			test
+				script
+					test
+					const regex r = v_ISO_local_date_time_regex
+
+					// valid
+					verify "1900-01-01T00:00:00".matches_regex(r)
+					verify "2999-12-31T23:59:59".matches_regex(r)
+					verify "2011-03-04T08:02:03".matches_regex(r)
+
+					// invalid
+					verify not "2011-03-04 08:02:03".matches_regex(r)
+					verify not "2011.03.04T12:30".matches_regex(r)
+					verify not "2011/03/04T12:30:00".matches_regex(r)
+				end
+			end
+		end
+	end
+
+end

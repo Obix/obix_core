@@ -1,0 +1,21 @@
+type script_state
+
+	inherit has_to_long_string end
+
+	attribute source_code_location type:bug_source_code_location end
+	attribute time type:local_date_time default:se_date_time.current_local_date_time end // TD type:date_time
+	attribute item_list type:script_state_item_list end
+	attribute stack_trace type:java_stack_trace end
+
+	///
+	attribute_list type:script_state_item_list voidable:yes kind:readonly_constant
+
+		attribute attribute_list end
+		attribute input_argument_list end
+		attribute output_argument_list end
+		attribute variable_constant_list end
+		
+	end
+	end ///
+
+end

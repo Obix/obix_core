@@ -1,0 +1,22 @@
+///
+   Copyright (C) 2011 Christian Neumanns (www.obix.lu)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory console_output_user_input_error_handler type:user_input_error_handler
+
+	command handle_user_input_error
+		script
+			if se_system.console #r void then
+				se_system.console.write_line ( i_error.description )
+			else
+				se_system.err.write_line ( string = i_error.description )
+			end if
+		end
+	end
+	
+	creator create kind:in_all end
+
+end factory

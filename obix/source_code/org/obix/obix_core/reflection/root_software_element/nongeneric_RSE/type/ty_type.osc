@@ -1,0 +1,86 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type type
+
+	inherit nongeneric_RSE
+
+		attribute id_path type:type_id_path end
+		attribute a_id type:type_id end
+
+		attribute attribute_list type:type_attribute_list end
+		attribute public_attribute_list type:type_attribute_list end
+		attribute command_list type:type_command_list end
+		attribute public_command_list type:type_command_list end
+		attribute event_definition_list type:type_event_definition_list end
+
+		attribute generic_RSE_reference type:generic_type_reference end
+
+		command is_equal_to
+			in other type:type end
+		end
+	end
+
+	attribute_list voidable:yes
+
+		attribute inherited_type_list type:type_id_path_list end
+
+		attribute enumerated_list type:enumerated_list end
+
+	end attribute_list
+	
+	attribute is_base_type_of_generic_type type:yes_no end
+
+	attribute persistence_kind type:type_persistence_kind.enumerated end
+
+	attribute default_factory type:yes_no end
+
+	attribute_list kind:readonly_constant
+
+		attribute uninherited_attribute_list type:type_attribute_list voidable:yes end
+
+		attribute uninherited_command_list type:type_command_list voidable:yes end
+
+		attribute uninherited_event_definition_list type:type_event_definition_list voidable:yes end
+		
+	end attribute_list
+	
+	and_attribute_check
+		script
+			check not ( i_is_base_type_of_generic_type and not i_is_generified_RSE )
+		end
+	end
+
+	command base_type_of_generic_type
+		in_check check: i_object_.is_generified_RSE and not i_object_.is_base_type_of_generic_type end
+		
+		out result type:type_id_path end
+	end
+
+	command is_compatible_to
+		in target_type_id_path type:type_id_path end
+		in type_getter type:type_getter default:se_reflection.library_repository end
+		
+		out result type:yes_no end
+		out not_compatible_reason type:string voidable:yes end
+		out_check check: i_result xor i_not_compatible_reason #r void end
+	end
+	
+	command get_object_type
+		in generic_parameter_id type:template_parameter_id voidable:yes end
+
+		out result type:object_type end
+	end
+	
+	command get_enumerated_object_type
+		in generic_parameter_id type:template_parameter_id voidable:yes end
+		in_check check: i_object_.enumerated_list #r void end
+
+		out result type:enumerated_object_type end
+	end
+	
+end type

@@ -1,0 +1,637 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory directory type:directory
+
+	java_header
+		import java.io.File;
+		import java.util.Arrays;
+		import java.io.IOException;
+
+		import org.obix.obix_core.java.fa_java_exception;
+		import org.obix.obix_core.directories_and_files.files.absolute_file.*;
+		import org.obix.obix_core.date_and_time.date_time.*;
+		import org.obix.obix_core.basics.scalars.string.string_value.in_string_value;
+		import org.obix.obix_core.basics.scalars.string.string_value.fa_string_value;
+		import org.obix.obix_core.collections.lists.indexed_list.in_mutable_indexed_list_base_;
+		import org.obix.obix_core.utilities.filters.in_filter_base_;
+		import org.obix.obix_core.utilities.loop_item_handlers.in_loop_item_handler_base_;
+	end java_header
+
+	java
+		private File a_file ;
+		public File java_value() {return a_file;}
+		
+		private void loop_items ( File i_directory, in_loop_item_handler_base_ i_item_handler, in_filter_base_ i_filter, 
+			boolean i_include_directories, boolean i_include_files, boolean i_include_child_directories, boolean i_sort_by_path ) throws IOException {
+
+			File[] v_java_file_list = i_directory.listFiles() ;
+			if ( v_java_file_list != null && v_java_file_list.length > 0 ) {
+
+				if ( i_sort_by_path ) {
+					Arrays.sort ( v_java_file_list ) ;
+				}
+
+				for ( int i = 1; i <= v_java_file_list.length; i++ ) {
+					File v_file = v_java_file_list[i-1] ;
+					
+					// in_string_value path = new fa_string_value ( v_file.getAbsolutePath() );
+					in_string_value path = new fa_string_value ( v_file.getCanonicalPath() );
+
+					if ( i_include_directories && v_file.isDirectory() ) {
+						in_directory directory = fa_directory.co_create_command ( path );
+						boolean is_accepted = true;
+						if ( i_filter != null ) {
+							is_accepted = i_filter.co_is_accepted_command ( directory ).java_value();
+						}
+						if ( is_accepted ) {
+							i_item_handler.co_handle_item_command ( directory );
+						}
+					}
+
+					if ( i_include_files && v_file.isFile() ) {
+						in_file file = fa_file.co_create_command ( path );
+						boolean is_accepted = true;
+						if ( i_filter != null ) {
+							is_accepted = i_filter.co_is_accepted_command ( file ).java_value();
+						}
+						if ( is_accepted ) {
+							i_item_handler.co_handle_item_command ( file );
+						}
+					}
+				}
+
+				if ( i_include_child_directories ) {
+					File[] v_child_dir_list = i_directory.listFiles() ;
+
+					if ( i_sort_by_path ) {
+						Arrays.sort ( v_child_dir_list ) ;
+					}
+
+					if ( v_child_dir_list != null && v_child_dir_list.length > 0 ) {
+						for ( int j = 1; j <= v_child_dir_list.length; j++ ) {
+							File v_child_dir = v_child_dir_list[j-1] ;
+							if ( v_child_dir.isDirectory() ) {
+								/*
+								boolean is_accepted = true;
+								if ( i_filter != null ) {
+									in_directory directory = fa_directory.co_create_command 
+										// ( new fa_string_value ( v_child_dir.getAbsolutePath() ) );
+										( new fa_string_value ( v_child_dir.getCanonicalPath() ) );
+									is_accepted = i_filter.co_is_accepted_command ( directory ).java_value();
+								}
+								if ( is_accepted ) {
+									loop_items ( v_child_dir, i_item_handler, i_filter, 
+										i_include_directories, i_include_files, i_include_child_directories, i_sort_by_path );
+								}
+								*/
+								loop_items ( v_child_dir, i_item_handler, i_filter, 
+									i_include_directories, i_include_files, i_include_child_directories, i_sort_by_path );
+							}
+						}
+					}
+				}
+			}
+		}
+
+		private static boolean delete_directory ( File directory ) {
+
+			File[] file_list = directory.listFiles();
+			for ( int i=0; i < file_list.length; i++ ) {
+				if ( file_list[i].isDirectory() ) {
+					delete_directory ( file_list[i] );
+				} else {
+					file_list[i].delete();
+				}
+			}
+
+			return directory.delete();
+		}
+
+		private static boolean delete_directory_content ( File directory ) {
+
+			File[] file_list = directory.listFiles();
+			for ( int i=0; i < file_list.length; i++ ) {
+				if ( file_list[i].isDirectory() ) {
+					delete_directory ( file_list[i] );
+				} else {
+					file_list[i].delete();
+				}
+			}
+
+			return directory.listFiles().length == 0;
+		}
+
+	end java
+
+	%te_directory_or_file_factory_attributes < "directory_name" >
+	
+	attribute parent_directory
+		get
+			script
+				var string_value v_parent_name
+				java
+					String v_parent = a_file.getParent();
+					v_parent_name = v_parent != null ? new fa_string_value ( v_parent ) : null ;
+				end java
+				if v_parent_name #r void then
+					o_parent_directory = fa_directory.co_create ( v_parent_name )
+				end if
+			end
+		end
+	end
+	
+	attribute is_root_directory
+		get
+			script
+				o_is_root_directory = a_parent_directory =r void
+			end
+		end
+	end
+	
+	%te_directory_or_file_factory_commands<"directory">
+
+	command create_on_device
+		script
+			var yes_no success
+			java
+				if (a_file.mkdir()) {
+					v_success = fa_yes_no.a_yes;
+				} else {
+					v_success = fa_yes_no.a_no;
+				}
+			end java
+			if not v_success then
+				const string reason = &
+					iif a_parent_directory #r void and not a_parent_directory.exists &
+					then " because the parent directory doesn't exist" &
+					else "" end if
+				o_error = fa_create_directory_error.create ( &
+					description = """Directory '{{this}}' could not be created{{c_reason}}.""" &
+					java_exception = void &
+					resource = this )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+	
+	command create_on_device_including_parents
+		script
+			var yes_no success
+			java
+				if (a_file.mkdirs()) {
+					v_success = fa_yes_no.a_yes;
+				} else {
+					v_success = fa_yes_no.a_no;
+				}
+			end java
+			if not v_success then
+				o_error = fa_create_directory_error.create ( &
+					description = """Directory '{{this}}' could not be created.""" &
+					java_exception = void &
+					resource = this )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+	command delete_on_device
+		script
+			var yes_no success
+			var java_exception java_exception
+			
+			section delete_dir
+			
+				if i_ask_confirmation_in_system_console then
+					const yes_no confirmation = se_system.console.ask_yes_no.result ( &
+						message = """Delete directory '{{this}}' (y/n) ?""" &
+						default_value = no &
+						error_handler = i_error_handler )
+					if c_confirmation =r void or not c_confirmation then
+						v_success = no
+						exit section
+					end if
+				end if
+				
+				java
+					try {
+						v_success = delete_directory ( java_value() ) ? fa_yes_no.a_yes : fa_yes_no.a_no;
+					} catch ( SecurityException e ) {
+						v_java_exception = new fa_java_exception ( e );
+					}
+				end java
+				
+			end section
+			
+			if not v_success or v_java_exception #r void then
+				var string error_description = """Directory '{{this}}' could not be deleted."""
+				if v_java_exception #r void then
+					v_error_description = v_error_description & """ The following security problem was reported:
+{{v_java_exception.message}}"""
+				end if
+				o_error = fa_delete_directory_error.create ( &
+					description = v_error_description &
+					java_exception = v_java_exception &
+					resource = this )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+	
+	command delete_content_on_device
+		script
+			var yes_no success
+			var java_exception java_exception
+			
+			section delete_dir_content
+			
+				if i_ask_confirmation_in_system_console then
+					const yes_no confirmation = se_system.console.ask_yes_no.result ( &
+						message = """Delete content of directory '{{this}}' (y/n) ?""" &
+						default_value = no &
+						error_handler = i_error_handler )
+					if c_confirmation =r void or not c_confirmation then
+						v_success = no
+						exit section
+					end if
+				end if
+
+				java
+					try {
+						v_success = delete_directory_content ( java_value() ) ? fa_yes_no.a_yes : fa_yes_no.a_no;
+					} catch ( SecurityException e ) {
+						v_java_exception = new fa_java_exception ( e );
+					}
+				end java
+				
+			end section
+			
+			if not v_success or v_java_exception #r void then
+				var string error_description = """The content of directory '{{this}}' could not be deleted."""
+				if v_java_exception #r void then
+					v_error_description = v_error_description & """ The following security problem was reported:
+{{v_java_exception.message}}"""
+				end if
+				o_error = fa_delete_directory_error.create ( &
+					description = v_error_description &
+					java_exception = v_java_exception &
+					resource = this )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+	command rename_on_device
+		script
+			o_renamed_directory = fa_directory.create_from_root_and_child_name ( &
+				root_directory = a_parent_directory &
+				child_name = i_new_directory_name )
+
+			var yes_no success
+			var java_exception java_exception
+			java
+				try {
+					if ( a_file.renameTo ( new File ( o_renamed_directory.getValue().java_value() ) ) ) {
+						v_success = fa_yes_no.a_yes;
+					} else {
+						v_success = fa_yes_no.a_no;
+					}
+				} catch ( Exception e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+			end java
+
+			if not v_success or v_java_exception #r void then
+				o_renamed_directory = void
+				o_error = fa_rename_directory_error.create ( &
+					description = "Directory '" & this & "' could not be renamed to '" & i_new_directory_name & "'." &
+					java_exception = v_java_exception &
+					resource = this )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+	
+	command append_child_name
+		script
+			o_result = create_from_root_and_child_name ( &
+				root_directory = this &
+				child_name = i_child_name )
+		end
+	end
+
+	command append_child_directory
+		script
+			o_result = create_from_root_and_child_directory ( &
+				root_directory = this &
+				child_directory = i_child_directory )
+		end
+	end
+
+	command append_relative_file
+		script
+			o_result = fa_file.create ( a_value & i_file.value )
+		end
+	end
+
+	command is_empty
+		script
+			var directory_or_file_list list
+			co_directory_or_file_list ( &
+				filter = void &
+				sort_by_path = no &
+				include_child_directories = no ) &
+				( v_list = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+
+			o_result = v_list.is_empty
+		end
+	end
+
+	command make_relative_directory
+		script
+			const string_value relative_path = to_current_OS_path.value.extract_from ( 1 + i_root_directory.to_current_OS_path.value.item_count )
+			o_result = fa_relative_directory.create ( relative_path )
+		end
+	end
+
+	command directory_or_file_list
+		script
+			var !mutable_indexed_list<directory_or_file> v_item_list = !mutable_indexed_list_factory<directory_or_file>.co_create
+			o_error = co_loop_directories_and_files ( &
+				filter = i_filter &
+				sort_by_path = i_sort_by_path &
+				include_child_directories = i_include_child_directories &
+				item_handler = fa_create_list_directory_or_file_loop_item_handler.create ( v_item_list ) &
+				error_handler = i_error_handler )
+			if o_error #r void then
+				exit script
+			end if
+
+			o_result = v_item_list.make_immutable
+		end
+	end
+	
+	command directory_list
+		script
+			var !mutable_indexed_list<directory> v_directory_list = !mutable_indexed_list_factory<directory>.co_create
+			o_error = co_loop_directories ( &
+				filter = i_filter &
+				sort_by_path = i_sort_by_path &
+				include_child_directories = i_include_child_directories &
+				item_handler = fa_create_list_directory_loop_item_handler.create ( v_directory_list ) &
+				error_handler = i_error_handler )
+			if o_error #r void then
+				exit script
+			end if
+
+			o_result = v_directory_list.make_immutable
+		end
+	end
+	
+	command file_list
+		script
+			var !mutable_indexed_list<file> v_file_list = !mutable_indexed_list_factory<file>.co_create
+			o_error = co_loop_files ( &
+				filter = i_filter &
+				sort_by_path = i_sort_by_path &
+				include_child_directories = i_include_child_directories &
+				item_handler = fa_create_list_file_loop_item_handler.create ( v_file_list ) &
+				error_handler = i_error_handler )
+			if o_error #r void then
+				exit script
+			end if
+
+			o_result = v_file_list.make_immutable
+		end
+	end
+	
+	command loop_directories_and_files
+		script
+			var java_exception java_exception
+			java
+				try {
+					loop_items ( a_file, i_item_handler, i_filter, true, true, i_include_child_directories.java_value(), i_sort_by_path.java_value() );
+				} catch ( IOException e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+			end java
+
+			if v_java_exception #r void then
+				o_error = fa_read_directory_error.create ( &
+					description = """Could not read the contents of directory '{{this}}'. Reason:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception &
+					resource = this )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+	
+	command loop_directories
+		script
+			var java_exception java_exception
+			java
+				try {
+					loop_items ( a_file, i_item_handler, i_filter, true, false, i_include_child_directories.java_value(), i_sort_by_path.java_value() );
+				} catch ( IOException e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+			end java
+
+			if v_java_exception #r void then
+				o_error = fa_read_directory_error.create ( &
+					description = """Could not read the childdirectory list of directory '{{this}}'. Reason:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception &
+					resource = this )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+	
+	command loop_files
+		script
+			var java_exception java_exception
+			java
+				try {
+					loop_items ( a_file, i_item_handler, i_filter, false, true, i_include_child_directories.java_value(), i_sort_by_path.java_value() );
+				} catch ( IOException e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+			end java
+
+			if v_java_exception #r void then
+				o_error = fa_read_directory_error.create ( &
+					description = """Could not read the file list of directory '{{this}}'. Reason:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception &
+					resource = this )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+	creator create kind:in_all
+		script
+			var string_value path = i_value
+			if not ( i_value.ends_with ( se_directory.Unix_directory_separator.value ) or i_value.ends_with ( se_directory.Windows_directory_separator.value ) ) then
+				v_path = v_path & se_directory.current_OS_directory_separator.value
+			end if
+
+			java
+				o_result.a_file = new File ( v_path.java_value() ) ;
+			end java
+			o_result.a_value = v_path
+		end
+	end
+
+	// %create_from_string_creator_for_simple_string
+
+	creator create_from_string
+		in string type:simple_string voidable:yes end
+		in config type:string_to_object_converter_config default:se_string_to_object_converter_config.default_value end
+		in append_separator_at_end_if_omitted type:yes_no default:yes end
+		%system_error_handler_input_argument
+		
+		%result_or_string_to_object_conversion_error_void_output<directory>
+		
+		script
+			var system_error conversion_error
+			section convert
+				if i_string =r void then
+					if i_config.void_input_allowed then
+						o_result = void
+						exit script
+					else
+						o_result = void
+						v_conversion_error = fa_system_error.create ( description = "A void string input is not allowed." )
+						exit section
+					end if
+				end if
+
+				var string directory_path = i_string.to_string
+
+				if i_append_separator_at_end_if_omitted and not v_directory_path.is_empty then
+					const string last_char = v_directory_path.last_item.to_string
+					if c_last_char #v se_directory.Unix_directory_separator and c_last_char #v se_directory.Windows_directory_separator then
+						v_directory_path = v_directory_path & se_directory.current_OS_directory_separator
+					end if
+				end if
+
+				o_result = create ( v_directory_path.value ) on_error:continue
+
+				if v_program_error_ =r void then
+					exit script
+				end if
+				
+				if v_directory_path =v se_string_constants.empty_string then
+					if i_config.empty_string_is_void then
+						o_result = void
+						exit script
+					end if
+
+				else if i_config.void_value_as_string #r void and v_directory_path =v i_config.void_value_as_string then
+					o_result = void
+					exit script
+
+				end if
+
+				v_conversion_error = fa_system_error.create ( description = se_program_error.get_source_error_of_program_error ( v_program_error_ ).description )
+			end section
+			
+			o_result = void
+			o_error = fa_string_to_object_conversion_error.create ( &
+				i_id = "string_to_directory_conversion_error" &
+				description = """'{{se_any_type.force_object_to_string(i_string)}}' cannot be converted to an object of type 'directory'. Reason:
+{{v_conversion_error.description}}'""" &
+				data = i_string &
+				type_of_result = "directory" &
+				error_position = void )
+			i_error_handler.handle_system_error ( o_error )
+		end
+	end
+
+	creator create_from_root_and_child_name
+		in root_directory type:directory end
+		in child_name type:directory_name end
+
+		out result type:directory end
+
+		script
+			o_result = co_create ( i_root_directory.value & i_child_name.value & se_directory.current_OS_directory_separator.value )
+		end
+	end
+	
+	creator create_from_root_and_child_directory
+		in root_directory type:directory end
+		in child_directory type:relative_directory end
+
+		out result type:directory end
+
+		script
+			o_result = co_create ( i_root_directory.value & i_child_directory.value )
+		end
+	end
+	
+	creator create_from_root_and_id
+		in root_directory type:directory end
+		in i_id type:id end
+
+		out result type:directory end
+
+		script
+			o_result = co_create ( i_root_directory.value & i_id.value & se_directory.current_OS_directory_separator.value )
+		end
+	end
+	
+	creator create_from_root_and_id_path
+		in root_directory type:directory end
+		in id_path type:id_path end
+
+		out result type:directory end
+
+		script
+			o_result = co_create ( i_root_directory.value & &
+				i_id_path.value.replace_all ( &
+					to_replace = se_id_path.id_separator.value &
+					replace_by = se_directory.current_OS_directory_separator.value ) & &
+				se_directory.current_OS_directory_separator.value )
+		end
+	end
+	
+	// TD creator create_from_URI
+
+	///
+	creator create_from_root_and_prefixed_id_path
+		in root_directory type:directory end
+		in prefixed_id_path type:prefixed_id_path end
+
+		out result type:directory end
+
+		script
+			var ty_string_value v_path = i_root_directory.value
+			///
+			if not ( v_path.extract_last ( 1 ) =v se_directory.current_OS_directory_separator.value ) then
+				v_path = v_path & se_directory.current_OS_directory_separator.value
+			end if
+			end ///
+
+			// TD1 should simply replace se_id_path.id_separator.value with se_directory.current_OS_directory_separator.value
+			repeat for each prefixed_id prefixed_id in i_prefixed_id_path.id_list
+				v_path = v_path & c_prefixed_id.value & se_directory.current_OS_directory_separator.value
+			end repeat
+			
+			o_result = co_create ( v_path )
+		end script
+	end creator
+	end ///
+	
+end factory

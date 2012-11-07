@@ -1,0 +1,22 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type generic_RSE_parameter default_factory:yes
+
+	inherit prefixed_id_object
+		attribute a_id type:template_parameter_id end
+	end
+
+	attribute_list type:object_type voidable:yes
+
+		attribute child_of_type end
+
+		attribute parent_of_type end
+
+	end
+	
+end type

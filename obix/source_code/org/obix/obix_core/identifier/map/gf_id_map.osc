@@ -1,0 +1,59 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic factory id_map
+
+	param item_type child_of:type_with_id end
+	param id_type child_of:id end
+
+	factory type: !gt_id_map < item_type:{item_type} id_type:{id_type} >
+
+		attribute map type:!map < key_type: simple_string item_type: {item_type} > private:yes end
+
+		%id_map_factory_code
+		
+		creator create
+			in map type:!map < key_type: simple_string item_type: {item_type} > end
+				
+			out result type: !gt_id_map < item_type:{item_type} id_type:{id_type} > end
+			
+			script
+				o_result.map = i_map
+			end
+		end
+
+		creator create_singleton
+			in item type:{item_type} end
+
+			out result type: !gt_id_map < item_type:{item_type} id_type:{id_type} > end
+			
+			script
+				o_result.map = !map_factory < key_type: simple_string item_type: {item_type} >.create_singleton ( &
+					key = i_item.id &
+					item = i_item )
+			end
+		end
+		
+		creator create_duo
+			in item_1 type:{item_type} end
+			in item_2 type:{item_type} end
+
+			out result type: !gt_id_map < item_type:{item_type} id_type:{id_type} > end
+			
+			script
+				o_result.map = !map_factory < key_type: simple_string item_type: {item_type} >.create_duo ( &
+					key1 = i_item_1.id &
+					item1 = i_item_1 &
+					key2 = i_item_2.id &
+					item2 = i_item_2 )
+			end
+		end
+		
+	end factory
+	
+end generic
+

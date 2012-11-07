@@ -1,0 +1,73 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type directory_or_file
+
+	inherit resource end
+
+	inherit absolute_or_relative_directory_or_file
+
+		// TD attribute root_directory type:directory end
+	
+	end
+
+	// TD4 Java exceptions can occur
+	// The full path of the directory or file according to the current operating system (OS) syntax.
+	// 		Remark:
+	// 		On Unix/Linux systems, the path separator is a '/' (slash)
+	// 		On Windows systems, the path separator is a '\' (backslash)
+	command to_current_OS_path 
+		out result type:absolute_or_relative_directory_or_file end
+	end
+
+	// TD4 Java exceptions can occur
+	command exists
+		out result type:yes_no end
+	end
+	
+	/// not available in Java
+	command time_created
+		in_check check: i_object_.exists end
+
+		out result type:local_date_time end
+	end
+	end ///
+
+	// TD4 Java exceptions can occur
+	command time_last_modified
+		in_check check: i_object_.exists end
+
+		out result type:local_date_time end
+	end
+
+	command create_on_device
+		%system_error_handler_input_argument
+		in_check check: not i_object_.exists end
+
+		out error type:directory_or_file_error voidable:yes end
+		out_check check: i_object_.exists xor i_error #r void end
+	end
+	
+	command delete_on_device
+		in ask_confirmation_in_system_console type:yes_no end
+		%system_error_handler_input_argument
+		in_check
+			script
+				check i_object_.exists &
+					error_message: "'" & i_object_ & "' cannot be deleted, because it does not exist." &
+					error_id: directory_must_exist
+				check not i_ask_confirmation_in_system_console or se_system.console #r void
+			end
+		end
+
+		out error type:directory_or_file_error voidable:yes end
+		out_check check: not i_object_.exists xor i_error #r void end
+	end
+	
+	// TD command delete_on_exit (see Java doc)
+
+end

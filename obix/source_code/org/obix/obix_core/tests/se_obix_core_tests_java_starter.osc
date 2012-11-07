@@ -1,0 +1,33 @@
+service obix_core_tests_java_starter
+
+	java_header
+		import org.obix.obix_core.collections.lists.indexed_list.in_mutable_indexed_list_base_;
+		import org.obix.obix_core.collections.lists.indexed_list.generified.fa_mutable_indexed_string_list;
+		import org.obix.obix_core.system.se_system;
+	end java_header
+
+	// THE FOLLOWING JAVA CODE CAN BE MODIFIED IF NEEDED, BUT BE CAREFUL!
+	java
+		public static void main ( String[] i_arguments ) {
+			try {
+				System.setProperty ( "sun.awt.exception.handler", "org.obix.obix_core.system.fa_AWT_exception_handler" );
+
+				// input arguments provided on the command line
+				in_mutable_indexed_list_base_ command_line_arguments = null;
+				if ( i_arguments.length > 0 ) {
+					command_line_arguments = fa_mutable_indexed_string_list.co_create_command();
+					for ( int i=0; i < i_arguments.length; i++ ) {
+						command_line_arguments.co_append_command ( new fa_non_empty_string ( i_arguments[i] ) );
+					}
+				}
+				
+				se_obix_core_tests_starter.co_start_command ( command_line_arguments == null ? null : command_line_arguments.co_make_immutable_command() );
+			}
+			catch ( Throwable i_throwable ) {
+				se_system._co_handle_exception ( i_throwable ) ;
+				System.exit ( 1 );
+			}
+		}
+	end java
+
+end service

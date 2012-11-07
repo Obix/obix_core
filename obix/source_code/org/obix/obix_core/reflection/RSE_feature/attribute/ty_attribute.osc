@@ -1,0 +1,36 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type attribute
+
+	inherit RSE_feature
+		attribute a_id type:attribute_id end
+	end
+
+	attribute object_type type:object_type end
+
+	attribute voidable type:yes_no end
+
+	attribute check_script type:attribute_check_script voidable:yes end
+
+	attribute default_value_script type:attribute_default_value_script voidable:yes end
+
+	attribute kind type:attribute_kind.enumerated end
+
+	attribute setable type:attribute_setable.enumerated end
+
+	attribute_list type:target_code_instructions voidable:yes transient:yes
+		attribute field_target_code_instructions end
+		attribute getter_target_code_instructions end
+		attribute setter_target_code_instructions end
+	end
+	
+	attribute value_is_variable type:yes_no kind:readonly_constant end
+	attribute value_is_readonly type:yes_no kind:readonly_constant end
+	attribute value_is_public_setable type:yes_no kind:readonly_constant end
+
+end type

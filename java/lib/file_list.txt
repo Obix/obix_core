@@ -1,0 +1,17 @@
+# Don't delete this file, despite the fact that there are no entries.
+# This file only exists to force Git to copy the lib directory
+# see https:#git.wiki.kernel.org/index.php/GitFaq#Can_I_add_empty_directories.3F
+
+# This file defines pointers to .jar files used in your project
+# Each line represents a pointer to one or more .jar files
+# One or more pointer lines can be defined
+# There are 4 syntaxes supported:
+#    1. absolute file
+#       example: file /foo/bar/zar.jar
+#    2. relative file (relative to the directory of this configuration file)
+#       example: rel file foo/bar/zar.jar
+#    3. absolute directory (all files in the directory will be used)
+#       example: dir /foo/bar/
+#    4. relative directory (relative to the directory of this configuration file; all files in the directory will be used)
+#       example: rel dir ../foo/bar/
+# Comment lines start with #

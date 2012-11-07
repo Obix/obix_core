@@ -1,0 +1,1146 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service reflection
+
+	java_header
+		import java.lang.reflect.Method;
+	end java_header
+
+	java
+		private static String _a_next_method_name = "co_next_command";
+	end java
+
+	attribute reflection_file_name_extension type:file_name_extension default: fa_file_name_extension.create ( "oar"~ ) end
+
+	attribute obix_lib_directory_name type:directory_name default: fa_directory_name.create ( "obix_lib"~ ) end
+
+	attribute WEBINF_directory_name type:directory_name default: fa_directory_name.create ( "WEB-INF"~ ) end
+
+	attribute base_type_for_generic_type_suffix type:non_empty_string default: "_base_" end
+	
+	attribute_list type:command_id
+		attribute command_id_RSE_test default: fa_command_id.create ( "co_test_"~ ) end
+	
+		attribute create_creator_id default: fa_command_id.create ( "co_create"~ ) end
+		attribute create_from_string_creator_id default: fa_command_id.create ( "co_create_from_string"~ ) end
+	end attribute_list
+
+	attribute result_output_argument_id type:output_argument_id default: fa_output_argument_id.create ( "o_result"~ ) end
+	attribute error_output_argument_id type:output_argument_id default: fa_output_argument_id.create ( "o_error"~ ) end
+
+	attribute cached_obix_lib_directory type:directory voidable:yes private:yes kind:variable end
+
+	attribute obix_lib_directory type:directory voidable:yes private:yes kind:readonly_constant
+		get
+			script
+				if a_cached_obix_lib_directory =r void then
+					// first guess subdirectory obix_lib/
+					var directory result1 = fa_directory.create_from_root_and_child_name ( &
+						root_directory = se_system_directories.application_home_directory &
+						child_name = obix_lib_directory_name )
+					if v_result1.exists then
+						a_cached_obix_lib_directory = v_result1
+					else
+						// then guess subdirectory WEB-INF/obix_lib/
+						var directory v_result2 = fa_directory.create_from_root_and_child_name ( &
+							root_directory = se_system_directories.application_home_directory &
+							child_name = WEBINF_directory_name )
+						v_result2 = v_result2.append_child_name ( obix_lib_directory_name )
+						if v_result2.exists then
+							a_cached_obix_lib_directory = v_result2
+						else
+							se_system_utilities.default_system_error_handler.handle_system_error ( fa_resource_error.create ( &
+								description = "Reflection data cannot be loaded because neither directory '" & v_result1 & "' nor directory '" & v_result2 & "' exists." &
+								resource = void ) )
+						end if
+					end if
+				end if
+				
+				o_obix_lib_directory = a_cached_obix_lib_directory
+			end
+		end
+	end
+
+	attribute cached_library_repository type:library_repository voidable:yes private:yes kind:variable end
+
+	attribute library_repository type:library_repository voidable:yes kind:readonly_constant // private:yes
+		get
+			script
+				if a_cached_library_repository =r void then
+					var system_error error
+					fa_library_repository.create_from_directory ( &
+						directory = a_obix_lib_directory &
+						include_system_repository = no &
+						message_handler = fa_no_infos_console_output_message_handler.create ) &
+						( a_cached_library_repository = result &
+						v_error = error )
+					if v_error #r void then
+						se_system_utilities.default_system_error_handler.handle_system_error ( fa_resource_error.create ( &
+							description = "Library repository cannot be loaded from directory '" & a_obix_lib_directory.to_string & "'. Reflection cannot be used." &
+							resource = a_obix_lib_directory ) )
+					end if
+				end if
+
+				o_library_repository = a_cached_library_repository
+			end 
+		end
+	end
+	
+	// TD2 should be replaced by service_by_id_path
+	command service_by_prefixed_id_path_string
+		in id_path type:simple_string end
+		
+		out result type:service voidable:yes end
+	
+		script
+			const service_id_path service_id_path = fa_service_id_path.create ( i_id_path.value )
+
+			o_result = a_library_repository.service_by_id_path ( c_service_id_path )
+		end
+	end
+	
+	command type_id_path_of_object
+		in object type:any_type end
+		
+		out result type:type_id_path end
+		
+		script
+			var string_value type_id_path
+			java
+				for ( Class<?> interf : i_object.getClass().getInterfaces() ) {
+					String name = interf.getName();
+					int in_position = name.indexOf ( ".in_" ); 
+					if ( in_position != -1 ) {  // Obix objects always implement aaa.bbb.in_ccc and java.io.Serializable
+						v_type_id_path = new fa_string_value ( name.substring ( 0, in_position ) + ".ty_" + name.substring ( in_position + 4 ) );
+						break;
+					}
+				}
+				if ( v_type_id_path == null ) throw new RuntimeException ( "Java interface of object '" + i_object.toString() + "' could not be defined." );
+			end java
+			
+			o_result = fa_type_id_path.create ( v_type_id_path )
+		end
+		
+		test
+			script
+				test ""
+				verify v_result.value compare =v se_common_type_id_paths.string.value
+			end
+		end
+	end
+	
+	// TD for better performance all calls to this command should be replaced by co_type_id_path_of_object when possible
+	command type_of_object
+		in object type:any_type end
+		
+		out result type:type end
+		
+		script
+			o_result = a_library_repository.type_by_id_path ( co_type_id_path_of_object ( i_object ) )
+		end
+	end
+	
+	command factory_id_path_of_object
+		in object type:any_type end
+		
+		out result type:factory_id_path end
+		
+		script
+			var string_value class_name
+			java
+				v_class_name = new fa_string_value ( i_object.getClass().getName() );
+			end java
+			o_result = fa_factory_id_path.create ( v_class_name )
+		end
+		
+		test
+			script
+				test ""
+				verify v_result.value compare =v se_common_type_id_paths.string.value.replace_all ( to_replace = ".ty_"~ replace_by = ".fa_"~ )
+			end
+		end
+	end
+
+	// TD for better performance all calls to this command should be replaced by co_type_id_path_of_object when possible
+	command factory_of_object
+		in object type:any_type end
+		
+		out result type:factory end
+		
+		script
+			o_result = a_library_repository.factory_by_id_path ( co_factory_id_path_of_object ( i_object ) )
+		end
+	end
+
+
+	command type_of_object_type
+		in object_type type:object_type end
+		
+		out result type:type end
+		
+		script
+			o_result = i_object_type.type
+
+			if o_result =r void then
+				o_result = a_library_repository.type_by_id_path ( i_object_type.type_id_path )
+				i_object_type.type = o_result
+			end if
+		end
+	end
+	
+	command underlying_enumerated_type_of_object_type
+		in object_type type:object_type end
+		
+		out result type:type voidable:yes end
+		
+		script
+			case type of i_object_type
+				when enumerated_object_type enumerated_object_type then
+					o_result = underlying_enumerated_type_of_enumerated_object_type ( c_enumerated_object_type )
+				otherwise
+					o_result = void
+			end case
+		end
+	end
+	
+	command underlying_enumerated_type_of_enumerated_object_type
+		in enumerated_object_type type:enumerated_object_type end
+		
+		out result type:type end
+		
+		script
+			o_result = i_enumerated_object_type.underlying_enumerated_type
+
+			if o_result =r void then
+				o_result = a_library_repository.type_by_id_path ( i_enumerated_object_type.underlying_enumerated_type_id_path )
+				i_enumerated_object_type.underlying_enumerated_type = o_result
+			end if
+		end
+	end
+	
+	command type_id_path_of_map_keys
+		in map type:!mutable_or_immutable_map<*> end
+		
+		out result type:type_id_path end
+		
+		script
+			o_result = co_type_id_path_of_iterator_items ( i_map.key_iterator )
+		end
+
+		test
+			script
+				test !map_factory<key_type:string item_type:positive32>.create_empty
+				verify v_result.value compare =v se_common_type_id_paths.string.value
+			end
+		end
+	end
+
+
+	// for best performance co_type_id_path_of_map_keys should be used when possible
+	command type_of_map_keys
+		in map type:!mutable_or_immutable_map<*> end
+		
+		out result type:type end
+		
+		script
+			o_result = a_library_repository.type_by_id_path ( co_type_id_path_of_map_keys ( i_map ) )
+		end
+	end
+
+	command type_id_path_of_iteratable_items
+		in iteratable type:!iteratable<*> end
+		
+		out result type:type_id_path end
+		
+		script
+			o_result = co_type_id_path_of_iterator_items ( i_iteratable.item_iterator )
+		end
+		
+		test
+			script
+				test fa_indexed_string_list.create_empty
+				verify v_result.value compare =v se_common_type_id_paths.string.value
+
+				test !map_factory<key_type:string item_type:positive32>.create_empty
+				verify v_result.value compare =v se_common_type_id_paths.positive32.value
+
+				test ""
+				verify v_result.value compare =v se_common_type_id_paths.character.value
+			end
+		end
+	end
+
+	// for best performance co_type_id_path_of_iteratable_items should be used when possible
+	command type_of_iteratable_items
+		in iteratable type:!iteratable<*> end
+		
+		out result type:type end
+		
+		script
+			o_result = a_library_repository.type_by_id_path ( co_type_id_path_of_iteratable_items ( i_iteratable ) )
+		end
+	end
+
+	command type_id_path_of_iterator_items
+		in iterator type:!iterator<*> end
+		
+		out result type:type_id_path end
+		
+		script
+			var string_value type_id_path
+			java
+				Method next_method = i_iterator.getClass().getDeclaredMethod ( _a_next_method_name, se_java_reflection._a_empty_class_array );
+				Class<?> return_type = next_method.getReturnType();
+				// TD doesn't work if the item type of the iterator is an 'on the fly' generified type (e.g. !list<!list<foo>>)
+				v_type_id_path = se_java_reflection._interface_class_to_type_id_path ( return_type );
+			end java
+			
+			o_result = fa_type_id_path.create ( v_type_id_path )
+		end
+		
+		test
+			script
+				test fa_indexed_string_list.create_empty.item_iterator
+				verify v_result.value compare =v se_common_type_id_paths.string.value
+			end
+		end
+	end
+
+///
+	command item_type_of_iteratable_or_iterator_type private:yes
+		in type type:type end
+		in generic_parameter_id type:template_parameter_id end
+
+		out result type:type end
+		
+		script
+			// TD4 Problem:
+			// If a type has an instruction such as the following one in ty_string
+			// inherit !indexed_list<character> end
+			// then i_type.generic_RSE_reference will be void and an error will occur
+			
+			const generified_RSE_parameter_map generic_parameter_map = i_type.generic_RSE_reference.parameter_map
+			const object_type item_object_type = c_generic_parameter_map.require_item ( i_generic_parameter_id )
+
+			o_result = co_type_of_object_type ( c_item_object_type )
+		end
+	end
+end ///
+
+///
+	command is_scalar_object
+		in object type:any_type end
+		
+		out result type:yes_no end
+		
+		script
+			// TD this very slow!!!
+			o_result = co_is_scalar_type ( co_type_of_object ( i_object ) )
+		end
+	end
+end ///
+	
+	command is_scalar_type
+		in i_type type:type end
+		
+		out result type:yes_no end
+		
+		script
+			// TD this very slow!!! Should use java.lang.Class.isAssignableFrom(Class<?> cls) (except if called from compiler components)
+			o_result = i_type.is_compatible_to.result ( &
+				target_type_id_path = se_common_type_id_paths.scalar &
+				type_getter = a_library_repository )
+		end
+	end
+
+
+
+	///
+	command is_type_id_path_compatible_to_type_id_path
+		in type_id_path type:type_id_path end
+		in compatible_to type:type_id_path end
+		
+		out result type:yes_no end
+		
+		script
+			const string_value interface_path = i_type_id_path.value
+		end
+	end
+
+	command is_object_compatible_to_type_id_path
+		in object type:any_type end
+		in compatible_to type:type_id_path end
+		
+		out result type:yes_no end
+		
+		script
+		end
+	end
+
+	command is_object_compatible_to_object
+		in object type:any_type end
+		in compatible_to type:any_type end
+		
+		out result type:yes_no end
+		
+		script
+		end
+	end
+	end ///
+
+	
+	
+///	
+	command is_iteratable_object
+		in object type:any_type end
+		
+		out result type:yes_no end
+		
+		script
+			// TD this very slow!!!
+			o_result = co_is_iteratable_type ( co_type_of_object ( i_object ) )
+		end
+	end
+
+	
+	command is_iteratable_type
+		in i_type type:type end
+		
+		out result type:yes_no end
+		
+		script
+			// TD this very slow!!!
+			o_result = i_type.is_compatible_to.result ( &
+				target_type_id_path = se_common_type_id_paths.iteratable_base_ &
+				type_getter = a_library_repository )
+		end
+	end
+end ///
+	
+	command get_create_creator_for_type
+		in type type:type end
+		%system_error_handler_input_argument
+		
+		out factory type:factory voidable:yes end
+		out creator type:factory_command voidable:yes end
+		out error type:reflection_error voidable:yes end
+		out_check check: ( i_factory =r void xor i_error =r void ) and ( i_creator =r void xor i_error =r void ) end
+		
+		script
+			a_library_repository.get_create_creator_for_type ( &
+				type_id_path = i_type.id_path &
+				error_handler = i_error_handler ) &
+				( o_factory = factory &
+				o_creator = creator &
+				o_error = error )
+		end
+	end
+
+	command get_create_from_string_creator_for_type
+		in type type:type end
+		%system_error_handler_input_argument
+		
+		out factory type:factory voidable:yes end
+		out creator type:factory_command voidable:yes end
+		out error type:reflection_error voidable:yes end
+		out_check check: ( i_factory =r void xor i_error =r void ) and ( i_creator =r void xor i_error =r void ) end
+		
+		script
+			co_get_creator_for_type ( &
+				type = i_type &
+				creator_id = a_create_from_string_creator_id &
+				error_handler = i_error_handler ) &
+				( o_factory = factory &
+				o_creator = creator &
+				o_error = error )
+		end
+	end
+
+	command get_creator_for_type
+		in type type:type end
+		// in type_id_path type:type_id_path check: i_object_.contains_type ( i_type_id_path ) end
+		in creator_id type:command_id end
+		%system_error_handler_input_argument
+		
+		out factory type:factory voidable:yes end
+		out creator type:factory_command voidable:yes end
+		out error type:reflection_error voidable:yes end
+		out_check check: ( i_factory =r void xor i_error =r void ) and ( i_creator =r void xor i_error =r void ) end
+		
+		script
+			a_library_repository.get_creator_for_type ( &
+				type_id_path = i_type.id_path &
+				creator_id = i_creator_id &
+				error_handler = i_error_handler ) &
+				( o_factory = factory &
+				o_creator = creator &
+				o_error = error )
+		end
+	end
+
+
+	// get attribute values
+	
+	command get_attribute_list_of_type
+		in i_type type:type end
+		in include_readonly_attributes type:yes_no end
+		in include_inherited_attributes type:yes_no end
+		
+		out result type:type_attribute_list voidable:yes end
+		
+		script
+			const type_attribute_list full_attribute_list = i_type.attribute_list
+
+			if c_full_attribute_list =r void then
+				o_result = void
+				exit script
+			end if
+			
+			if i_include_readonly_attributes and i_include_inherited_attributes then
+				o_result = c_full_attribute_list
+				exit script
+			end if
+			
+			const mutable_type_attribute_list list = fa_mutable_type_attribute_list.create ( se_attribute.id_prefix )
+
+			repeat for each type_attribute attribute in c_full_attribute_list
+
+				if not i_include_readonly_attributes and c_attribute.value_is_readonly then
+					next repeat
+				end if
+
+				if not i_include_inherited_attributes then
+					case type of c_attribute
+						when inherited_type_attribute; redefined_type_attribute then
+							next repeat
+					end case
+				end if
+				
+				c_list.add ( c_attribute )
+			end repeat
+
+			o_result = c_list.make_immutable
+		end
+	end
+
+	command get_attribute_list_of_object
+		in object type:any_type end
+		in include_readonly_attributes type:yes_no end
+		in include_inherited_attributes type:yes_no end
+		
+		out result type:type_attribute_list voidable:yes end
+		
+		script
+			o_result = get_attribute_list_of_type ( &
+				type = type_of_object ( i_object ) &
+				include_readonly_attributes = i_include_readonly_attributes &
+				include_inherited_attributes = i_include_inherited_attributes )
+		end
+	end
+
+	command get_attribute_value_list_of_object
+		in object type:any_type end
+		in include_readonly_attributes type:yes_no end
+		in include_inherited_attributes type:yes_no end
+		in suppress_identifier_prefix type:yes_no end
+		
+		out result type:string_any_type_map voidable:yes end
+		
+		script
+			const type_attribute_list type_attribute_list = co_get_attribute_list_of_object ( &
+				object = i_object &
+				include_readonly_attributes = i_include_readonly_attributes &
+				include_inherited_attributes = i_include_inherited_attributes )
+				
+			if c_type_attribute_list =r void then
+				exit script
+			end if
+
+			const string_any_type_mutable_map map = fa_string_any_type_mutable_map.create
+
+			repeat for each attribute attribute in c_type_attribute_list
+				const attribute_id attribute_id = c_attribute.id
+
+				var simple_non_empty_string name
+				if i_suppress_identifier_prefix then
+					v_name = c_attribute_id.suffix
+				else
+					v_name = c_attribute_id
+				end if
+
+				c_map.add ( &
+					key = v_name &
+					item = co_get_attribute_value_of_object.result ( &
+						object = i_object &
+						attribute_id = c_attribute_id ) )
+			end repeat
+			
+			o_result = c_map.make_immutable
+		end
+	end
+
+	
+	command get_attribute_value_of_object
+		in object type:any_type end
+		in attribute_id type:attribute_id end
+		
+		%result_or_error_void_output < &
+			result_type: any_type &
+			error_type: error >
+		
+		script
+			section get_value on_error:continue
+				java
+					o_result = se_java_reflection._co_get_public_attribute_value ( i_object.getClass(), i_object, i_attribute_id.getValue().java_value() ) ;
+				end java
+			end 			
+			if v_program_error_ #r void then
+				o_error = v_program_error_
+			end
+		end
+	end
+	
+	command get_attribute_value_of_service
+		in service type:service end
+		in attribute_id type:attribute_id end
+		
+		%result_or_error_void_output < &
+			result_type: any_type &
+			error_type: error >
+
+		script
+			var ty_simple_string v_class_name = i_service.a_id_path
+
+			section get_value on_error:continue
+				java
+					Class v_class = Class.forName ( v_class_name.getValue().java_value() ) ;
+					o_result = se_java_reflection._co_get_public_attribute_value ( v_class, null, i_attribute_id.getValue().java_value() ) ;
+				end java
+			end
+
+			if v_program_error_ #r void then
+				o_error = v_program_error_
+			end
+
+		end
+	end
+	
+	// commands
+
+	command execute_service_command
+		///
+		if the command has no output arguments then o_result will be void
+		if the command has one output argument then o_result will contain the result
+		if the command has more than one output argument then o_result will contain a string_any_type map with the output argument ids as keys
+		   
+		if a program error or exception occurs during execution of 'i_command_id' then the exception propagates to the caller (i.e. it is not reported in o_error; o_result and o_error are both void)
+		however, if the program error is due to an invalid value in 'i_input_argument_list' (which causes a program error of type 'input_argument_check_error') then the error is returned in o_error
+		if 'i_command_id' cannot be executed (because of wrong reflection data, such as an inexistant command id) then an error is reported in o_error
+		end ///
+
+		in service_id_path type:service_id_path end
+		in command_id type:command_id end
+		in input_argument_list type:!indexed_list<*> voidable:yes end
+		%system_error_handler_input_argument
+
+		%result_or_system_error_void_output < any_type >
+			
+		script
+			se_java_reflection.execute_static_class_method ( &
+				class_path = i_service_id_path &
+				method_name = """{{i_command_id}}_command""".to_non_empty_string &
+				method_input = i_input_argument_list &
+				reload_class = no &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error ) on_error:continue
+
+			if v_program_error_ #r void then
+				const program_error source_error = se_program_error.get_source_error_of_program_error ( v_program_error_ )
+				case type of c_source_error
+					when input_argument_check_error; in_check_error then
+						o_error = fa_invalid_data_error.create ( &
+							description = c_source_error.description &
+							data = i_input_argument_list )
+				otherwise
+					// TD should be replaced by 'rethrow v_program_error_' (as soon as 'rethrow' is available)
+					error v_program_error_.description
+				end case
+			end if
+		end
+	end
+	
+	command execute_factory_command
+		///
+		if the command has no output arguments then o_result will be void
+		if the command has one output argument then o_result will contain the result
+		if the command has more than one output argument then o_result will contain a string_any_type map with the output argument ids as keys
+		   
+		if a program error or exception occurs during execution of 'i_command_id' then the exception propagates to the caller (i.e. it is not reported in o_error; o_result and o_error are both void)
+		however, if the program error is due to an invalid value in 'i_input_argument_list' (which causes a program error of type 'input_argument_check_error') then the error is returned in o_error
+		if 'i_command_id' cannot be executed (because of wrong reflection data, such as an inexistant command id) then an error is reported in o_error
+		end ///
+
+		in factory_id_path type:factory_id_path end
+		in command_id type:command_id end
+		in input_argument_list type:!indexed_list<*> voidable:yes end
+		%system_error_handler_input_argument
+
+		%result_or_system_error_void_output < any_type >
+			
+		script
+			se_java_reflection.execute_static_class_method ( &
+				class_path = i_factory_id_path &
+				method_name = """{{i_command_id}}_command""".to_non_empty_string &
+				method_input = i_input_argument_list &
+				reload_class = no &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error ) on_error:continue
+
+			if v_program_error_ #r void then
+				const program_error source_error = se_program_error.get_source_error_of_program_error ( v_program_error_ )
+				case type of c_source_error
+					when input_argument_check_error; in_check_error then
+						o_error = fa_invalid_data_error.create ( &
+							description = c_source_error.description &
+							data = i_input_argument_list )
+				otherwise
+					// TD should be replaced by 'rethrow v_program_error_' (as soon as 'rethrow' is available)
+					error v_program_error_.description
+				end case
+			end if
+		end
+	end
+
+	command execute_create_creator_for_string_value_input
+		///
+		if a program error or exception occurs during execution of 'i_command_id' then the exception propagates to the caller (i.e. it is not reported in o_error; o_result and o_error are both void)
+		however, if the program error is due to an invalid value of 'i_string_value_input_argument' (which causes a program error of type 'attribute_check_error') then the error is returned in o_error
+		if 'i_command_id' cannot be executed because of wrong reflection data (e.g. an inexistant command id) then an error is reported in o_error
+		end ///
+
+		in factory type:factory end
+		in creator_id type:command_id end
+		in string_value_input_argument type:string_value end
+		%system_error_handler_input_argument
+
+		%result_xor_system_error_output < any_type >
+			
+		script
+			se_java_reflection.execute_static_class_method_6 ( &
+				class_path = i_factory.id_path &
+				method_name = """{{i_creator_id}}_command""".to_non_empty_string &
+				method_input = i_string_value_input_argument &
+				reload_class = no &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error ) on_error:continue
+
+			if v_program_error_ #r void then
+				const program_error source_error = se_program_error.get_source_error_of_program_error ( v_program_error_ )
+				case type of c_source_error
+					when attribute_check_error then
+						o_error = fa_invalid_data_error.create ( &
+							description = c_source_error.description &
+							data = i_string_value_input_argument )
+				otherwise
+					// TD should be replaced by 'rethrow v_program_error_' (as soon as 'rethrow' is available)
+					error c_source_error.description
+				end case
+			end if
+		end
+	end
+
+	command execute_create_from_string_creator
+		///
+		if a program error or exception occurs during execution of 'i_command_id' then the exception propagates to the caller (i.e. it is not reported in o_error; o_result and o_error are both void)
+		however, if the program error is due to an invalid value of 'i_string_input_argument' (which causes a program error of type 'attribute_check_error') then the error is returned in o_error
+		if 'i_command_id' cannot be executed (because of wrong reflection data, such as an inexistant command id) then an error is reported in o_error
+		end ///
+
+		in factory type:factory end
+		in creator_id type:command_id end
+		in string_input_argument type:string voidable:yes end
+		in config_input_argument type:string_to_object_converter_config end
+		%system_error_handler_input_argument
+
+		%result_or_system_error_void_output < any_type >
+			
+		script
+			se_java_reflection.execute_static_class_method_2a ( &
+				class_path = i_factory.id_path &
+				method_name = """{{i_creator_id}}_command""".to_non_empty_string &
+				method_string_input = i_string_input_argument &
+				method_config_input = i_config_input_argument &
+				reload_class = no &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error ) on_error:continue
+
+			if v_program_error_ #r void then
+				const program_error source_error = se_program_error.get_source_error_of_program_error ( v_program_error_ )
+				case type of c_source_error
+					when attribute_check_error then
+						o_error = fa_invalid_data_error.create ( &
+							description = c_source_error.description &
+							data = i_string_input_argument )
+				otherwise
+					// TD should be replaced by 'rethrow v_program_error_' (as soon as 'rethrow' is available)
+					error c_source_error.description
+				end case
+			end if
+		end
+	end
+
+	command execute_create_creator_for_integer32_value_input
+		///
+		if a program error or exception occurs during execution of 'i_command_id' then the exception propagates to the caller (i.e. it is not reported in o_error; o_result and o_error are both void)
+		however, if the program error is due to an invalid value of 'i_string_value_input_argument' (which causes a program error of type 'attribute_check_error') then the error is returned in o_error
+		if 'i_command_id' cannot be executed because of wrong reflection data (e.g. an inexistant command id) then an error is reported in o_error
+		end ///
+
+		in factory type:factory end
+		in creator_id type:command_id end
+		in integer32_value_input_argument type:integer32_value end
+		%system_error_handler_input_argument
+
+		%result_xor_system_error_output < any_type >
+			
+		script
+			se_java_reflection.execute_static_class_method_6 ( &
+				class_path = i_factory.id_path &
+				method_name = """{{i_creator_id}}_command""".to_non_empty_string &
+				method_input = i_integer32_value_input_argument &
+				reload_class = no &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error ) on_error:continue
+
+			if v_program_error_ #r void then
+				const program_error source_error = se_program_error.get_source_error_of_program_error ( v_program_error_ )
+				case type of c_source_error
+					when attribute_check_error then
+						o_error = fa_invalid_data_error.create ( &
+							description = c_source_error.description &
+							data = i_integer32_value_input_argument )
+				otherwise
+					// TD should be replaced by 'rethrow v_program_error_' (as soon as 'rethrow' is available)
+					error v_program_error_.description
+				end case
+			end if
+		end
+	end
+
+	// create objects
+
+	command create_object_for_simple_string_type
+		///
+		if a program error or exception occurs during execution of the creator (e.g. i_string_value is invalid) then the exception propagates to the caller (i.e. it is not reported in o_error; o_result and o_error are both void)
+		however, if the program error is due to an invalid value of 'i_string_value' then the error is returned in o_error
+		if the creator cannot be executed (e.g. no factory or no creator can be found) then an error is reported in o_error
+		end ///
+
+		in simple_string_type type:type end
+		in string_value type:string_value end
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output < simple_string >
+		
+		script
+			var factory factory
+			var factory_command creator
+			co_get_create_creator_for_type ( &
+				type = i_simple_string_type &
+				error_handler = i_error_handler ) &
+				( v_factory = factory &
+				v_creator = creator &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			const !indexed_list<string_value> input_argument_list = !indexed_list_factory<string_value>.create_singleton ( i_string_value )
+
+			var any_type reflection_result
+			se_reflection.execute_factory_command ( &
+				factory_id_path = v_factory.id_path &
+				command_id = v_creator.id &
+				input_argument_list = c_input_argument_list &
+				error_handler = i_error_handler ) &
+				( v_reflection_result = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			case type of v_reflection_result
+				when simple_string simple_string then
+					o_result = c_simple_string
+				otherwise
+					o_error = fa_reflection_output_argument_type_error.create ( &
+						description = """Creator '{{v_factory.id}}.{{v_creator.id}}' doesn't return a 'simple_string' type.""" &
+						java_exception = void )
+					i_error_handler.handle_system_error ( o_error )
+			end case
+		end
+	end
+
+	command create_object_for_simple_integer32_type
+		///
+		if a program error or exception occurs during execution of the creator (e.g. i_string_value is invalid) then the exception propagates to the caller (i.e. it is not reported in o_error; o_result and o_error are both void)
+		however, if the program error is due to an invalid value of 'i_integer32_value' then the error is returned in o_error
+		if the creator cannot be executed (e.g. no factory or no creator can be found) then an error is reported in o_error
+		end ///
+
+		in integer32_type type:type end
+		in integer32_value type:integer32_value end
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output < simple_signed_integer32 >
+		
+		script
+			var factory factory
+			var factory_command creator
+			co_get_create_creator_for_type ( &
+				type = i_integer32_type &
+				error_handler = i_error_handler ) &
+				( v_factory = factory &
+				v_creator = creator &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			const !indexed_list<integer32_value> input_argument_list = !indexed_list_factory<integer32_value>.create_singleton ( i_integer32_value )
+
+			var any_type reflection_result
+			se_reflection.execute_factory_command ( &
+				factory_id_path = v_factory.id_path &
+				command_id = v_creator.id &
+				input_argument_list = c_input_argument_list &
+				error_handler = i_error_handler ) &
+				( v_reflection_result = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			case type of v_reflection_result
+				when simple_signed_integer32 simple_signed_integer32 then
+					o_result = c_simple_signed_integer32
+				otherwise
+					o_error = fa_reflection_output_argument_type_error.create ( &
+						description = """Creator '{{v_factory.id}}.{{v_creator.id}}' doesn't return a 'simple_signed_integer32' type.""" &
+						java_exception = void )
+					i_error_handler.handle_system_error ( o_error )
+			end case
+		end
+	end
+
+	command create_object_for_simple_character_type
+		///
+		if a program error or exception occurs during execution of the creator (e.g. i_string_value is invalid) then the exception propagates to the caller (i.e. it is not reported in o_error; o_result and o_error are both void)
+		however, if the program error is due to an invalid value of 'i_character_value' then the error is returned in o_error
+		if the creator cannot be executed (e.g. no factory or no creator can be found) then an error is reported in o_error
+		end ///
+
+		in simple_character_type type:type end
+		in character_value type:character_value end
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output < simple_character >
+		
+		script
+			var factory factory
+			var factory_command creator
+			co_get_create_creator_for_type ( &
+				type = i_simple_character_type &
+				error_handler = i_error_handler ) &
+				( v_factory = factory &
+				v_creator = creator &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			const !indexed_list<character_value> input_argument_list = !indexed_list_factory<character_value>.create_singleton ( i_character_value )
+
+			var any_type reflection_result
+			se_reflection.execute_factory_command ( &
+				factory_id_path = v_factory.id_path &
+				command_id = v_creator.id &
+				input_argument_list = c_input_argument_list &
+				error_handler = i_error_handler ) &
+				( v_reflection_result = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			case type of v_reflection_result
+				when simple_character simple_character then
+					o_result = c_simple_character
+				otherwise
+					o_error = fa_reflection_output_argument_type_error.create ( &
+						description = """Creator '{{v_factory.id}}.{{v_creator.id}}' doesn't return a 'simple_character' type.""" &
+						java_exception = void )
+					i_error_handler.handle_system_error ( o_error )
+			end case
+		end
+	end
+
+///	
+	// attribute checks
+	
+	command check_public_attribute_of_object
+		in object type:any_type end
+		in attribute_id type:attribute_id end
+		
+		out attribute type:attribute voidable:yes end
+		out error type:error voidable:yes end
+		out_check check: i_attribute =r void xor i_error =r void end
+		
+		script
+			var ty_type_proxy v_type_proxy = co_type_proxy_of_object ( i_object )
+			o_attribute = v_type_proxy.a_type.co_attribute_by_id ( i_attribute_id )
+			if o_attribute =r void then
+				o_error = fa_error.co_create ( &
+					i_id = "invalid_attribute_id" &
+					i_description = "Attribute '" & i_attribute_id.co_suffix & "' does not exist in type '" & v_type_proxy.co_to_string & "'" )
+			end if
+		end script
+	end command
+		
+	command check_public_assignable_attribute_of_object
+		in object type:any_type end
+		in attribute_id type:attribute_id end
+		
+		out attribute type:attribute voidable:yes end
+		out error type:error voidable:yes end
+		out_check check: not ( i_attribute =r void and i_error =r void ) end
+		
+		script
+			co_check_public_attribute_of_object ( &
+				i_object = i_object &
+				i_attribute_id = i_attribute_id ) &
+				( o_attribute = o_attribute &
+				o_error = o_error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			if o_attribute.a_setable #v ty_attribute_setable.en_all then
+				o_error = fa_error.co_create ( &
+					i_id = "attribute_not_assignable" &
+					i_description = "The value of attribute '" & i_attribute_id.co_suffix & "' in type '" & co_type_proxy_of_object ( i_object ).co_to_string & "' cannot be changed." )
+			end if
+		end script
+	end command
+		
+	command check_type_assignable_to_attribute_of_object
+		in object type:any_type end
+		in attribute_id type:attribute_id end
+		in type_proxy type:type_proxy end
+		
+		out attribute type:attribute voidable:yes end
+		out error type:error voidable:yes end
+		out_check check: not ( i_attribute =r void and i_error =r void ) end
+	
+		script
+			co_check_public_assignable_attribute_of_object ( &
+				i_object = i_object &
+				i_attribute_id = i_attribute_id ) &
+				( o_attribute = o_attribute &
+				o_error = o_error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			if not o_attribute.a_object_type.a_type_proxy.a_type.co_is_compatible.result ( i_type_proxy ) then
+				o_error = fa_error.co_create ( &
+					i_id = "type_not_compatible" &
+					i_description = "A value of type '" & i_type_proxy.co_to_string & "' cannot be assigned to attribute '" & co_type_proxy_of_object ( i_object ).co_to_string & "." & i_attribute_id.co_suffix & "', which is of type '" & o_attribute.a_object_type.a_type_proxy.co_to_string & "'." )
+			end if
+		end script
+	end command
+		
+	command check_value_assignable_to_attribute_of_object
+		in object type:any_type end
+		in attribute_id type:attribute_id end
+		in value type:any_type voidable:yes end
+		
+		out attribute type:attribute voidable:yes end
+		out error type:error voidable:yes end
+		out_check check: not ( i_attribute =r void and i_error =r void ) end
+		
+		script
+			if i_value #r void then
+				co_check_type_assignable_to_attribute_of_object ( &
+					i_object = i_object &
+					i_attribute_id = i_attribute_id &
+					i_type_proxy = co_type_proxy_of_object ( i_value ) ) &
+					( o_attribute = o_attribute &
+					o_error = o_error )
+			else
+				co_check_public_assignable_attribute_of_object ( &
+					i_object = i_object &
+					i_attribute_id = i_attribute_id ) &
+					( o_attribute = o_attribute &
+					o_error = o_error )
+			end if
+			if o_error #r void then
+				exit script
+			end if
+			
+			var string_value v_class_name = co_type_proxy_of_object ( i_object ).id_path.value
+			java
+				Class v_class = Class.forName ( v_class_name.java_value() ) ;
+				o_error = _co_check_attribute_value ( v_class, i_attribute_id.getValue().java_value(), i_value );
+			end java
+		end script
+	end command
+	
+	// set attribute values
+
+	command assign_value_to_attribute_of_object
+		in object type:any_type end
+		in attribute_id type:attribute_id end
+		in value type:any_type voidable:yes end
+		in_check
+			script
+				var ty_error v_error = co_check_value_assignable_to_attribute_of_object.o_error ( &
+					i_object = i_object &
+					i_attribute_id = i_attribute_id &
+					i_value = i_value )
+				check v_error =r void error_message: v_error.a_description
+			end script
+		end in_check
+		
+		// out error type:error voidable:yes end
+		
+		script
+			//section set_value on_error:continue
+				java
+					_co_set_attribute_value ( i_object.getClass(), i_object, i_attribute_id.getValue().java_value(), i_value ) ;
+				end java
+			///
+			end section
+			if v_program_error_ #r void then
+				o_error = v_program_error_.a_error
+			end if
+			end ///
+		end script
+	end command
+
+	// execute commands
+	
+	//
+end ///
+
+end service

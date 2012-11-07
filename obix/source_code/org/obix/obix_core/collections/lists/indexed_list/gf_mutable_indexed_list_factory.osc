@@ -1,0 +1,290 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic factory mutable_indexed_list_factory
+
+	param item_type end
+	
+	factory type:!mutable_indexed_list<{item_type}>
+	
+		java_header
+			import java.util.ArrayList;
+			import java.util.Collections;
+			import java.util.List;
+
+			import org.obix.obix_core.collections.se_collection;
+			import org.obix.obix_core.collections.java.fa_java_collection_wrapper;
+			import org.obix.obix_core.collections.java.fa_java_unmodifiable_list_wrapper;
+		end java_header
+
+		java
+			private List<in_any_type> a_java_list = null ;
+			
+			/* TD needed?
+			// converted to unmodifiableList because a_java_list can be passed to an immutable list
+			public List<in_any_type> java_list() { 
+				if ( se_java_collection_utilities.is_unmodifiable_list ( a_java_list ) {
+					return Collections.unmodifiableList ( a_java_list ); 
+				} else {
+					return a_java_list; 
+				}
+			} */
+		end java
+
+		%te_mutable_or_immutable_indexed_list_factory_attributes
+
+		%te_mutable_or_immutable_indexed_list_factory_commands<{item_type}>
+
+		command to_string
+			script
+				o_result = "Mutable indexed list containing " & a_item_count.co_to_string & " item(s)."
+			end
+		end
+		
+		// mutable list
+
+		command append
+			script
+				java
+					try {
+						a_java_list.add ( i_item ) ;
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+
+		command prepend
+			script
+				java
+					try {
+						a_java_list.add ( 0, i_item ) ;
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+
+		command remove_first
+			script
+				java
+					try {
+						a_java_list.remove ( 0 ) ;
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+
+		command remove_last
+			script
+				java
+					try {
+						a_java_list.remove ( a_java_list.size() - 1 ) ;
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+
+		command remove_all
+			script
+				java
+					try {
+						a_java_list.clear() ;
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+
+		command replace_first
+			script
+				java
+					try {
+						a_java_list.set ( 0, i_new_item ) ;
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+
+		command replace_last
+			script
+				java
+					try {
+						a_java_list.set ( a_java_list.size() - 1, i_new_item ) ;
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+		
+		// mutable indexed list
+
+		command insert_before
+			script
+				java
+					try {
+						a_java_list.add ( i_index.getValue().java_value() - 1, i_item ) ;
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+
+		command insert_after
+			script
+				java
+					try {
+						a_java_list.add ( i_index.getValue().java_value(), i_item ) ;
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+
+		command remove_at_index
+			script
+				java
+					try {
+						a_java_list.remove ( i_index.getValue().java_value() - 1 ) ;
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+
+		command replace_at_index
+			script
+				java
+					try {
+						a_java_list.set ( i_index.getValue().java_value() - 1, i_new_item ) ;
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+		
+		// immutable
+		
+		command copy_to_immutable
+			script
+				var java_unmodifiable_list_wrapper wrapper
+				java
+					List<in_any_type> copy = new ArrayList<in_any_type> ( a_java_list );
+					v_wrapper = new fa_java_unmodifiable_list_wrapper ( Collections.unmodifiableList ( copy ) );
+				end java
+				o_result = !indexed_list_factory<{item_type}>.create_from_unmodifiable_java_list ( v_wrapper )
+			end
+		end
+		
+		command make_immutable
+			script
+				var java_unmodifiable_list_wrapper wrapper
+				java
+					a_java_list = Collections.unmodifiableList ( a_java_list );
+					v_wrapper = new fa_java_unmodifiable_list_wrapper ( a_java_list );
+				end java
+				o_result = !indexed_list_factory<{item_type}>.create_from_unmodifiable_java_list ( v_wrapper )
+			end
+		end
+		
+		// creators
+
+		creator create
+
+			out result type:!mutable_indexed_list<{item_type}> end
+
+			script
+				java
+					o_result.a_java_list = new ArrayList<in_any_type>();
+				end java
+			end
+		end
+
+		creator create_singleton
+			in item type:{item_type} voidable:yes end
+
+			out result type:!mutable_indexed_list<{item_type}> end
+
+			script
+				java
+					o_result.a_java_list = new ArrayList<in_any_type>();
+					o_result.a_java_list.add(i_item);
+				end java
+			end
+		end
+
+		creator create_duo
+			in item1 type:{item_type} voidable:yes end
+			in item2 type:{item_type} voidable:yes end
+
+			out result type:!mutable_indexed_list<{item_type}> end
+
+			script
+				java
+					o_result.a_java_list = new ArrayList<in_any_type> ( ) ;
+					o_result.a_java_list.add(i_item1);
+					o_result.a_java_list.add(i_item2);
+				end java
+			end
+		end
+
+		creator create_trio
+			in item1 type:{item_type} voidable:yes end
+			in item2 type:{item_type} voidable:yes end
+			in item3 type:{item_type} voidable:yes end
+
+			out result type:!mutable_indexed_list<{item_type}> end
+
+			script
+				java
+					o_result.a_java_list = new ArrayList<in_any_type> ( ) ;
+					o_result.a_java_list.add(i_item1);
+					o_result.a_java_list.add(i_item2);
+					o_result.a_java_list.add(i_item3);
+				end java
+			end
+		end
+
+	end factory
+
+end generic

@@ -1,0 +1,30 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template mutable_or_immutable_map_factory_attributes
+
+	attribute is_empty
+		get
+			script
+				java
+					o_is_empty = a_map.isEmpty() ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+				end java
+			end
+		end
+	end
+
+	attribute item_count
+		get
+			script
+				java
+					o_item_count = new fa_zero_positive32 ( a_map.size() ) ;
+				end java
+			end
+		end
+	end
+
+end template

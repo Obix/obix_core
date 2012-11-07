@@ -1,0 +1,36 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory unchecked_assignment_error type:unchecked_assignment_error
+
+	command to_string
+		script
+			const mutable_string temp_result = fa_mutable_string.create
+			
+			temp_result.append ( se_program_error.co_program_error_to_string ( this ) )
+			
+			if a_source_type #r void then
+				se_program_error.co_append_label_value ( &
+					string = temp_result &
+					i_label = "Source type" &
+					i_value = a_source_type )
+			end if
+
+			if a_target_type #r void then
+				se_program_error.co_append_label_value ( &
+					string = temp_result &
+					i_label = "Target type" &
+					i_value = a_target_type )
+			end if
+			
+			o_result = temp_result.to_non_empty_string
+		end script
+	end command
+
+	creator create kind:in_all end
+
+end factory

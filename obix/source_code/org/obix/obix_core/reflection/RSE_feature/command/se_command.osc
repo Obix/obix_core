@@ -1,0 +1,14 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service command
+
+	attribute id_prefix type:id_prefix default: fa_id_prefix.co_create ( "co".value ) end
+	attribute id_prefix_with_terminator type:non_empty_string default: a_id_prefix.append_terminator end
+	attribute id_prefix_with_terminator_length type:positive32 default: a_id_prefix_with_terminator.item_count end
+	
+end service

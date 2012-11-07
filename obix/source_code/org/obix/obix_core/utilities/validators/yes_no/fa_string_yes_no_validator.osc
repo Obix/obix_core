@@ -1,0 +1,37 @@
+factory string_yes_no_validator type:string_validator
+
+	attribute accept_yn_characters type:yes_no private:yes end
+
+	command is_valid
+		script
+			var string lower_case = i_object.to_lower_case
+			if v_lower_case =v "yes" or v_lower_case =v "no" then
+				o_result = yes
+			else
+				o_result = a_accept_yn_characters and ( v_lower_case =v "y" or v_lower_case =v "n" )
+			end if
+			
+			if not o_result then
+				var string error_message = """'{{i_object}}' is an invalid value. Valid values are: 'yes', 'no'"""
+				if a_accept_yn_characters then
+					v_error_message = v_error_message & ", 'y', 'n'"
+				end if
+				o_error = fa_validation_error.create ( &
+					description = v_error_message &
+					data = i_object )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+	
+	creator create
+		in accept_yn_characters type:yes_no end
+		
+		out result type:string_validator end
+		
+		script
+			o_result.a_accept_yn_characters = i_accept_yn_characters
+		end
+	end
+	
+end

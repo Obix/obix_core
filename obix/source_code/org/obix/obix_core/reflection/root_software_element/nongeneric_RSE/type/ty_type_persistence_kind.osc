@@ -1,0 +1,5 @@
+type type_persistence_kind
+
+	enumerated none; JPA end
+	
+end

@@ -1,0 +1,124 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service java_config
+
+	attribute_list kind:readonly_constant
+
+		attribute java_root_directory type:directory
+			get
+				script
+					o_java_root_directory = fa_directory.create ( co_get_system_property ( "java.home" ).value )
+				end
+			end
+		end
+
+		attribute JAVA_HOME_system_variable type:string voidable:yes
+			get
+				script
+					o_JAVA_HOME_system_variable = se_system_variables.get_value_if_exists.result ( variable_name = "JAVA_HOME" )
+				end
+			end
+		end
+
+		attribute java_ext_directory type:directory
+			get
+				script
+					o_java_ext_directory = fa_directory.create ( co_get_system_property ( "java.ext.dirs" ).value )
+				end
+			end
+		end
+		
+		attribute java_version type:non_empty_string
+			get
+				script
+					o_java_version = co_get_system_property ( "java.version" )
+				end
+			end
+		end
+
+		attribute java_class_version type:non_empty_string
+			get
+				script
+					o_java_class_version = co_get_system_property ( "java.class.version" )
+				end
+			end
+		end
+		
+		attribute java_class_path type:non_empty_string
+			get
+				script
+					o_java_class_path = co_get_system_property ( "java.class.path" )
+				end
+			end
+		end
+		
+		attribute java_library_path type:non_empty_string
+			get
+				script
+					o_java_library_path = co_get_system_property ( "java.library.path" )
+				end
+			end
+		end
+		
+		attribute current_OS_classpath_separator type:non_empty_string
+			get
+				script
+					o_current_OS_classpath_separator = co_get_system_property ( "path.separator" )
+				end
+			end
+		end
+		
+	end
+
+	attribute Unix_classpath_separator type:non_empty_string default: ":" end
+	attribute Windows_classpath_separator type:non_empty_string default: ";" end
+	
+	command get_system_property
+		in property_name type:simple_string end
+
+		out result type:non_empty_string voidable:yes end
+		
+		script
+			java
+				String property_value = System.getProperty ( i_property_name.getValue().java_value() );
+				if ( property_value != null ) {
+					o_result = new fa_non_empty_string ( property_value );
+				}
+			end java
+		end
+	end
+	
+	command get_java_exe_file
+		in use_javaw type:yes_no default:no end
+		%system_error_handler_input_argument
+		
+		%result_xor_resource_error_output < file >
+
+		script
+			const string exe = &
+				iif i_use_javaw &
+				then "javaw" &
+				else "java" end if
+			const string path = &
+				iif se_system.OS_is_Windows &
+				then """{{a_java_root_directory}}bin\{{c_exe}}.exe""" &
+				else """{{a_java_root_directory}}bin/{{c_exe}}""" end if
+			
+			o_result = fa_file.create ( c_path.value )
+			
+			if not o_result.exists then
+				o_error = fa_resource_error.create ( &
+					description = """The Java executable file '{{o_result}}' doesn't exist.""" &
+					resource = o_result )
+				i_error_handler.handle_system_error ( o_error )
+				o_result = void
+			end if
+		end
+	end
+		
+end service

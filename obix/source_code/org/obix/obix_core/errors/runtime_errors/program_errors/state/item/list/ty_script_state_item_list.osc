@@ -1,0 +1,5 @@
+type script_state_item_list
+
+	!gt_indexed_list<script_state_item>
+	
+end

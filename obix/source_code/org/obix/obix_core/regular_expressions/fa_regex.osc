@@ -1,0 +1,40 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory regex type:regex
+
+	java_header
+		import java.util.regex.Pattern;
+	end java_header
+
+	java
+		private Pattern a_java_pattern;
+		
+		public Pattern java_pattern() { return a_java_pattern; }
+	end java
+
+	creator create kind:in_all
+		script
+			o_result.value = i_value
+			java
+				o_result.a_java_pattern = Pattern.compile ( i_value.java_value() );
+			end java
+		end
+	end
+
+	creator create_with_multiline_mode kind:in_all
+		script
+			o_result.value = i_value
+			java
+				o_result.a_java_pattern = Pattern.compile ( i_value.java_value(), Pattern.MULTILINE );
+			end java
+		end
+	end
+	
+	%create_from_string_creator_for_simple_string<regex>
+
+end factory

@@ -1,0 +1,107 @@
+service testing
+
+	attribute_list kind:variable setable:all
+
+		attribute default_test_message_handler type:test_message_handler default: fa_system_out_test_message_handler.create end
+		
+	end
+	
+	command run_project_tests
+		in test_context type:test_context end
+		in project_start_library_id_path type:library_id_path end
+		%system_error_handler_input_argument
+		
+		out success type:yes_no end
+		
+		script
+			const library_repository library_repository = se_reflection.library_repository
+
+			const regex include_path_regex = i_test_context.include_path_regex
+			const regex exclude_path_regex = i_test_context.exclude_path_regex
+			
+			const mutable_string message = fa_mutable_string.create
+			c_message.append ( "Running unit tests in " )
+			c_message.append ( i_project_start_library_id_path )
+
+			if c_include_path_regex #r void then
+				c_message.append_new_line
+				c_message.append ( "include_path_regex: " )
+				c_message.append ( c_include_path_regex )
+			end if
+
+			if c_exclude_path_regex #r void then
+				c_message.append_new_line
+				c_message.append ( "exclude_path_regex: " )
+				c_message.append ( c_exclude_path_regex )
+			end if
+			
+			i_test_context.start
+
+			i_test_context.handle_info_message	( c_message.to_string )
+			
+			var system_error system_error = void
+			
+			repeat for each nongeneric_RSE RSE in c_library_repository.nongeneric_RSE_list
+				if not c_RSE.library_id_path.value.starts_with ( i_project_start_library_id_path.value ) then
+				 	next repeat
+				end if
+				
+				const RSE_id_path RSE_id_path = c_RSE.id_path
+
+				if c_include_path_regex #r void then
+					if not c_RSE_id_path.value.matches_regex ( c_include_path_regex ) then
+						next repeat
+					end if
+				end if
+				
+				if c_exclude_path_regex #r void then
+					if c_RSE_id_path.value.matches_regex ( c_exclude_path_regex ) then
+						next repeat
+					end if
+				end if
+				
+				if c_RSE.command_list =r void or c_RSE.command_list.item_by_id ( se_reflection.command_id_RSE_test ) =r void then
+				 	next repeat
+				end if
+				
+				i_test_context.handle_RSE_test_start ( c_RSE_id_path )
+				
+				v_system_error = se_java_reflection.execute_static_class_method_5 ( &
+					class_path = c_RSE.id_path &
+					method_name = fa_non_empty_string.create ( se_reflection.command_id_RSE_test.value & "_command"~ ) &
+					method_input = i_test_context &
+					reload_class = no &
+					error_handler = i_error_handler )
+				if v_system_error #r void then
+					// i_test_context.handle_info_message ( "Test execution has been interrupted due to the following system error: " & v_system_error.description )
+					// exit repeat
+					const bug_source_code_location source_code_location = fa_bug_source_code_location.create ( &
+						root_software_element_path = c_RSE.library_id_path.to_string.to_non_empty_string &
+						root_software_element_id = c_RSE.id.to_string.to_non_empty_string &
+						feature_id = se_reflection.command_id_RSE_test.to_string.to_non_empty_string &
+						script_kind = "test_script" &
+						script_line_number = void &
+						script_instruction = void )
+					i_test_context.handle_test_error ( fa_test_error.create ( &
+						description = """Test execution in '{{c_RSE.id}}' has been interrupted due to the following system error:
+{{v_system_error.description}}""" &
+						source_code_location = c_source_code_location ) )
+				end if
+				
+			end repeat
+			
+			i_test_context.stop
+
+			// o_success = not i_test_context.test_errors_found and v_system_error =r void
+			o_success = not i_test_context.test_errors_found
+			
+			///
+			if se_system.console #r void then
+				se_system.console.ask_press_Enter
+			end if
+			end ///
+		end
+	end
+
+end
+	

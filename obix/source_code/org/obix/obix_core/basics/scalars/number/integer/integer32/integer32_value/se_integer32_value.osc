@@ -1,0 +1,74 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service integer32_value
+
+	attribute_list type:integer32_value
+
+		attribute min_value
+			default
+				script
+					java
+						o_min_value = new fa_integer32_value ( Integer.MIN_VALUE ) ;
+					end java
+				end
+			end
+		end
+
+		attribute max_value
+			default
+				script
+					java
+						o_max_value = new fa_integer32_value ( Integer.MAX_VALUE ) ;
+					end java
+				end
+			end
+		end
+
+		attribute max_value_unsigned16
+			default
+				script
+					java
+						o_max_value_unsigned16 = new fa_integer32_value ( Short.MAX_VALUE ) ;
+					end java
+				end
+			end
+		end
+
+		attribute zero
+			default
+				script
+					java
+						o_zero = new fa_integer32_value(0);
+					end java
+				end
+			end
+		end
+
+		attribute one
+			default
+				script
+					java
+						o_one = new fa_integer32_value(1);
+					end java
+				end
+			end
+		end
+
+		attribute minus_one
+			default
+				script
+					java
+						o_minus_one = new fa_integer32_value(-1);
+					end java
+				end
+			end
+		end
+
+	end attribute_list
+
+end service

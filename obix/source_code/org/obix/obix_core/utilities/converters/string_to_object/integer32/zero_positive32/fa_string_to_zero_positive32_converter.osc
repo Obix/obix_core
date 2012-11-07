@@ -1,0 +1,23 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory string_to_zero_positive32_converter type:string_to_zero_positive32_converter
+
+	command convert
+		script
+			fa_zero_positive32.create_from_string ( &
+				string = i_input &
+				config = a_config &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error )
+		end
+	end
+	
+	creator create kind:in_all end
+	
+end

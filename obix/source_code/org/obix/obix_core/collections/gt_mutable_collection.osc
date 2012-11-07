@@ -1,0 +1,22 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic type mutable_collection
+
+	param item_type end
+	
+	type
+
+		inherit !mutable_or_immutable_collection<{item_type}> end
+	
+		command copy_to_immutable
+			out result type:!collection<{item_type}> end
+		end
+
+	end
+
+end generic

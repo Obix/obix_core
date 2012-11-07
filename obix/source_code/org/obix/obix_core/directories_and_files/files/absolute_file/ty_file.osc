@@ -1,0 +1,87 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type file
+
+	inherit !equalable<file> end
+	
+	inherit absolute_or_relative_file
+
+		attribute value
+			and_check
+				script
+					check se_directory_or_file.is_absolute_path ( i_value.to_string ) &
+						error_message: """'{{i_value.to_string}}' is an invalid file path, because it is not an absolute path""" &
+						error_id:invalid_file_path
+				end
+			end
+		end
+
+		attribute name type:file_name end
+
+		attribute directory type:directory end
+		
+	end
+	
+	inherit directory_or_file
+	
+		command to_current_OS_path 
+			out result type:file end
+		end
+
+		command create_on_device
+			out error type:create_file_error end
+		end
+		
+		command delete_on_device
+			out error type:delete_file_error end
+		end
+
+	end
+	
+	command rename_on_device
+		in new_file_name type:file_name end
+		%system_error_handler_input_argument
+		in_check
+			script
+				check i_object_.exists
+				const file new_file = fa_file.create_from_directory_and_name ( &
+					directory = i_object_.directory &
+					name = i_new_file_name )
+				check not c_new_file.exists
+			end
+		end
+
+		out renamed_file type:file voidable:yes end
+		%error_output_argument < rename_file_error >
+		out_check
+			script
+				check i_renamed_file =r void xor i_error =r void
+				if i_renamed_file #r void then
+					check i_renamed_file.exists
+					check not i_object_.exists
+				end if
+			end
+		end
+	end
+	
+	command make_relative_file
+		in root_directory type:directory &
+			check: i_object_.to_current_OS_path.to_string.starts_with ( i_root_directory.to_current_OS_path ) end
+			
+		out result type:relative_file end
+	end
+	
+	command set_Unix_executable_permission
+		in executable_permission type:yes_no end
+		in only_for_owner type:yes_no end
+		%system_error_handler_input_argument
+
+		%error_output_argument < file_security_error >
+	end
+	
+end

@@ -1,0 +1,18 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type command_output_argument default_factory:yes
+
+	inherit output_argument end
+
+	inherit command_argument
+		attribute check_script type:output_argument_check_script end
+	end
+	
+	attribute is_new_object_of_creator type:yes_no end
+
+end type

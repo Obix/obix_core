@@ -1,0 +1,212 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory yes_no type:yes_no
+
+	java_header
+		import org.obix.obix_core.basics.scalars.yes_no.yes_no_value.fa_yes_no_value;
+	end java_header
+
+	// two static final values (yes and no) are shared, because objects are immutable
+	// same principle as enumerated
+	// different from integer, character and string
+	
+	java
+	
+		private boolean java_value ;
+
+		public boolean java_value() { return java_value; }
+
+		public static final fa_yes_no a_yes = new fa_yes_no ( true ) ;
+
+		public static final fa_yes_no a_no = new fa_yes_no ( false ) ;
+
+		public fa_yes_no ( boolean i_java_value ) {
+			this.java_value = i_java_value ;
+			this.a_value = new fa_yes_no_value ( i_java_value ) ;
+		}
+	
+		// necessary in order to be used in hash tables
+		public int hashCode() {
+			return java_value ? 1231 : 1237 ; // hash values copied from Java source code
+		}
+	end java
+
+	command is_equal_to
+		script
+			java
+				o_result = (this.java_value == i_other.java_value()) ? a_yes : a_no ;
+			end java
+		end
+	end
+
+	command co_and
+		script
+			java
+				o_result = (this.java_value && i_operand.java_value()) ? a_yes : a_no ;
+			end java
+		end
+	end
+
+	command co_or
+		script
+			java
+				o_result = (this.java_value || i_operand.java_value()) ? a_yes : a_no ;
+			end java
+		end
+	end
+	
+	command co_xor
+		script
+			java
+				o_result = (this.java_value ^ i_operand.java_value()) ? a_yes : a_no ;
+			end java
+		end
+	end
+	
+	command co_not
+		script
+			java
+				o_result = this.java_value ? a_no : a_yes ;
+			end java
+		end
+	end
+	
+	command to_string
+		script
+			java
+				o_result = java_value ? se_string_constants.getYes() : se_string_constants.getNo() ;
+			end java
+		end
+	end
+	
+	command to_integer
+		script
+			java
+				o_result = java_value ? se_zero_positive32.getOne() : se_zero_positive32.getZero() ;
+			end java
+		end
+	end
+	
+	command to_true_false
+		script
+			o_result = iif this then "true" else "false" end if
+		end
+	end
+
+	command to_character
+		script
+			java
+				o_result = new fa_character ( java_value ? 'y' : 'n' ) ;
+			end java
+		end
+	end
+	
+	creator create_from_string
+		in string type:simple_string voidable:yes end
+		in config type:string_to_object_converter_config default:se_string_to_object_converter_config.default_value end
+		%system_error_handler_input_argument
+		
+		%result_or_string_to_object_conversion_error_void_output < yes_no >
+
+		script
+			section convert
+				if i_string =r void then
+					if i_config.void_input_allowed then
+						o_result = void
+						exit script
+					else
+						exit section
+					end if
+				end if
+				
+				const string value = i_string.to_string.to_lower_case
+				
+				if c_value =v "y" or c_value =v se_string_constants.yes then
+					java
+						o_result = a_yes;
+					end java
+					exit script
+
+				else if c_value =v "n" or c_value =v se_string_constants.no then
+					java
+						o_result = a_no;
+					end java
+					exit script
+
+				else if c_value =v se_string_constants.empty_string then
+					if i_config.empty_string_is_void then
+						o_result = void
+						exit script
+					else
+						exit section
+					end if
+
+				else if i_config.void_value_as_string #r void and c_value =v i_config.void_value_as_string then
+					o_result = void
+					exit script
+
+				end if
+
+			end section
+
+			o_result = void
+			o_error = fa_string_to_object_conversion_error.create ( &
+				id = "string_to_yes_no_conversion_error" &
+				description = """'{{se_any_type.force_object_to_string ( i_string )}}' cannot be converted to a yes_no value.
+Valid values are 'y', 'n', '{{se_string_constants.a_yes}}' and '{{se_string_constants.a_no}}'""" &
+				java_exception = void &
+				data = i_string &
+				type_of_result = "yes_no" &
+				error_position = void )
+			i_error_handler.handle_system_error ( o_error )
+		end
+		
+		test
+			script
+				test string = "y"
+				verify v_result
+
+				test string = "n"
+				verify not v_result
+
+				test string = "yes"
+				verify v_result
+
+				test string = "no"
+				verify not v_result
+				
+				test string = "Yes"
+				verify v_result
+				
+				test string = "No"
+				verify not v_result
+				
+				test string = void
+				verify v_result =r void
+				verify v_error =r void
+				
+				test string = ""
+				verify v_result =r void
+				verify v_error =r void
+				
+				test string = se_any_type.void_object_as_string
+				verify v_result =r void
+				verify v_error =r void
+				
+				test string = "a"
+				verify v_result =r void
+				verify v_error #r void
+				
+				test string = "1"
+				verify v_result =r void
+				verify v_error #r void
+			end
+		end
+	end
+
+end factory

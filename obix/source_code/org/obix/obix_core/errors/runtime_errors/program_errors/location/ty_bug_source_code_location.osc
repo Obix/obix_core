@@ -1,0 +1,19 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type bug_source_code_location
+
+	attribute root_software_element_path type:non_empty_string end
+	attribute root_software_element_id type:non_empty_string end	// maybe: should be removed (included in path)
+
+	attribute feature_id type:non_empty_string end
+
+	attribute script_kind type:non_empty_string end
+	attribute script_line_number type:positive32 voidable:yes end
+	attribute script_instruction type:non_empty_string voidable:yes end
+
+end type

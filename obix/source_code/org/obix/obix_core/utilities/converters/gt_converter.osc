@@ -1,0 +1,27 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic type converter
+
+	param input_type end
+	param result_type end
+	
+	type
+
+		command convert
+			// in input type:{input_type} end
+			in input type:{input_type} voidable:yes end
+			%system_error_handler_input_argument
+			
+			out result type:{result_type} end
+			%error_output_argument<conversion_error>
+			%result_or_error_void_out_check
+		end
+		
+	end
+
+end

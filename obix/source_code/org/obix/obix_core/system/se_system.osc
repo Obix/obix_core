@@ -1,0 +1,137 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service system
+
+	java_header
+		import org.obix.obix_core.errors.runtime_errors.program_errors.*;
+	end java_header
+
+	java
+
+		public static String _co_handle_exception ( Throwable i_throwable ) {
+		
+			in_program_error v_program_error_;
+			if ( i_throwable instanceof in_program_error ) {
+				v_program_error_ = (in_program_error) i_throwable;
+			}
+			else {
+				// we should never arrive here, because every throwable has already been catched and converted into ty_program_error. Anyway, ...
+				String unknown = "unknown";
+				v_program_error_ = se_program_error._co_create_java ( unknown, unknown, unknown, unknown, 1, unknown, null, i_throwable );
+			}
+			co_handle_program_error_command ( v_program_error_ );
+			
+			return se_any_type.co_force_object_to_string_command ( v_program_error_ ).getValue().java_value() ;
+		}
+
+	end java
+
+	attribute_list kind:readonly_constant
+
+		attribute obix_version type:string
+			get
+				script
+					o_obix_version = "2012-10-24"
+				end
+			end
+		end
+
+		attribute OS_name type:string
+			get
+				script
+					o_OS_name = se_java_config.get_system_property ( "os.name" )
+				end
+			end
+		end
+
+		attribute OS_version type:string
+			get
+				script
+					o_OS_version = se_java_config.get_system_property ( "os.version" )
+				end
+			end
+		end
+
+		attribute OS_is_Windows type:yes_no
+			get
+				script
+					o_OS_is_Windows = a_OS_name.to_lower_case.find ( "windows" ) #r void
+				end
+			end
+		end
+
+	end
+
+	attribute_list // TD? kind:variable setable:all
+	
+		attribute in type:simple_string_reader default: fa_system_in.create end
+		attribute out type:simple_string_writer default: fa_system_out.create end
+		attribute err type:simple_string_writer default: fa_system_err.create end
+		
+		attribute console type:system_console voidable:yes default:fa_system_console.create end
+	end
+	
+	attribute user_name type:string kind:readonly_constant 
+		get
+			script
+				o_user_name = se_java_config.get_system_property ( "user.name" )
+			end
+		end
+	end
+
+	// exit
+
+	command exit_with_success
+		in message type:non_empty_string voidable:yes default:void end
+
+		script
+			co_exit_system ( &
+				message = i_message &
+				exit_code = 0 )
+		end
+	end
+
+	command exit_with_error
+		in error_message type:non_empty_string voidable:yes default:void end
+		in exit_code type:signed_integer32 default: 1 end
+
+		script
+			co_exit_system ( &
+				message = i_error_message &
+				exit_code = i_exit_code )
+		end
+	end
+
+	command_list private:yes
+	
+		command handle_program_error
+			in error type:program_error end
+			
+			script
+				se_system_utilities.program_error_handler.handle_program_error ( i_error )
+			end
+		end
+
+		command exit_system
+			in message type:string voidable:yes end
+			in exit_code type:signed_integer32 end
+
+			script
+				if message #r void then
+					out.write_line ( string = i_message )
+				end if
+
+				java
+					System.exit ( i_exit_code.getValue().java_value() ) ;
+				end java
+			end
+		end
+
+	end command_list
+
+end service

@@ -1,0 +1,14 @@
+template fa_test_error_to_long_string_start
+
+			const mutable_string temp_result = fa_mutable_string.create
+			
+			temp_result.append_line ( se_any_type.force_object_to_string ( a_description ) )
+			
+			temp_result.append ( se_any_type.force_object_to_string ( a_source_code_location ) )
+			
+			se_program_error.append_label_value ( &
+				string = temp_result &
+				i_label = "Time" &
+				i_value = se_any_type.force_object_to_string ( a_date_time ) )
+
+end

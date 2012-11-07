@@ -1,0 +1,24 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template system_out_loop_item_handler_factory
+
+	param item_type end
+
+	factory system_out_{item_type}_loop_item_handler type:{item_type}_loop_item_handler
+
+		command handle_item
+			script
+				se_system.out.write_line ( string = i_item.to_string )
+			end
+		end
+		
+		creator create kind:in_all end
+		
+	end
+	
+end

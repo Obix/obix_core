@@ -1,0 +1,111 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic factory indexed_list_factory
+
+	param item_type end
+	
+	factory type:!indexed_list<{item_type}>
+	
+		java_header
+			import java.util.ArrayList;
+			import java.util.Collections;
+			import java.util.List;
+			
+			import org.obix.obix_core.collections.java.fa_java_collection_wrapper;
+		end java_header
+
+		java
+			private List<in_any_type> a_java_list = null ;
+			
+			/* TD needed?
+			public List<in_any_type> java_list() { return Collections.unmodifiableList ( a_java_list ); }
+			*/
+		end java
+
+		%te_mutable_or_immutable_indexed_list_factory_attributes
+
+		%te_mutable_or_immutable_indexed_list_factory_commands<{item_type}>
+
+		command to_string
+			script
+				o_result = "Indexed list containing " & a_item_count.co_to_string & " item(s)."
+			end
+		end
+		
+
+		creator create_empty
+
+			out result type:!indexed_list<{item_type}> end
+
+			script
+				java
+					o_result.a_java_list = new ArrayList<in_any_type> ( ) ;
+				end java
+			end
+		end
+
+		creator create_singleton
+			in item type:{item_type} voidable:yes end
+
+			out result type:!indexed_list<{item_type}> end
+
+			script
+				java
+					o_result.a_java_list = new ArrayList<in_any_type> ( ) ;
+					o_result.a_java_list.add(i_item);
+				end java
+			end
+		end
+
+		creator create_duo
+			in item1 type:{item_type} voidable:yes end
+			in item2 type:{item_type} voidable:yes end
+
+			out result type:!indexed_list<{item_type}> end
+
+			script
+				java
+					o_result.a_java_list = new ArrayList<in_any_type> ( ) ;
+					o_result.a_java_list.add(i_item1);
+					o_result.a_java_list.add(i_item2);
+				end java
+			end
+		end
+
+		creator create_trio
+			in item1 type:{item_type} voidable:yes end
+			in item2 type:{item_type} voidable:yes end
+			in item3 type:{item_type} voidable:yes end
+
+			out result type:!indexed_list<{item_type}> end
+
+			script
+				java
+					o_result.a_java_list = new ArrayList<in_any_type> ( ) ;
+					o_result.a_java_list.add(i_item1);
+					o_result.a_java_list.add(i_item2);
+					o_result.a_java_list.add(i_item3);
+				end java
+			end
+		end
+
+		creator create_from_unmodifiable_java_list
+			in java_list type:java_unmodifiable_list_wrapper end
+
+			out result type:!indexed_list<{item_type}> end
+
+			script
+				java
+					o_result.a_java_list = i_java_list.java_list();
+				end java
+			end
+		end
+
+	end factory
+
+end generic

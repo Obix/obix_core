@@ -1,0 +1,21 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type command_input_argument default_factory:yes
+
+	inherit input_argument end
+
+	inherit command_argument
+		attribute check_script type:input_argument_check_script end
+	end
+	
+	attribute default_value_script type:input_argument_default_value_script voidable:yes end
+
+	// this attribute is set if the input type for the check script is modified in case of a base type of a generic type
+	attribute modified_type_for_check_script_input type:object_type voidable:yes end
+
+end type

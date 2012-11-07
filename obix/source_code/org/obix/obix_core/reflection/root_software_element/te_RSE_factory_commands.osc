@@ -1,0 +1,27 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template RSE_factory_commands
+
+	command is_equal_to
+		script
+			if this =r i_other then
+				o_result = yes
+			else
+				o_result = this.a_id_path =v i_other.a_id_path
+			end if
+		end
+	end
+
+	command to_string
+		script
+			// TD same expression as in fa_xxx_proxy
+			o_result = a_id_path.to_string
+		end
+	end
+
+end template

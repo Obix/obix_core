@@ -1,0 +1,31 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory prefixed_id_path_new type:prefixed_id_path_new
+
+	creator create_from_id
+		in i_id type:prefixed_id end
+
+		out result type:prefixed_id_path_new end
+		
+		script
+			o_result.a_value = i_id.value
+		end
+	end
+
+	creator create_from_parent_path_and_id
+		in parent_id_path type:prefixed_id_path_new end
+		in i_id type:prefixed_id end
+
+		out result type:prefixed_id_path_new end
+		
+		script
+			o_result.a_value = i_parent_id_path.value & se_id_path.id_separator.value & i_id.value
+		end
+	end
+
+end factory

@@ -1,0 +1,19 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type file_name_extension
+
+	inherit simple_string
+		attribute value &
+			and_check: i_value.find ( se_file.file_name_extension_separator.value ) =r void &
+			error_message: "'" & i_value.to_string & "' is an invalid file name extension, because it contains the extension's prefix character (" & &
+			se_file.file_name_extension_separator & ")" end
+	end
+
+	inherit !equalable<file_name_extension> end
+
+end

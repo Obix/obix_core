@@ -1,0 +1,90 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template RSE_id_path_factory
+
+	param RSE_kind end
+
+factory {RSE_kind}_id_path type:{RSE_kind}_id_path
+
+	attribute_list private:yes
+
+		attribute private_library_id_path type:library_id_path end
+		attribute a_private_id type:{RSE_kind}_id end
+
+	end
+	
+	attribute library_id_path
+		get
+			script
+				o_library_id_path = a_private_library_id_path
+			end
+		end
+	end
+
+	attribute a_id
+		get
+			script
+				o_id = a_private_id
+			end
+		end
+	end
+
+	attribute value
+		get
+			script
+				o_value = a_private_library_id_path.value & se_id_path.id_separator.value & a_private_id.value
+			end
+		end
+		set
+			script
+			end
+		end
+	end
+
+	attribute id_list
+		get
+			script
+				const !indexed_list<string_value> string_value_list = a_value.split ( se_id_path.id_separator.value )
+				const !mutable_indexed_list<id> temp_id_list = !mutable_indexed_list_factory<id>.create
+				repeat for each string_value string_value in c_string_value_list
+					temp_id_list.append ( fa_id.create ( c_string_value ) )
+				end repeat
+				o_id_list = temp_id_list.make_immutable
+			end
+		end
+	end
+
+	%scalar_is_equal_to_factory_command
+	
+	creator create kind:in_all
+		script
+			const positive32 last_separator_index = i_value.find_last ( se_id_path.id_separator.value )
+			const library_id_path library_id_path = fa_library_id_path.create ( i_value.extract_to ( c_last_separator_index - 1 ) )
+			const {RSE_kind}_id id = fa_{RSE_kind}_id.create ( i_value.extract_from ( c_last_separator_index + 1 ) )
+
+			o_result = co_create_from_library_id_path_and_id ( &
+				library_id_path = c_library_id_path &
+				id = c_id )
+		end
+	end
+
+	creator create_from_library_id_path_and_id
+		in library_id_path type:library_id_path end
+		in i_id type:{RSE_kind}_id end
+
+		out result type:{RSE_kind}_id_path end
+		
+		script
+			o_result.a_private_library_id_path = i_library_id_path
+			o_result.a_private_id = i_id
+		end
+	end
+
+end factory
+
+end template

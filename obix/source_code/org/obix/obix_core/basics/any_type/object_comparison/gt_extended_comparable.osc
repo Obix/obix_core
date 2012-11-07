@@ -1,0 +1,38 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic type extended_comparable
+
+	param other end
+	param min_max_result end
+
+	type
+	
+		inherit !comparable<{other}> end
+	
+		command min
+			in other type:{other} end
+
+			out result type:{min_max_result} end
+		end
+
+		command max
+			in other type:{other} end
+
+			out result type:{min_max_result} end
+		end
+
+		command is_between
+			in min type:{other} end
+			in max type:{other} end
+
+			out result type:yes_no end
+		end
+
+	end
+
+end

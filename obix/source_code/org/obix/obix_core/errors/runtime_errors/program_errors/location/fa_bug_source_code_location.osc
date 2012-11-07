@@ -1,0 +1,51 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory bug_source_code_location type:bug_source_code_location
+
+	java
+		public static in_bug_source_code_location _co_create_java ( String i_rse_path, String i_rse_id, String i_feature_id, String i_script_kind, int i_script_line_number, String i_script_instruction ) {
+
+			return fa_bug_source_code_location.co_create_command ( new fa_non_empty_string ( i_rse_path ), new fa_non_empty_string ( i_rse_id ), new fa_non_empty_string ( i_feature_id ), new fa_non_empty_string ( i_script_kind ), i_script_line_number == 0 ? null : new fa_positive32 ( i_script_line_number ), i_script_instruction == null ? null : new fa_non_empty_string ( i_script_instruction ) ) ;
+		}
+	end java
+
+	command to_string
+		script
+			const mutable_string temp_result = fa_mutable_string.create
+			
+			se_program_error.co_append_label_value ( &
+				string = temp_result &
+				label = "Feature" &
+				value = a_root_software_element_id & "." & a_feature_id )
+
+			se_program_error.co_append_label_value ( &
+				string = temp_result &
+				label = "Library" &
+				value = a_root_software_element_path )
+
+			if a_script_line_number #r void then
+				se_program_error.co_append_label_value ( &
+					string = temp_result &
+					label = "Line" &
+					value = a_script_line_number.co_to_string )
+			end if
+
+			if a_script_instruction #r void then
+				se_program_error.co_append_label_value ( &
+					string = temp_result &
+					label = "Instruction" &
+					value = a_script_instruction )
+			end if
+			
+			o_result = temp_result.to_string
+		end script
+	end command
+
+	creator create kind:in_all end
+
+end factory

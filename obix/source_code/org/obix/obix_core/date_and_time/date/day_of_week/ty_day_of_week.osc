@@ -1,0 +1,45 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type day_of_week
+
+	%inherit_simple_positive32_with_maximum < se_date_constants.days_in_week >
+
+	inherit !comparable < other:day_of_week > end
+
+	attribute_list type:yes_no kind:readonly_constant
+
+		a_is_first_day_of_week
+		a_is_last_day_of_week
+
+		a_is_monday
+		a_is_tuesday
+		a_is_wednesday
+		a_is_thursday
+		a_is_friday
+		a_is_saturday
+		a_is_sunday
+		a_is_weekend end
+
+	end
+
+	/// TD
+	attribute_list type:non_empty_string kind:readonly_constant
+
+		attribute english_name end
+		attribute local_name end
+
+	end
+
+	command localized_name
+		in locale type:locale end
+
+		out result type:non_empty_string end
+	end
+	end ///
+
+end

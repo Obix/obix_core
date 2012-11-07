@@ -1,0 +1,196 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory local_date_time type:local_date_time
+
+	java_header
+		import java.util.Date;
+		import java.util.Calendar;
+		import java.util.GregorianCalendar;
+		
+		import org.obix.obix_core.date_and_time.date.in_date;
+		import org.obix.obix_core.date_and_time.time.in_local_time;
+	end java_header
+	
+	java
+		public static fa_local_date_time create_from_date ( Date i_date ) {
+			return co_create_command ( new fa_string_value ( se_date_time.a_java_ISO_local_date_time_format.format ( i_date ) ) );
+		}
+
+		public static fa_local_date_time create_from_calendar ( Calendar i_calendar ) {
+			return create_from_date ( i_calendar.getTime() );
+		}
+
+		public GregorianCalendar to_calendar() {
+		
+			in_date date = getDate();
+			in_local_time local_time = getTime();
+
+			GregorianCalendar result = new GregorianCalendar ( 
+				date.getYear().getValue().java_value(), 
+				date.getMonth().getValue().java_value() - 1, 
+				date.getDay_of_month().getValue().java_value(),
+				local_time.getHours().getValue().java_value(),
+				local_time.getMinutes().getValue().java_value(),
+				local_time.getSeconds().getValue().java_value() );
+
+			// result.setFirstDayOfWeek(Calendar.MONDAY);
+				
+			return result;
+		}
+	end java
+
+	attribute date
+		get
+			script
+				o_date = fa_date.create ( a_value.extract_to ( 10 ) )
+			end
+			test
+				script
+					var local_date_time dt = create ( "2011-07-06T08:30:44"~ )
+					verify dt.date.value =v "2011-07-06"~
+				end
+			end
+		end
+	end
+
+	attribute time
+		get
+			script
+				o_time = fa_local_time.create ( a_value.extract_from ( 12 ) )
+			end
+			test
+				script
+					var local_date_time dt = create ( "2011-07-06T08:30:44"~ )
+					verify dt.time.value =v "08:30:44"~
+				end
+			end
+		end
+	end
+
+	%scalar_comparable_factory_code
+
+
+	creator create kind:in_all end
+
+	creator create_current_date_time
+		out result type:local_date_time end
+		
+		script
+			var string_value value
+			java
+				v_value = new fa_string_value ( se_date_time.a_java_ISO_local_date_time_format.format ( new Date() ) );
+			end java
+			
+			o_result = create ( v_value )
+		end
+		test
+			script
+				var local_date_time dt = create_current_date_time
+				system.out.write_line ( string = "current date time: " & dt.to_string )
+			end
+		end
+	end
+	
+	%create_from_string_creator_for_simple_string<local_date_time>
+
+	creator create_from_date_and_time
+		in date type:date end
+		in time type:local_time end
+
+		out result type:local_date_time end
+		
+		script
+			o_result = create ( i_date.value & se_date_time_constants.ISO_date_time_separator.value & i_time.value )
+		end
+		test
+			script
+				var local_date_time dt = create_from_date_and_time ( &
+					date = fa_date.create ( "2011-07-06"~ ) &
+					time = fa_local_time.create ( "08:30:44"~ ) )
+				verify dt.value =v "2011-07-06T08:30:44"~
+			end
+		end
+	end
+	
+	test
+		script
+			const local_date_time dt1 = create ( "2011-07-06T08:30:44"~ )
+			const local_date_time dt2 = create_from_string.result ( string = "2011-07-06T08:30:44" )
+			var local_date_time dt3
+			java
+				v_dt3 = create_from_calendar ( new GregorianCalendar ( 2011, 6, 6, 8, 30, 44 ) ); // Month value is 0-based !!!
+			end java
+			verify dt1 =v dt2
+			verify dt1 =v dt3
+			verify dt2 =v dt3
+
+			const local_date_time after = create ( "2011-07-06T08:30:45"~ )
+			const local_date_time before = create ( "2011-07-06T08:30:43"~ )
+			verify after > dt1
+			verify before < dt1
+
+			// create_from_string
+
+			var local_date_time result = create_from_string.result ( string = "2011-07-06T08:30:44" )
+			verify v_result #r void
+
+			var system_error error = create_from_string.error ( string = "2011" )
+			verify v_error #r void
+			
+			// void input
+
+			co_create_from_string ( string = void ) &
+				( v_result = result &
+				v_error = error )
+			verify v_result =r void
+			verify v_error =r void
+
+			co_create_from_string ( string = "" ) &
+				( v_result = result &
+				v_error = error )
+			verify v_result =r void
+			verify v_error =r void
+
+			co_create_from_string ( string = se_any_type.void_object_as_string ) &
+				( v_result = result &
+				v_error = error )
+			verify v_result =r void
+			verify v_error =r void
+
+			const string_to_object_converter_config no_void_config = fa_string_to_object_converter_config.create ( &
+				empty_string_is_void = no &
+				void_value_as_string = void &
+				void_input_allowed = no )
+
+			co_create_from_string ( &
+				string = void &
+				config = c_no_void_config ) &
+				( v_result = result &
+				v_error = error )
+			verify v_result =r void
+			verify v_error #r void
+
+			co_create_from_string ( &
+				string = "" &
+				config = c_no_void_config ) &
+				( v_result = result &
+				v_error = error )
+			verify v_result =r void
+			verify v_error #r void
+
+			co_create_from_string ( &
+				string = se_any_type.void_object_as_string &
+				config = c_no_void_config ) &
+				( v_result = result &
+				v_error = error )
+			verify v_result =r void
+			verify v_error #r void
+		end
+	end
+
+end factory

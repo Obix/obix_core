@@ -1,0 +1,27 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory any_type type:any_type
+
+	command to_string
+		script
+			java
+				o_result = new fa_string(this.toString());
+			end java
+		end
+	end
+	
+	///
+    command type_proxy
+		script
+			o_result = se_system_RSE_proxy_list.a_type_proxy_any_type
+		end
+	end ///
+	
+	creator create kind:in_all end
+
+end factory

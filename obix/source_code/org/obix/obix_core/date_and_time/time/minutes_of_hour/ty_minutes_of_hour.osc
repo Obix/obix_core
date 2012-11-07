@@ -1,0 +1,14 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type minutes_of_hour
+
+	%inherit_simple_zero_positive32_with_maximum < "se_time_constants.minutes_in_hour - 1" >
+
+	inherit !comparable < other:minutes_of_hour > end
+
+end type

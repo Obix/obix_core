@@ -1,0 +1,18 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory not_matches_regex_string_filter type: regex_based_string_filter
+
+	command is_accepted
+		script
+			o_result = not i_object.matches_regex ( a_regex )
+		end
+	end
+	
+	creator create kind:in_all end
+	
+end

@@ -1,0 +1,22 @@
+template create_from_string_converter_factory
+
+	param type_id_suffix end
+
+factory string_to_{type_id_suffix}_converter type:string_to_{type_id_suffix}_converter
+
+	command convert
+		script
+			fa_{type_id_suffix}.create_from_string ( &
+				string = i_input &
+				config = a_config &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error )
+		end
+	end
+	
+	creator create kind:in_all end
+	
+end
+
+end template

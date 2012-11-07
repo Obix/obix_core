@@ -1,0 +1,51 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic factory mutable_prefixed_id_map
+
+	param item_type child_of:prefixed_id_object end
+	param item_id_type child_of:prefixed_id end
+
+	factory type: !gt_mutable_prefixed_id_map < item_type:{item_type} item_id_type:{item_id_type} >
+
+		attribute map type:!mutable_map < key_type: simple_string item_type: {item_type} > private:yes end
+
+		attribute id_prefix_with_terminator type:simple_string private:yes end
+
+		%prefixed_id_map_factory_code
+
+		command add
+			script
+				a_map.add ( &
+					key = i_item.id.suffix &
+					item = i_item )
+			end
+		end
+
+		command make_immutable
+			script
+				o_result = !gf_prefixed_id_map < item_type: {item_type}; item_id_type: {item_id_type} >.create ( &
+					id_suffix_key_map = a_map.make_immutable &
+					id_prefix_with_terminator = a_id_prefix_with_terminator )
+			end
+		end
+		
+		creator create
+			in id_prefix type:id_prefix end
+				
+			out result type: !gt_mutable_prefixed_id_map < item_type:{item_type} item_id_type:{item_id_type} > end
+			
+			script
+				o_result.map = !mutable_map_factory < key_type: simple_string item_type: {item_type} >.create
+				o_result.id_prefix_with_terminator = fa_string.create ( i_id_prefix.value & se_prefixed_id.prefix_terminator.value )
+			end
+		end
+
+	end factory
+	
+end generic
+

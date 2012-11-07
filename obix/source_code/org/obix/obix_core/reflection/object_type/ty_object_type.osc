@@ -1,0 +1,20 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type object_type
+
+	inherit !equalable < object_type > end
+
+	attribute type_id_path type:type_id_path end
+
+	attribute generic_parameter_id type:template_parameter_id voidable:yes end
+	
+	attribute a_type type:type voidable:yes kind:variable setable:all transient:yes end
+	
+	attribute is_parameter_of_generified_type type:yes_no kind:readonly_constant end
+	
+end

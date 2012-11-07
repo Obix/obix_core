@@ -1,0 +1,28 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory file_name_extension_filter type: file_filter
+
+	attribute file_name_extension type:simple_string private:yes end
+
+	command is_accepted
+		script
+			o_result = i_object.name.extension #r void and i_object.name.extension.value =v a_file_name_extension.value
+		end
+	end
+	
+	creator create
+		in file_name_extension type:simple_string end
+		
+		out result type:file_filter end
+		
+		script
+			o_result.file_name_extension = i_file_name_extension
+		end
+	end
+	
+end

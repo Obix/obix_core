@@ -1,0 +1,28 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic type string_to_object_converter
+
+	param result_type end
+	
+	type
+	
+		attribute config type:string_to_object_converter_config default:se_string_to_object_converter_config.default_value end
+
+		command convert
+			// in input type:string end
+			in input type:string voidable:yes end
+			%system_error_handler_input_argument
+			
+			out result type:{result_type} voidable:yes end
+			%error_output_argument<string_to_object_conversion_error>
+			%result_or_error_void_out_check
+		end
+		
+	end
+
+end

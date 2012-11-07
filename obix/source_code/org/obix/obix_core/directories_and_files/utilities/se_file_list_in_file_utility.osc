@@ -1,0 +1,276 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service file_list_in_file_utility
+
+	// TD2 transfer to li_obix_ext
+	
+	attribute file_regex type:regex default:fa_regex.create ( '''\A\s*file\s+\S'''.value ) end
+	attribute dir_regex type:regex default:fa_regex.create ( '''\A\s*dir\s+\S'''.value ) end
+
+	attribute relative_file_regex type:regex default:fa_regex.create ( '''\A\s*rel\s+file\s+\S'''.value ) end
+	attribute relative_dir_regex type:regex default:fa_regex.create ( '''\A\s*rel\s+dir\s+\S'''.value ) end
+
+	attribute comment_regex type:regex default:fa_regex.create ( '''\A\s*#'''.value ) end
+	attribute empty_line_regex type:regex default:fa_regex.create ( '''\A\s*\z'''.value ) end
+
+	attribute default_file_list_file_name type:file_name default: fa_file_name.create ( "file_list.txt".value ) end
+		
+	command read_file_list_from_directory_and_file_list_file
+		%existing_directory_input_argument
+		in include_child_directories type:yes_no end
+		in file_list_file_name type:file_name end
+		in check_if_files_in_file_list_file_exist type:yes_no end
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output < !indexed_list<file> >
+		
+		script
+			const !mutable_indexed_list<file> file_list = !mutable_indexed_list_factory<file>.create
+			
+			var file_list files
+			i_directory.file_list ( &
+				include_child_directories = i_include_child_directories &
+				error_handler = i_error_handler ) &
+				( v_files = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+
+			repeat for each file file in v_files
+				if c_file.name.value #v i_file_list_file_name.value then
+					c_file_list.append ( c_file )
+				else
+					var !indexed_list<file> file_list_in_file
+					co_read_file_list_from_file ( &
+						file = c_file &
+						check_if_each_file_exists = i_check_if_files_in_file_list_file_exist &
+						include_child_directories = i_include_child_directories &
+						error_handler = i_error_handler ) &
+						( file_list_in_file = result &
+						o_error = error )
+					if o_error #r void then
+						exit script
+					end if
+
+					repeat for each file file_in_file in file_list_in_file
+						c_file_list.append ( c_file_in_file )
+					end repeat
+				end if
+			end repeat
+			
+			o_result = c_file_list.make_immutable
+		end
+	end
+
+	command read_file_list_from_file
+		%existing_file_input_argument
+		in check_if_each_file_exists type:yes_no default:yes end
+		in check_if_each_directory_exists type:yes_no default:yes end
+		in include_child_directories type:yes_no end
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output < !indexed_list<file> >
+		
+		script
+			var !indexed_list<string> line_list
+			se_text_file_IO.co_restore_lines_from_text_file ( &
+				file = i_file &
+				error_handler = i_error_handler ) &
+				( v_line_list = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			const !mutable_indexed_list<file> file_list = !mutable_indexed_list_factory<file>.create
+			repeat for each string line in line_list
+			
+				if c_line.item_count =v 0 then
+					next repeat
+				end if
+			
+				var string_find_result find_result = c_line.find_regex ( a_file_regex )
+				if v_find_result #r void then
+					// absolute file
+					var string file_path = c_line.extract_from ( v_find_result.end_index )
+					var system_error system_error = co_add_file ( &
+						input_file = i_file &
+						file_list = c_file_list &
+						file_path = v_file_path &
+						check_if_file_exists = i_check_if_each_file_exists &
+						error_handler = i_error_handler )
+					if v_system_error #r void then
+						o_error = v_system_error
+					end if
+					next repeat
+				end if
+
+				v_find_result = c_line.find_regex ( a_relative_file_regex )
+				if v_find_result #r void then
+					// relative file
+					var string file_path = i_file.directory.to_string & c_line.extract_from ( v_find_result.end_index )
+					var system_error system_error = co_add_file ( &
+						input_file = i_file &
+						file_list = c_file_list &
+						file_path = v_file_path &
+						check_if_file_exists = i_check_if_each_file_exists &
+						error_handler = i_error_handler )
+					if v_system_error #r void then
+						o_error = v_system_error
+					end if
+					next repeat
+				end if
+
+				v_find_result = c_line.find_regex ( a_dir_regex )
+				if v_find_result #r void then
+					// absolute directory
+					var string directory_path = c_line.extract_from ( v_find_result.end_index )
+					var system_error system_error = co_add_directory ( &
+						input_file = i_file &
+						file_list = c_file_list &
+						directory_path = v_directory_path &
+						include_child_directories = i_include_child_directories &
+						check_if_directory_exists = i_check_if_each_directory_exists &
+						error_handler = i_error_handler )
+					if v_system_error #r void then
+						o_error = v_system_error
+					end if
+					next repeat
+				end if
+
+				v_find_result = c_line.find_regex ( a_relative_dir_regex )
+				if v_find_result #r void then
+					// relative directory
+					var string directory_path = i_file.directory.to_string & c_line.extract_from ( v_find_result.end_index )
+					var system_error system_error = co_add_directory ( &
+						input_file = i_file &
+						file_list = c_file_list &
+						directory_path = v_directory_path &
+						include_child_directories = i_include_child_directories &
+						check_if_directory_exists = i_check_if_each_directory_exists &
+						error_handler = i_error_handler )
+					if v_system_error #r void then
+						o_error = v_system_error
+					end if
+					next repeat
+				end if
+
+				v_find_result = c_line.find_regex ( a_comment_regex )
+				if v_find_result #r void then
+					next repeat
+				end if
+
+				v_find_result = c_line.find_regex ( a_empty_line_regex )
+				if v_find_result #r void then
+					next repeat
+				end if
+
+				o_error = fa_resource_data_error.create ( &
+					description = """Line '{{c_line}}' in file '{{i_file}}' is illegal and ignored.""" &
+					resource = i_file &
+					data = c_line )
+				i_error_handler.handle_system_error ( o_error )
+
+			end repeat
+			
+			if o_error =r void then
+				o_result = c_file_list.make_immutable
+			end if
+		end
+	end
+	
+	command_list private:yes
+
+		command add_file
+			in input_file type:file end
+			in file_list type:!mutable_indexed_list<file> end
+			in file_path type:string end
+			in check_if_file_exists type:yes_no end
+			%system_error_handler_input_argument
+			
+			%system_error_output_argument
+			
+			script
+				var file file
+				fa_file.create_from_string ( &
+					string = i_file_path &
+					error_handler = i_error_handler ) &
+					( v_file = result &
+					o_error = error )
+				if o_error #r void then
+					exit script
+				end if
+				
+				if i_check_if_file_exists and not v_file.exists then
+					o_error = fa_resource_data_error.create ( &
+						description = """File '{{v_file}}' which is defined in file '{{i_input_file}}' doesn't exist.""" &
+						resource = i_input_file &
+						data = v_file )
+					i_error_handler.handle_system_error ( o_error )
+					exit script
+				end if
+				
+				i_file_list.append ( v_file )
+			end
+		end
+
+		command add_directory
+			in input_file type:file end
+			in file_list type:!mutable_indexed_list<file> end
+			in directory_path type:string end
+			in include_child_directories type:yes_no end
+			in check_if_directory_exists type:yes_no end
+			%system_error_handler_input_argument
+			
+			%system_error_output_argument
+			
+			script
+				var directory directory
+				fa_directory.create_from_string ( &
+					string = i_directory_path &
+					append_separator_at_end_if_omitted = yes &
+					error_handler = i_error_handler ) &
+					( v_directory = result &
+					o_error = error )
+				if o_error #r void then
+					exit script
+				end if
+				
+				if v_directory.exists then
+
+					var file_list file_list_to_add
+					v_directory.file_list ( &
+						include_child_directories = i_include_child_directories &
+						error_handler = i_error_handler ) &
+						( v_file_list_to_add = result &
+						o_error = error )
+					if o_error #r void then
+						exit script
+					end if
+
+					repeat for each file file in v_file_list_to_add
+						i_file_list.append ( c_file )
+					end repeat
+				else
+					if i_check_if_directory_exists then
+						o_error = fa_resource_data_error.create ( &
+							description = """Directory '{{v_directory}}' which is defined in file '{{i_input_file}}' doesn't exist.""" &
+							resource = i_input_file &
+							data = v_directory )
+						i_error_handler.handle_system_error ( o_error )
+						exit script
+					end if
+				end if
+				
+			end
+		end
+		
+	end command_list
+
+end service

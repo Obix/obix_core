@@ -1,0 +1,12 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service non_empty_string_converter
+
+	attribute default_string_to_non_empty_string_converter type:string_to_non_empty_string_converter default:fa_string_to_non_empty_string_converter.create kind:variable setable:all end
+
+end

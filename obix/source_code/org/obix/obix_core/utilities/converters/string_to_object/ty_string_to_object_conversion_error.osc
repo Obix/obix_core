@@ -1,0 +1,29 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type string_to_object_conversion_error
+
+	inherit conversion_error
+
+		attribute a_id default:"string_to_object_conversion_error" end
+
+		attribute data type:simple_string end
+
+	end
+	
+	attribute error_position type:positive32 voidable:yes end
+
+	attribute_check
+		script
+			check not ( i_data =r void and i_error_position #r void )
+			if i_error_position #r void then
+				check i_error_position <= i_data.value.item_count + 1
+			end if
+		end
+	end
+
+end type

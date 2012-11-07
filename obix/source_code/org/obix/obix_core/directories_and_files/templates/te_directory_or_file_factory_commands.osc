@@ -1,0 +1,42 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template directory_or_file_factory_commands
+
+	param directory_or_file end
+
+	%file_system_item_factory_commands
+	
+	command to_current_OS_path
+		script
+			var string_value OS_path
+			java
+				v_OS_path = new fa_string_value ( a_file.getCanonicalPath() );
+			end java
+			o_result = co_create ( v_OS_path )
+		end
+	end
+
+	command exists
+		script
+			java
+				o_result = a_file.exists() ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+			end java
+		end
+	end
+	
+	command time_last_modified
+		script
+			java
+				java.util.GregorianCalendar v_calendar = new java.util.GregorianCalendar();
+				v_calendar.setTimeInMillis(a_file.lastModified());
+				o_result = fa_local_date_time.create_from_calendar(v_calendar);
+			end java
+		end
+	end
+
+end

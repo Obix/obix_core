@@ -1,0 +1,44 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory inherited_type_attribute type:inherited_type_attribute
+
+	%factory_attribute_features
+
+	// TD3 for less memory consumtion: store only the reference to parent_attribute and use getters for all inherited attributes
+
+	creator create_from_inherited_attribute
+		in inherited_attribute type:type_attribute end
+		in parent_type_id_path type:type_id_path end
+		in root_type_id_path type:type_id_path end
+		
+		out result type:inherited_type_attribute end
+		
+		script
+			o_result.id = i_inherited_attribute.id
+			o_result.private = i_inherited_attribute.private
+			o_result.obsolete = i_inherited_attribute.obsolete
+			o_result.scope_is_object = i_inherited_attribute.scope_is_object
+			o_result.target_code_instructions = i_inherited_attribute.target_code_instructions
+			o_result.object_type = i_inherited_attribute.object_type
+			o_result.voidable = i_inherited_attribute.voidable
+			o_result.check_script = i_inherited_attribute.check_script
+			o_result.default_value_script = i_inherited_attribute.default_value_script
+			o_result.kind = i_inherited_attribute.kind
+			o_result.setable = i_inherited_attribute.setable
+			o_result.field_target_code_instructions = i_inherited_attribute.field_target_code_instructions
+			o_result.getter_target_code_instructions = i_inherited_attribute.getter_target_code_instructions
+			o_result.setter_target_code_instructions = i_inherited_attribute.setter_target_code_instructions
+			o_result.transient = i_inherited_attribute.transient
+			o_result.modified_type_for_default_script_output = i_inherited_attribute.modified_type_for_default_script_output
+
+			o_result.parent_type_id_path = i_parent_type_id_path
+			o_result.root_type_id_path = i_root_type_id_path
+		end
+	end
+
+end

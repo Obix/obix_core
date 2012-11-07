@@ -1,0 +1,52 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic factory iterator_factory
+
+	param item_type end
+
+	factory type:!iterator<{item_type}>
+
+		java
+			private java.util.Iterator a_java_iterator = null ;
+		end java
+		
+		attribute has_next
+			get
+				script
+					java
+						o_has_next = a_java_iterator.hasNext() ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+					end java
+				end script
+			end get
+		end attribute
+
+		command next
+			script
+				var ty_any_type v_temp;
+				java
+					v_temp = (in_any_type) a_java_iterator.next() ;
+				end java
+				o_result = v_temp type_check:no
+			end script
+		end command
+
+		creator create
+			in java_collection_wrapper type:java_collection_wrapper end
+			
+			out result type:!iterator<{item_type}> end
+			
+			script
+				java
+					o_result.a_java_iterator = i_java_collection_wrapper.java_collection().iterator() ;
+				end java
+			end script
+		end creator
+				
+	end factory
+
+end generic

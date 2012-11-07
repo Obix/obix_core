@@ -1,0 +1,5 @@
+factory script_state_item_list type:script_state_item_list
+
+	!gf_indexed_list_factory<script_state_item>
+	
+end

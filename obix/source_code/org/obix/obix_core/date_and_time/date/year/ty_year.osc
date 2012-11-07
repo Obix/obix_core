@@ -1,0 +1,30 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type year
+
+	%inherit_simple_positive32_with_min_max < &
+		min_value: se_date_constants.gregorian_start_year &
+		max_value: se_date_constants.max_year >
+	
+	inherit !comparable < other:year > end
+
+	attribute_list kind:readonly_constant
+
+		attribute is_leap_year type:yes_no end
+
+		attribute days_in_year type:positive32 end
+
+	/// TD?
+		attribute weeks_in_year type:positive32 &
+			check: i_weeks_in_year >= se_date.min_weeks_in_year and &
+			i_weeks_in_year <= se_date.max_weeks_in_year end
+	end ///
+
+	end
+
+end

@@ -1,0 +1,31 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template library_factory_RSE_map_attribute
+
+	param RSE_type end
+
+	attribute {RSE_type}_map
+		get
+			script
+				const mutable_id_{RSE_type}_map mutable_id_{RSE_type}_map = fa_mutable_id_{RSE_type}_map.create ( se_{RSE_type}.id_prefix )
+				repeat for each RSE RSE in a_RSE_list
+					case type of c_RSE
+						when {RSE_type} {RSE_type} then
+							c_mutable_id_{RSE_type}_map.add ( c_{RSE_type} )
+						otherwise
+					end case
+				end repeat
+
+				if not c_mutable_id_{RSE_type}_map.is_empty then
+					o_{RSE_type}_map = c_mutable_id_{RSE_type}_map.make_immutable
+				end if
+			end
+		end
+	end
+	
+end template

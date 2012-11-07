@@ -1,0 +1,110 @@
+factory mutable_script_state_item_list type:mutable_script_state_item_list
+
+	java_header
+		import org.obix.obix_core.reflection.RSE_feature.attribute.fa_attribute_id;
+		import org.obix.obix_core.reflection.script.argument.input.fa_input_argument_id;
+		import org.obix.obix_core.reflection.script.argument.output.fa_output_argument_id;
+		import org.obix.obix_core.reflection.script.script_instruction_components.fa_variable_id;
+		import org.obix.obix_core.reflection.script.script_instruction_components.fa_constant_id;
+		import org.obix.obix_core.reflection.root_software_element.nongeneric_RSE.type.fa_type_id_path;
+	end java_header
+
+	java
+		public void _add_attribute ( String i_id, String i_type, in_any_type i_value ) {
+			co_add_attribute_command ( 
+				fa_attribute_id.co_create_command ( new fa_string_value ( i_id ) ), 
+				fa_type_id_path.co_create_command ( new fa_string_value ( i_type ) ),
+				i_value );
+		}
+
+		public void _add_input_argument ( String i_id, String i_type, in_any_type i_value ) {
+			co_add_input_argument_command ( 
+				fa_input_argument_id.co_create_command ( new fa_string_value ( i_id ) ), 
+				fa_type_id_path.co_create_command ( new fa_string_value ( i_type ) ),
+				i_value );
+		}
+
+		public void _add_output_argument ( String i_id, String i_type, in_any_type i_value ) {
+			co_add_output_argument_command ( 
+				fa_output_argument_id.co_create_command ( new fa_string_value ( i_id ) ), 
+				fa_type_id_path.co_create_command ( new fa_string_value ( i_type ) ),
+				i_value );
+		}
+
+		public void _add_variable ( String i_id, String i_type, in_any_type i_value ) {
+			co_add_variable_command ( 
+				fa_variable_id.co_create_command ( new fa_string_value ( i_id ) ), 
+				fa_type_id_path.co_create_command ( new fa_string_value ( i_type ) ),
+				i_value );
+		}
+
+		public void _add_constant ( String i_id, String i_type, in_any_type i_value ) {
+			co_add_constant_command ( 
+				fa_constant_id.co_create_command ( new fa_string_value ( i_id ) ), 
+				fa_type_id_path.co_create_command ( new fa_string_value ( i_type ) ),
+				i_value );
+		}
+	end java
+
+	attribute mutable_list type:!mutable_indexed_list<script_state_item> default:!mutable_indexed_list_factory<script_state_item>.create private:yes end
+
+	command add_attribute
+		script
+			a_mutable_list.append ( fa_script_state_item.create ( &
+				kind = ty_script_state_item_kind.attribute &
+				id = i_id &
+				type = i_type &
+				value = i_value ) )
+		end
+	end
+	
+	command add_input_argument
+		script
+			a_mutable_list.append ( fa_script_state_item.create ( &
+				kind = ty_script_state_item_kind.input_argument &
+				id = i_id &
+				type = i_type &
+				value = i_value ) )
+		end
+	end
+
+	command add_output_argument
+		script
+			a_mutable_list.append ( fa_script_state_item.create ( &
+				kind = ty_script_state_item_kind.output_argument &
+				id = i_id &
+				type = i_type &
+				value = i_value ) )
+		end
+	end
+
+	command add_variable
+		script
+			a_mutable_list.append ( fa_script_state_item.create ( &
+				kind = ty_script_state_item_kind.variable &
+				id = i_id &
+				type = i_type &
+				value = i_value ) )
+		end
+	end
+
+	command add_constant
+		script
+			a_mutable_list.append ( fa_script_state_item.create ( &
+				kind = ty_script_state_item_kind.constant &
+				id = i_id &
+				type = i_type &
+				value = i_value ) )
+		end
+	end
+
+	command to_immutable
+		script
+			o_result = a_mutable_list.make_immutable
+		end
+	end
+	
+	creator create kind:in_all end
+	
+end
+	

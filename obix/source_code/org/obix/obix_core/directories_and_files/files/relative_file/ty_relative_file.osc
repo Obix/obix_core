@@ -1,0 +1,40 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type relative_file
+
+	inherit !equalable<relative_file> end
+	
+	inherit relative_directory_or_file
+	
+		attribute value
+			and_check
+				script
+					check se_directory_or_file.is_relative_path ( i_value.to_string ) &
+						error_message: """'{{i_value.to_string}}' is an invalid file path, because it is not a relative path""" &
+						error_id:invalid_file_path
+				end
+			end
+		end
+
+		attribute name type:file_name end
+
+	end
+	
+	inherit absolute_or_relative_file
+
+		attribute directory type:relative_directory end
+		
+	end
+	
+	command make_absolute_file
+		in root_directory type:directory default:se_system_directories.current_working_directory end
+		
+		out result type:file end
+	end
+	
+end

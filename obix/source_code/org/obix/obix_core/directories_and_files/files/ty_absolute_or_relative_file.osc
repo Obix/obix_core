@@ -1,0 +1,38 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type absolute_or_relative_file
+
+	inherit absolute_or_relative_directory_or_file
+
+		attribute value
+			and_check
+				script
+					// cannot end with / or \
+					check not i_value.ends_with ( se_directory.Unix_directory_separator.value ) and &
+						not i_value.ends_with ( se_directory.Windows_directory_separator.value ) &
+						error_message: """'{{i_value.to_string}}' is an invalid file path, because it ends with '{{se_directory.Unix_directory_separator}}' or '{{se_directory.Windows_directory_separator}}'""" &
+						error_id:invalid_file_path
+				end
+			end
+		end
+
+		attribute name type:file_name end
+
+	end
+
+	attribute_list kind:readonly_constant // group:(01)info
+
+		attribute directory type:absolute_or_relative_directory voidable:yes end
+
+		attribute file_name_extension type:file_name_extension voidable:yes end
+
+		attribute file_name_without_extension type:file_name end
+
+	end attribute_list
+
+end

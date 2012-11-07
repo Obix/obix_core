@@ -1,0 +1,16 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type RSE_script_event_script
+
+	inherit event_script end
+
+	// attribute RSE_proxy type:RSE_proxy end
+	attribute RSE type:nongeneric_RSE end
+	attribute script_id type:id end
+
+end type

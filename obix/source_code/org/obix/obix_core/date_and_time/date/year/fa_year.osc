@@ -1,0 +1,33 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory year type:year
+
+	attribute is_leap_year
+		get
+			script
+				o_is_leap_year = se_date.is_leap_year ( fa_positive32.create ( a_value ) )
+			end
+		end
+	end
+
+	attribute days_in_year
+		get
+			script
+				o_days_in_year = iif a_is_leap_year &
+					then se_date_constants.days_in_leap_year &
+					else se_date_constants.days_in_non_leap_year end if
+			end
+		end
+	end
+	
+	%scalar_comparable_factory_code
+
+
+	creator create kind:in_all end
+
+end factory

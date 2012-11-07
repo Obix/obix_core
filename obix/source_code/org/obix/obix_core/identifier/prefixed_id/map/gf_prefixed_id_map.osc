@@ -1,0 +1,88 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic factory prefixed_id_map
+
+	param item_type child_of:prefixed_id_object end
+	param item_id_type child_of:prefixed_id end
+
+	factory type: !gt_prefixed_id_map < item_type:{item_type} item_id_type:{item_id_type} >
+
+		attribute map type:!map < key_type: simple_string item_type: {item_type} > private:yes end
+
+		attribute id_prefix_with_terminator type:simple_string private:yes end
+		
+		%prefixed_id_map_factory_code
+		
+		creator create
+			in id_suffix_key_map type:!map < key_type: simple_string item_type: {item_type} > end
+			in id_prefix_with_terminator type:simple_string end
+				
+			out result type: !gt_prefixed_id_map < item_type:{item_type} item_id_type:{item_id_type} > end
+			
+			script
+				o_result.map = i_id_suffix_key_map
+				o_result.id_prefix_with_terminator = i_id_prefix_with_terminator
+			end
+		end
+
+		///
+		creator create_from_prefixed_id_map
+			in prefixed_id_map type:!mutable_map < key_type: {item_id_type} item_type: {item_type} > end
+			in id_prefix type:id_prefix end
+				
+			out result type: !gt_prefixed_id_map < item_type:{item_type} item_id_type:{item_id_type} > end
+			
+			script
+				const !mutable_map < key_type: simple_string item_type: {item_type} > mutable_map = !mutable_map_factory < key_type: simple_string item_type: {item_type} >.create
+				repeat for each key {item_id_type} item_id in i_prefixed_id_map
+					const {item_type} item = i_prefixed_id_map.require_item ( c_item_id )
+					c_mutable_map.add ( &
+						key = c_item_id.suffix &
+						item = c_item )
+				end repeat
+				
+				o_result = co_create ( &
+					id_suffix_key_map = c_mutable_map &
+					id_prefix = i_id_prefix )
+			end
+		end
+		end ///
+		
+		creator create_singleton
+			in item type:{item_type} end
+
+			out result type: !gt_prefixed_id_map < item_type:{item_type} item_id_type:{item_id_type} > end
+			
+			script
+				o_result.map = !map_factory < key_type: simple_string item_type: {item_type} >.create_singleton ( &
+					key = i_item.id.suffix &
+					item = i_item )
+				o_result.id_prefix_with_terminator = fa_string.create ( i_item.id.prefix.value & se_prefixed_id.prefix_terminator.value )
+			end
+		end
+		
+		creator create_duo
+			in item_1 type:{item_type} end
+			in item_2 type:{item_type} end
+
+			out result type: !gt_prefixed_id_map < item_type:{item_type} item_id_type:{item_id_type} > end
+			
+			script
+				o_result.map = !map_factory < key_type: simple_string item_type: {item_type} >.create_duo ( &
+					key1 = i_item_1.id.suffix &
+					item1 = i_item_1 &
+					key2 = i_item_2.id.suffix &
+					item2 = i_item_2 )
+				o_result.id_prefix_with_terminator = fa_string.create ( i_item_1.id.prefix.value & se_prefixed_id.prefix_terminator.value )
+			end
+		end
+		
+	end factory
+	
+end generic
+

@@ -1,0 +1,52 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory redefined_type_command type:redefined_type_command
+
+	command is_any_input_argument_type_redefined
+		script
+			o_result = no
+
+			const command_input_argument_list input_argument_list = a_script.input_argument_list
+			if c_input_argument_list #r void then
+				repeat for each command_input_argument input_argument in c_input_argument_list
+					case type of c_input_argument
+						when redefined_type_command_input_argument redefined_type_input_argument then
+							if c_redefined_type_input_argument.object_type_is_redefined #r void then
+								o_result = yes
+								exit script
+							end if
+						when command_input_argument then
+					end case
+				end repeat
+			end if
+		end
+	end
+	
+	command is_any_output_argument_type_redefined
+		script
+			o_result = no
+
+			const command_output_argument_list output_argument_list = a_script.output_argument_list
+			if c_output_argument_list #r void then
+				repeat for each command_output_argument output_argument in c_output_argument_list
+					case type of c_output_argument
+						when redefined_type_command_output_argument redefined_type_output_argument then
+							if c_redefined_type_output_argument.object_type_is_redefined #r void then
+								o_result = yes
+								exit script
+							end if
+						when command_output_argument then
+					end case
+				end repeat
+			end if
+		end
+	end
+
+	creator create kind:in_all end
+
+end factory

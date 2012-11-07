@@ -1,0 +1,14 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type seconds_of_minute
+
+	%inherit_simple_zero_positive32_with_maximum < "se_time_constants.seconds_in_minute + 1" > // 00 ... 61 (see ISO norm)
+
+	inherit !comparable < other:seconds_of_minute > end
+
+end type

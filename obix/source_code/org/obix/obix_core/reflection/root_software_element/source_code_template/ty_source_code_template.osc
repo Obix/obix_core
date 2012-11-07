@@ -1,0 +1,25 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type source_code_template
+
+	inherit RSE
+		attribute id_path type:source_code_template_id_path end
+		attribute a_id type:source_code_template_id end
+
+		command is_equal_to
+			in other type:source_code_template end
+		end
+	end
+
+	attribute parameter_list type:source_code_template_parameter_list end
+
+	attribute source_code type:source_code_text end
+	
+	attribute is_simple_template type:yes_no end
+
+end type

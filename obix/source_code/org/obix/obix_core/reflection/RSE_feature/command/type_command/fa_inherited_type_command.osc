@@ -1,0 +1,32 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory inherited_type_command type:inherited_type_command
+
+	// TD3 for less memory consumtion: store only the reference to parent_command and use getters for all inherited commands
+
+	creator create_from_inherited_command
+		in inherited_command type:type_command end
+		in parent_type_id_path type:type_id_path end
+		in root_type_id_path type:type_id_path end
+		
+		out result type:inherited_type_command end
+		
+		script
+			o_result.id = i_inherited_command.id
+			o_result.private = i_inherited_command.private
+			o_result.obsolete = i_inherited_command.obsolete
+			o_result.scope_is_object = i_inherited_command.scope_is_object
+			o_result.target_code_instructions = i_inherited_command.target_code_instructions
+			o_result.script = i_inherited_command.script
+
+			o_result.parent_type_id_path = i_parent_type_id_path
+			o_result.root_type_id_path = i_root_type_id_path
+		end
+	end
+
+end

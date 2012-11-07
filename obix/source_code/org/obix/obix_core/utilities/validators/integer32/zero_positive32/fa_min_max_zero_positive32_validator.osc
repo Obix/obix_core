@@ -1,0 +1,53 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory min_max_zero_positive32_validator type:zero_positive32_validator
+
+	attribute_list type:zero_positive32 private:yes
+		attribute minimum end
+		attribute maximum end
+	end
+	
+	command is_valid
+		script
+			if i_object =r void then
+				o_result = no
+				o_error = fa_validation_error.create ( &
+					description = """The value is void and is therefore invalid. The value must be in the range between {{a_minimum.to_string}} and {{a_maximum.to_string}}.""" &
+					java_exception = void &
+					data = i_object )
+				i_error_handler.handle_system_error ( o_error )
+				exit script
+			end if
+
+			o_result = i_object >= a_minimum and i_object <= a_maximum
+
+			if not o_result then
+				o_error = fa_validation_error.create ( &
+					description = """The value {{i_object.to_string}} is invalid because it is not in the range between {{a_minimum.to_string}} and {{a_maximum.to_string}}.""" &
+					java_exception = void &
+					data = i_object )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+	creator create
+		in minimum type:zero_positive32 end
+		in maximum type:zero_positive32 end
+		in_check check: i_maximum > i_minimum end
+		
+		out result type:zero_positive32_validator end
+		
+		script
+			o_result.minimum = i_minimum
+			o_result.maximum = i_maximum
+		end
+	end
+	
+end factory
+	

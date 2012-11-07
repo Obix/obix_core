@@ -1,0 +1,25 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic type errorable_loop_item_handler
+
+	param item_type end
+	param error_type end
+	
+	type
+	
+		command handle_item
+			in item type:{item_type} voidable:yes end
+			%system_error_handler_input_argument
+			
+			out cancel_loop type:yes_no end
+			out error type:{error_type} voidable:yes end
+		end
+
+	end type
+
+end generic

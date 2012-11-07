@@ -1,0 +1,8 @@
+type script_state_item
+
+	attribute kind type:script_state_item_kind.enumerated end
+	attribute a_id type:prefixed_id end
+	attribute type type:type_id_path end
+	attribute value type:any_type voidable:yes end
+
+end

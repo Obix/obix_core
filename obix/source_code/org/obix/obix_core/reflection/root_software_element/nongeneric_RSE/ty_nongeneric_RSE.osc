@@ -1,0 +1,58 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type nongeneric_RSE
+
+	inherit RSE end
+
+	attribute_list voidable:yes
+
+		attribute attribute_list type:attribute_list end
+
+		attribute attribute_list_check_script type:attribute_list_check_script end
+
+		attribute command_list type:command_list end
+
+		attribute event_definition_list type:RSE_event_definition_list end
+
+		attribute test_script type:RSE_test_script end
+
+	end attribute_list
+
+	attribute is_generified_RSE type:yes_no end
+
+	attribute is_on_the_fly_generified_RSE type:yes_no end
+	
+	attribute generic_RSE_reference type:generic_RSE_reference voidable:yes end
+
+	attribute_list voidable:yes transient:yes
+
+		attribute target_code_header_instructions type:target_code_instructions end
+
+		attribute target_code_declaration type:non_empty_string end
+
+		attribute target_code_instructions type:target_code_instructions end
+
+	end
+
+	attribute_list kind:readonly_constant
+
+		attribute public_attribute_list type:attribute_list voidable:yes end
+
+		attribute public_command_list type:command_list voidable:yes end
+
+	end attribute_list
+	
+	attribute_check
+		script
+			check not ( i_is_on_the_fly_generified_RSE and not i_is_generified_RSE )
+			check not ( i_is_generified_RSE and i_generic_RSE_reference =r void )
+			check not ( i_attribute_list_check_script #r void and i_attribute_list =r void )
+		end
+	end
+
+end type

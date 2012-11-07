@@ -1,0 +1,61 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service time_utilities
+
+	///
+	command milliseconds_elapsed_from_1970_01_01
+		// the difference, measured in milliseconds, between the current time and midnight, January 1, 1970 UTC.
+		out result type:positive32 end
+
+		script
+			java
+				o_result = new fa_positive32 ( System.currentTimeMillis() );
+			end java
+		end
+	end
+	end ///
+		
+
+	command wait_milli_seconds
+		in milli_seconds type:positive32 end
+		
+		script
+			java
+				//try {
+					Thread.sleep ( i_milli_seconds.getValue().java_value() ) ;
+				//}
+				//catch ( InterruptedException e ) {}
+			end java
+		end
+	end
+
+	command wait_seconds
+		in seconds type:positive32 end // TD check limit
+		
+		script
+			co_wait_milli_seconds ( i_seconds * se_time_constants.milli_seconds_in_second )
+		end
+	end
+
+	command wait_minutes
+		in minutes type:positive32 end // TD check limit
+		
+		script
+			co_wait_milli_seconds ( i_minutes * se_time_constants.milli_seconds_in_minute )
+		end
+	end
+
+	command wait_hours
+		in hours type:positive32 end // TD check limit
+		
+		script
+			co_wait_milli_seconds ( i_hours * se_time_constants.milli_seconds_in_hour )
+		end
+	end
+
+end service

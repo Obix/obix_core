@@ -1,0 +1,22 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type test_error
+
+	inherit error
+		attribute a_id default:"test_error" end
+		attribute description default:"A problem occured during unit testing." end
+	end
+	
+	inherit has_to_long_string end
+	
+	attribute date_time type:local_date_time default:se_date_time.current_local_date_time end
+
+	attribute source_code_location type:bug_source_code_location end
+	// attribute script_state type:script_state voidable:yes default:void end
+
+end

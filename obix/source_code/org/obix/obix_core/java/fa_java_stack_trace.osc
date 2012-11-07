@@ -1,0 +1,53 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory java_stack_trace type:java_stack_trace
+
+	java
+		private StackTraceElement[] a_stack_trace;
+		public StackTraceElement[] getStack_trace() { return a_stack_trace; }
+		
+		public fa_java_stack_trace ( StackTraceElement[] i_stackTrace ) {
+			a_stack_trace = i_stackTrace;
+		}
+
+		public static void append_to_string_builder ( StringBuilder i_string_builder, StackTraceElement[] i_stack_trace, String i_new_line ) {
+
+			for ( StackTraceElement stack_trace_element : i_stack_trace ) {
+				i_string_builder.append ( ">" );
+				i_string_builder.append ( stack_trace_element.getClassName() );
+				i_string_builder.append ( "." );
+				i_string_builder.append ( stack_trace_element.getMethodName() );
+				i_string_builder.append ( ", Java line " );
+				i_string_builder.append ( stack_trace_element.getLineNumber() );
+				i_string_builder.append ( i_new_line );
+			}
+		}
+	end java
+	
+	command to_string
+		script
+			java
+				o_result = new fa_string ( "Java stack trace (" + a_stack_trace.length + " elements)" );
+			end java
+		end
+	end
+	
+	command to_long_string
+		script
+			java
+				final String new_line = se_string_constants.getCurrent_OS_new_line().getValue().java_value();
+				final StringBuilder string_builder = new StringBuilder();
+				
+				append_to_string_builder ( string_builder, a_stack_trace, new_line );
+
+				o_result = new fa_string ( string_builder.toString() );
+			end java
+		end
+	end
+	
+end factory

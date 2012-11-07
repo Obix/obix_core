@@ -1,0 +1,5 @@
+type script_state_item_kind
+
+	enumerated attribute; input_argument; output_argument; variable; constant end
+	
+end

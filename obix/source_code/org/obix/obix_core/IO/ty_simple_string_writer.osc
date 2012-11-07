@@ -1,0 +1,44 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type simple_string_writer
+
+	inherit closeable end
+	
+	// TD? attribute last_write_error type:string_writer_error kind:readonly_variable end
+	// TD? attribute has_write_error type:yes_no kind:readonly_variable end
+	
+	// implementations should throw a 'string_writer_error' if a write error can occur during the following write operations
+	// client code should catch such errors
+
+	command write
+		in string type:simple_string end
+		// %system_error_handler_input_argument
+
+		// %resource_error_output_argument
+	end
+
+	command write_line
+		in string type:simple_string end
+		// %system_error_handler_input_argument
+
+		// %resource_error_output_argument
+	end
+
+	command write_new_line
+		// %system_error_handler_input_argument
+
+		// %resource_error_output_argument
+	end
+	
+	command flush
+		%system_error_handler_input_argument
+
+		%resource_error_output_argument
+	end
+
+end type

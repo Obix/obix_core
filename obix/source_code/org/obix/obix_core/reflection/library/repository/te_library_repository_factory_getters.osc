@@ -1,0 +1,68 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template library_repository_factory_getters
+
+	param item_type end
+	
+	command contains_{item_type}
+		script
+			o_result = {item_type}_by_id_path ( i_id_path ) #r void
+		end
+	end
+
+	command {item_type}_by_id_path
+		script
+			o_result = a_id_{item_type}_map.item_by_id ( i_id_path.id )
+
+			// TD2 consider same id in different libraries
+			if o_result #r void and o_result.id_path.library_id_path #v i_id_path.library_id_path then
+				o_result = void
+			end if
+		end
+	end
+
+	///
+	command {item_type}_by_prefixed_id_path_string
+		script
+			const {item_type}_id_path path = fa_{item_type}_id_path.create_from_string.result ( i_id_path )
+			if c_path =r void then
+				exit script
+			end if
+
+			o_result = {item_type}_by_id_path ( c_path )
+		end
+	end
+	end ///
+
+	command {item_type}_by_id
+		script
+			o_result = a_id_{item_type}_map.item_by_id ( i_id )
+		end
+	end
+	
+	command {item_type}_by_prefixed_id_string
+		script
+			o_result = a_id_{item_type}_map.item_by_prefixed_id_string ( i_prefixed_id )
+		end
+	end
+	
+	command {item_type}_by_unprefixed_id_string
+		script
+			o_result = a_id_{item_type}_map.item_by_unprefixed_id_string ( i_unprefixed_id )
+		end
+	end
+	
+	command {item_type}_by_prefixed_or_unprefixed_id_string
+		script
+			o_result = a_id_{item_type}_map.item_by_prefixed_or_unprefixed_id_string ( i_prefixed_or_unprefixed_id )
+		end
+	end
+	
+end template
+	
+

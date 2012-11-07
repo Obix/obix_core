@@ -1,0 +1,309 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template string_value_wrapper_factory
+
+	param split_item_type_suffix end
+	param result_factory end
+
+	attribute is_empty
+		get
+			script
+				o_is_empty = a_value.is_empty
+			end
+		end
+	end
+
+	attribute hash_code
+		get
+			script
+				o_hash_code = a_value.hash_code
+			end
+		end
+	end
+
+	command to_string
+		script
+			o_result = this
+		end
+	end
+
+	
+	// extended_comparable
+
+	command is_equal_to
+		script
+			if this =r i_other then
+				o_result = yes
+			else
+				o_result = a_value.co_is_equal_to ( i_other.a_value )
+			end if
+		end
+	end
+
+	command compare_to
+		script
+			o_result = a_value.co_compare_to ( i_other.a_value )
+		end
+	end
+
+	command min
+		script
+			if this <= i_other then
+				o_result = this
+			else
+				//o_result = i_other
+				o_result = co_create ( i_other.a_value )
+			end if
+		end
+	end
+
+	command max
+		script
+			if this >= i_other then
+				o_result = this
+			else
+				//o_result = i_other
+				o_result = co_create ( i_other.a_value )
+			end if
+		end
+	end
+
+	command is_between
+		script
+			o_result = a_value.co_is_between ( i_min = i_min.a_value; i_max = i_max.a_value )
+		end
+	end
+
+	
+	// indexed_list
+
+	command first_item
+		script
+			o_result = a_value.co_first_item
+		end
+	end
+
+	command last_item
+		script
+			o_result = a_value.co_last_item
+		end
+	end
+
+	command item_at_index
+		script
+			o_result = a_value.co_item_at_index ( i_index )
+		end
+	end
+	
+	command item_iterator
+		script
+			o_result = a_value.co_item_iterator
+		end
+	end
+
+	
+	// extract
+
+	command extract_from
+		script
+			o_result = fa_non_empty_string.co_create ( a_value.co_extract_from ( i_from ) )
+		end
+	end
+
+	command extract_to
+		script
+			o_result = fa_non_empty_string.co_create ( a_value.co_extract_to ( i_to ) )
+		end
+	end
+
+	command extract_from_to
+		script
+			o_result = fa_non_empty_string.co_create ( a_value.co_extract_from_to ( i_from = i_from; i_to = i_to ) )
+		end
+	end
+
+	
+	// find
+
+	command find
+		script
+			o_result = a_value.find ( i_to_find.value )
+		end
+	end
+
+	command find_from
+		script
+			o_result = a_value.find_from ( i_to_find = i_to_find.a_value; i_from = i_from )
+		end
+	end
+
+	command find_last
+		script
+			o_result = a_value.find_last ( i_to_find.a_value )
+		end
+	end
+	
+	command find_regex
+		script
+			o_result = a_value.co_find_regex ( i_regex )
+		end
+	end
+
+
+	// check
+
+	command starts_with
+		script
+			o_result = a_value.starts_with ( i_start.a_value )
+		end
+	end
+
+	command ends_with
+		script
+			o_result = a_value.ends_with ( i_end.a_value )
+		end
+	end
+
+	command matches_regex
+		script
+			o_result = a_value.co_matches_regex ( i_regex )
+		end
+	end
+
+	command contains
+		script
+			o_result = a_value.contains ( i_string.value )
+		end
+	end
+
+	
+	// modify
+
+	command append
+		script
+			o_result = {result_factory}.co_create ( a_value.co_append ( i_string.a_value ) )
+		end
+	end
+
+	command repeat
+		script
+			o_result = fa_non_empty_string.co_create ( a_value.co_repeat ( i_count ) )
+		end
+	end
+
+	command remove_first
+		script
+			o_result = fa_string.co_create ( a_value.co_remove_first )
+		end
+	end
+
+	command remove_last
+		script
+			o_result = fa_string.co_create ( a_value.co_remove_last )
+		end
+	end
+
+	command trim
+		script
+			o_result = fa_string.co_create ( a_value.co_trim )
+		end
+	end
+	
+	command pad_left
+		script
+			o_result = fa_non_empty_string.co_create ( a_value.co_pad_left ( i_width ) )
+		end
+	end
+
+	command pad_right
+		script
+			o_result = fa_non_empty_string.co_create ( a_value.co_pad_right ( i_width ) )
+		end
+	end
+
+	command replace_from_to
+		script
+			o_result = fa_string.create ( a_value.replace_from_to ( &
+				from = i_from &
+				to = i_to &
+				replace_by = i_replace_by.value ) )
+		end
+	end
+
+	command replace_all
+		script
+			o_result = fa_string.co_create ( a_value.co_replace_all ( &
+				i_to_replace = i_to_replace.a_value &
+				i_replace_by = i_replace_by.a_value ) )
+		end
+	end
+
+	command replace_all_regex
+		script
+			o_result = fa_string.co_create ( a_value.co_replace_all_regex ( &
+				i_to_replace_regex = i_to_replace_regex &
+				i_replace_by = i_replace_by.a_value ) )
+		end
+	end
+
+	command truncate
+		script
+			o_result = {result_factory}.co_create ( a_value.co_truncate ( i_width ) )
+		end
+	end
+	
+
+	// split
+
+	command split_by_lines
+		script
+			o_result = co_split_by_regex ( se_regex_constants.a_current_OS_new_line_regex )
+		end
+	end
+	
+	command split
+		script
+			o_result = co_split_by_regex ( se_regex_utilities.literal_string_to_regex ( i_split_by ) )
+		end
+	end
+	
+	command split_by_regex
+		script
+			const !indexed_list<string_value> value_result = a_value.co_split_by_regex ( i_regex )
+
+			var !mutable_indexed_list<{split_item_type_suffix}> temp_result = !mutable_indexed_list_factory<{split_item_type_suffix}>.co_create
+			repeat for each string_value value in value_result
+				temp_result.co_append ( fa_{split_item_type_suffix}.co_create ( c_value ) )
+			end repeat
+			o_result = temp_result.make_immutable
+		end
+	end
+	
+
+	// convert
+
+	command to_lower_case
+		script
+			o_result = {result_factory}.co_create ( a_value.co_to_lower_case )
+		end
+	end
+
+	command to_upper_case
+		script
+			o_result = {result_factory}.co_create ( a_value.co_to_upper_case )
+		end
+	end
+
+	command to_first_upper_case
+		script
+			o_result = fa_non_empty_string.co_create ( a_value.co_to_first_upper_case )
+		end
+	end
+
+
+end template

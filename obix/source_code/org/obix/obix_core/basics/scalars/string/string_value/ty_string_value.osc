@@ -1,0 +1,28 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type string_value
+
+	java
+		public String java_value() ;
+	end java
+	
+	inherit scalar_value end
+
+	inherit !extended_comparable<other:string_value; min_max_result:string_value> end
+
+	inherit !indexed_list<character> end
+	
+	inherit has_hash_code end
+	
+	%string_commands < &
+		input_string_type: string_value &
+		non_empty_input_string_type: string_value &
+		output_string_type: string_value &
+		non_empty_output_string_type: string_value >
+
+end type

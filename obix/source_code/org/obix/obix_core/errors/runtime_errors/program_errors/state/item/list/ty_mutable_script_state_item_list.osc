@@ -1,0 +1,46 @@
+type mutable_script_state_item_list
+
+	java
+		public void _add_attribute ( String i_id, String i_type, in_any_type i_value ) ;
+		public void _add_input_argument ( String i_id, String i_type, in_any_type i_value ) ;
+		public void _add_output_argument ( String i_id, String i_type, in_any_type i_value ) ;
+		public void _add_variable ( String i_id, String i_type, in_any_type i_value ) ;
+		public void _add_constant ( String i_id, String i_type, in_any_type i_value ) ;
+	end java
+
+	command add_attribute
+		in i_id type:attribute_id end 
+		in type type:type_id_path end
+		in value type:any_type voidable:yes end
+	end
+	
+	command add_input_argument
+		in i_id type:input_argument_id end 
+		in type type:type_id_path end
+		in value type:any_type voidable:yes end
+	end
+
+	command add_output_argument
+		in i_id type:output_argument_id end 
+		in type type:type_id_path end
+		in value type:any_type voidable:yes end
+	end
+
+	command add_variable
+		in i_id type:variable_id end 
+		in type type:type_id_path end
+		in value type:any_type voidable:yes end
+	end
+
+	command add_constant
+		in i_id type:constant_id end 
+		in type type:type_id_path end
+		in value type:any_type voidable:yes end
+	end
+
+	command to_immutable
+		out result type:script_state_item_list end 
+	end
+	
+end
+	

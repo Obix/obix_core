@@ -1,0 +1,161 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type date
+
+	inherit simple_non_empty_string
+		attribute value
+			and_check
+				script
+					const regex date_regex = se_date_constants.ISO_date_regex
+					check i_value.matches_regex ( c_date_regex ) &
+						error_message: """'{{i_value.to_string}}' is invalid because it doesn't match the regular expression '{{c_date_regex}}'.""" &
+						error_id: invalid_date_format
+						
+					const zero_positive32 year = fa_zero_positive32.create_from_string.result ( string = i_value.extract_to ( 4 ).to_string )
+					const zero_positive32 month = fa_zero_positive32.create_from_string.result ( string = i_value.extract_from_to ( &
+						from = 6 &
+						to = 7 ).to_string )
+					const zero_positive32 day = fa_zero_positive32.create_from_string.result ( string = i_value.extract_from ( 9 ).to_string )
+
+					if c_month =v 4 or c_month =v 6 or c_month =v 9 or c_month =v 11 then
+						check c_day <= 30 &
+							error_message: """'{{i_value.to_string}}' is invalid because the month has only 30 days.""" &
+							error_id: invalid_day_in_date
+
+					else if c_month =v 2 then
+						const positive32 max_day = iif se_date.is_leap_year ( c_year ) then 29 else 28 end if
+						check c_day <= c_max_day &
+							error_message: """'{{i_value.to_string}}' is invalid because the month has only {{c_max_day.to_string}} days.""" &
+							error_id: invalid_day_in_date
+					end if
+
+					check c_year >= se_date_constants.gregorian_start_year &
+						error_message: """'{{i_value.to_string}}' is invalid because the year must be greater or equal to {{se_date_constants.gregorian_start_year.to_string}}.""" &
+						error_id: invalid_year_in_date
+
+				end
+				test
+					script
+						test "2011-07-06"~
+						verify v_error =r void
+
+						// format
+						test "2011-30-04"~
+						verify v_error #r void
+
+						// 30, 31
+						test "2011-01-31"~
+						verify v_error =r void
+						test "2011-04-31"~
+						verify v_error #r void
+
+						// February
+						test "2011-02-28"~
+						verify v_error =r void
+						test "2011-02-29"~
+						verify v_error #r void
+						test "2012-02-29"~
+						verify v_error =r void
+						
+						// year > 1583
+						test "1581-07-06"~
+						verify v_error #r void
+					end
+				end
+			end
+		end
+	end
+
+	inherit !comparable<other:date> end
+
+	attribute_list kind:readonly_constant
+
+		attribute year type:year end
+
+		attribute month type:month end
+
+		attribute day_of_week type:day_of_week end
+		
+		attribute day_of_month type:day_of_month end
+		
+		// TD attribute day_of_year type:day_of_year end
+		
+	end
+	
+/// TD
+
+	attribute_list kind:readonly_constant
+
+		attribute is_first_week_of_year type:yes_no end
+		attribute is_last_week_of_year type:yes_no end
+
+		attribute is_first_day_of_year type:yes_no end
+		attribute is_last_day_of_year type:yes_no end
+
+		attribute is_first_day_of_month type:yes_no end
+		attribute is_last_day_of_month type:yes_no end
+
+		attribute is_first_day_of_week type:yes_no end
+		attribute is_last_day_of_week type:yes_no end
+
+		attribute week type:week_of_year end
+
+	end attribute_list
+
+
+	command to_formatted_string
+		in format type:date_format end
+
+		out result type:non_empty_string end
+	end
+	
+	command to_local_string
+		out result type:non_empty_string end
+	end
+	
+	command to_localized_string
+		in locale type:locale end
+
+		out result type:non_empty_string end
+	end
+	
+	command add_duration
+		in duration type:days_duration end
+		
+		out result type:date end
+	end
+
+	command subtract_duration
+		in duration type:days_duration end
+		
+		out result type:date end
+	end
+
+	command duration_after_other
+		in other type:date end
+		
+		out result type:days_duration end
+	end
+
+	command duration_before_other
+		in other type:date end
+		
+		out result type:days_duration end
+	end
+
+	command create_modified
+		in year type:year voidable:yes default:void end
+		in month type:month voidable:yes default:void end
+		in day type:day_of_month voidable:yes default:void end
+		
+		out result type:date end
+	end
+
+end ///
+
+end type

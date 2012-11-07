@@ -1,0 +1,9 @@
+service string_to_object_converter_config
+
+	attribute default_value type:string_to_object_converter_config default:fa_string_to_object_converter_config.create end
+	attribute empty_string_allowed type:string_to_object_converter_config default:fa_string_to_object_converter_config.create ( empty_string_is_void = no ) end
+	attribute void_input_not_allowed type:string_to_object_converter_config default:fa_string_to_object_converter_config.create ( &
+		empty_string_is_void = yes &
+		void_input_allowed = no ) end
+	
+end

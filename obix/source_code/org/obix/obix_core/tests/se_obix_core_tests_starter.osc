@@ -1,0 +1,31 @@
+service obix_core_tests_starter
+
+	command start
+		in command_line_arguments type:indexed_string_list voidable:yes end
+		
+		script
+			///
+			const yes_no success = se_test_commands.run_project_tests_from_command_line ( &
+				command_line_arguments = iif i_input_arguments #r void then i_input_arguments.make_immutable else void end if &
+				project_root_library_id = fa_library_id.create ( "li_doc_tutorial_part_2".value ) )
+			end ///
+
+			const test_context test_context = fa_test_context.create ( &
+				include_path_regex = void &
+				exclude_path_regex = void &
+				display_info_messages = yes )
+				// include_path_regex = fa_regex.create ( ".*fa_integer32_value"~ ) &
+
+			const yes_no success = se_testing.run_project_tests ( &
+				test_context = c_test_context &
+				project_start_library_id_path = fa_library_id_path.create ( "org.obix.obix_core"~ ) )
+		
+			if c_success then
+				se_system.exit_with_success
+			else
+				se_system.exit_with_error
+			end if
+		end
+	end
+
+end

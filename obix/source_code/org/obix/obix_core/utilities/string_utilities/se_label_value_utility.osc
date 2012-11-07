@@ -1,0 +1,122 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service label_value_utility
+
+	command label_value
+	
+		in label type:non_empty_string end
+		//in value type:non_empty_string end
+		in value type:string end
+		in label_width type:positive32 default:15 end
+		in result_width type:positive32 default:75 end
+		in_check check: i_result_width >= i_label_width + 3 end
+		
+		out result type:non_empty_string end
+		
+		script
+
+			// TD use string builder
+			var ty_string temp_result = ""
+
+			var ty_positive32 v_value_width = i_result_width - i_label_width - 2
+			var ty_string v_label_remaining = i_label
+			var ty_string v_value_remaining = i_value
+			var ty_yes_no v_first_line = yes
+			
+			// replace new line with "|" in label
+			v_label_remaining = v_label_remaining.co_replace_all ( i_to_replace = se_string_constants.current_OS_new_line i_replace_by = "|" )
+			//v_value_remaining = v_value_remaining.co_replace_all ( i_to_replace = se_string_constants.current_OS_new_line i_replace_by = "|" )
+			v_label_remaining = v_label_remaining.co_replace_all ( i_to_replace = se_string_constants.tab i_replace_by = "   " )
+			v_value_remaining = v_value_remaining.co_replace_all ( i_to_replace = se_string_constants.tab i_replace_by = "   " )
+
+			repeat while not (v_value_remaining.is_empty and v_label_remaining.is_empty)
+
+				// new line
+				//if not v_first_line then
+				//	temp_result = temp_result & se_string_constants.current_OS_new_line
+				//end if
+
+				// label
+				if v_label_remaining.is_empty then
+					temp_result = temp_result & se_string_constants.space.repeat ( i_label_width )
+				else
+					if v_label_remaining.item_count <= i_label_width then
+						if v_first_line then
+							temp_result = temp_result & v_label_remaining.co_pad_left ( i_width = i_label_width )
+						else
+							temp_result = temp_result & v_label_remaining.co_pad_right ( i_width = i_label_width )
+						end if
+						v_label_remaining = ""
+					else
+						temp_result = temp_result & v_label_remaining.co_extract_to ( i_label_width )
+						v_label_remaining = v_label_remaining.co_extract_from ( i_label_width + 1 )
+					end if
+				end if
+
+				// separator
+				if v_first_line then
+					temp_result = temp_result & ": "
+				else
+					temp_result = temp_result & "  "
+				end if
+
+				// value					
+				var ty_positive32 v_new_line_index = v_value_remaining.find ( se_string_constants.current_OS_new_line )
+				var ty_positive32 v_count
+				if v_new_line_index =r void then
+					v_count = v_value_width
+				else
+					if v_new_line_index <= v_value_width then
+						//v_count = v_new_line_index - 1 + se_string_constants.current_OS_new_line.item_count
+						v_count = v_new_line_index + se_string_constants.current_OS_new_line.item_count - 1
+					else
+						v_count = v_value_width
+					end if
+				end if
+					
+				var ty_string v_value_line
+				if v_value_remaining.item_count <= v_count then
+					v_value_line = v_value_remaining
+					v_value_remaining = se_string_constants.empty_string
+				else
+					v_value_line = v_value_remaining.co_extract_to ( v_count )
+					v_value_remaining = v_value_remaining.co_extract_from ( v_count + 1 )
+				end if
+				temp_result = temp_result & v_value_line.replace_all ( &
+					to_replace = se_string_constants.current_OS_new_line &
+					replace_by = se_string_constants.empty_string )
+					
+				temp_result = temp_result & se_string_constants.current_OS_new_line
+
+				v_first_line = no
+
+			end repeat
+			
+			o_result = fa_non_empty_string.create ( temp_result.value )
+
+		end script
+		
+		test
+			script
+				test i_label = "city" i_value = "Paris" i_label_width = 10 i_result_width = 75
+				verify v_result compare =v "      city: Paris" & se_string_constants.current_OS_new_line
+
+				test i_label = "city" i_value = "Paris" i_label_width = 10 i_result_width = 15
+				verify v_result compare =v "      city: Par" & se_string_constants.current_OS_new_line & "            is" & se_string_constants.current_OS_new_line
+
+				test i_label = "city" i_value = "Paris" i_label_width = 2 i_result_width = 15
+				verify v_result compare =v "ci: Paris" & se_string_constants.current_OS_new_line & "ty  " & se_string_constants.current_OS_new_line
+
+				test i_label = "a very important message" i_value = "You should always be honest!" i_label_width = 8 i_result_width = 20
+				verify v_result compare =v "a very i: You should" & se_string_constants.current_OS_new_line & "mportant   always be" & se_string_constants.current_OS_new_line & " message   honest!" & se_string_constants.current_OS_new_line
+			end script
+		end test
+	end command
+	
+
+end service

@@ -1,0 +1,22 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template scalar_comparable_factory_code
+
+	command is_equal_to
+		script
+			o_result = a_value.is_equal_to ( i_other.value )
+		end
+	end
+	
+	command compare_to
+		script
+			o_result = a_value.compare_to ( i_other.value )
+		end
+	end
+
+end

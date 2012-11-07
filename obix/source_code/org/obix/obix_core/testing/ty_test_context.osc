@@ -1,0 +1,52 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type test_context
+
+	attribute message_handler type:test_message_handler default:se_testing.default_test_message_handler end
+	
+	// attribute root_library_id type:library_id voidable:yes default:void end
+
+	attribute include_path_regex type:regex voidable:yes default:void end
+
+	attribute exclude_path_regex type:regex voidable:yes default:void end
+
+	attribute display_info_messages type:yes_no default:yes end
+
+	attribute_list kind:readonly_variable
+
+		attribute RSEs_tested_count type:zero_positive32 end
+
+		attribute test_errors_found type:yes_no end
+
+		attribute test_error_count type:zero_positive32 end
+		// attribute verify_fail_count type:zero_positive32 end
+		// attribute program_error_count type:zero_positive32 end
+		
+		attribute test_error_list type:!indexed_list<test_error> end
+		// attribute verify_fail_list type:!indexed_list<test_verify_fail_base> end
+		// attribute program_error_list type:!indexed_list<test_program_error> end
+
+	end
+
+	command start end
+
+	command stop end
+
+	command handle_RSE_test_start
+		in RSE_id_path type:id_path end
+	end
+
+	command handle_test_error
+		in test_error type:test_error end
+	end
+
+	command handle_info_message
+		in message type:string end
+	end
+
+end type

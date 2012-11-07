@@ -1,0 +1,30 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template mutable_or_immutable_sorted_map_factory_commands
+
+		command first_key
+			script
+				var ty_any_type v_temp
+				java
+					v_temp = (in_any_type) a_map.firstKey();
+				end java
+				o_result = v_temp type_check:no
+			end
+		end
+
+		command last_key
+			script
+				var ty_any_type v_temp
+				java
+					v_temp = (in_any_type) a_map.lastKey();
+				end java
+				o_result = v_temp type_check:no
+			end
+		end
+
+end template

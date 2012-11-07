@@ -1,0 +1,193 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type directory
+
+	inherit !equalable<directory> end
+
+	inherit absolute_or_relative_directory
+
+		attribute value
+			and_check
+				script
+					check se_directory_or_file.is_absolute_path ( i_value.to_string ) &
+						error_message: """'{{i_value.to_string}}' is an invalid directory path, because it is not an absolute path""" &
+						error_id:invalid_directory_path
+				end
+			end
+		end
+
+		attribute name type:directory_name end
+
+		attribute parent_directory type:directory end
+
+		command append_child_name
+			out result type:directory end
+		end
+
+		command append_child_directory
+			out result type:directory end
+		end
+
+		command append_relative_file
+			out result type:file end
+		end
+	end
+
+	inherit directory_or_file
+	
+		command to_current_OS_path 
+			out result type:directory end
+		end
+
+		command create_on_device
+			out error type:create_directory_error end
+		end
+		
+		command delete_on_device
+			out error type:delete_directory_error end
+		end
+
+	end
+	
+	command create_on_device_including_parents
+		%system_error_handler_input_argument
+		in_check check: not i_object_.exists end
+
+		out error type:create_directory_error voidable:yes end
+		out_check check: i_object_.exists xor i_error #r void end
+	end
+	
+	command rename_on_device
+		in new_directory_name type:directory_name end
+		%system_error_handler_input_argument
+		in_check
+			script
+				check i_object_.exists
+				check not i_object_.is_root_directory
+				const directory new_directory = fa_directory.create_from_root_and_child_name ( &
+					root_directory = i_object_.parent_directory &
+					child_name = i_new_directory_name )
+				check not c_new_directory.exists
+			end
+		end
+
+		out renamed_directory type:directory voidable:yes end
+		%error_output_argument < rename_directory_error >
+		out_check
+			script
+				check i_renamed_directory =r void xor i_error =r void
+				if i_renamed_directory #r void then
+					check i_renamed_directory.exists
+					check not i_object_.exists
+				end if
+			end
+		end
+	end
+	
+	command delete_content_on_device
+		in ask_confirmation_in_system_console type:yes_no end
+		%system_error_handler_input_argument
+		in_check
+			script
+				check i_object_.exists &
+					error_message: "Contents of directory '" & i_object_ & "' cannot be deleted, because the directory does not exist." &
+					error_id: directory_must_exist
+				check not i_ask_confirmation_in_system_console or se_system.console #r void
+			end
+		end
+		
+		out error type:delete_directory_error voidable:yes end
+		// out_check check: i_object_.directory_or_file_list.result ( include_child_directories = no ).is_empty or i_error #r void end
+	end
+	
+	command is_empty
+		%system_error_handler_input_argument
+		in_check check: i_object_.exists end
+			
+		%result_xor_resource_error_output<yes_no>
+	end
+
+	command make_relative_directory
+		in root_directory type:directory &
+			check: i_object_.to_current_OS_path.to_string.starts_with ( i_root_directory.to_current_OS_path ) end
+			
+		out result type:relative_directory end
+	end
+
+	command_list // group:(03).lists
+	
+		command directory_or_file_list
+			in filter type:directory_or_file_filter voidable:yes default:void end
+			in sort_by_path type:yes_no default:yes end // TD sort_kind_list
+			in include_child_directories type:yes_no end
+			%system_error_handler_input_argument
+			in_check check: i_object_.exists end
+			
+			%result_xor_error_output<result_type:directory_or_file_list error_type:read_directory_error>
+		end
+		
+		command directory_list
+			in filter type:directory_filter voidable:yes default:void end
+			in sort_by_path type:yes_no default:yes end // TD sort_kind_list
+			in include_child_directories type:yes_no end
+			%system_error_handler_input_argument
+			in_check check: i_object_.exists end
+			
+			%result_xor_error_output<result_type:directory_list error_type:read_directory_error>
+		end
+		
+		command file_list
+			in filter type:file_filter voidable:yes default:void end
+			in sort_by_path type:yes_no default:yes end // TD sort_kind_list
+			in include_child_directories type:yes_no end
+			%system_error_handler_input_argument
+			in_check check: i_object_.exists end
+			
+			%result_xor_error_output<result_type:file_list error_type:read_directory_error>
+		end
+	
+	end command_list
+	
+	command_list // group:(04)looping
+
+		command loop_directories_and_files
+			in filter type:directory_or_file_filter voidable:yes default:void end
+			in sort_by_path type:yes_no default:yes end // TD sort_kind_list
+			in include_child_directories type:yes_no default:no end
+			in item_handler type:directory_or_file_loop_item_handler end
+			%system_error_handler_input_argument
+			in_check check: i_object_.exists end
+			
+			%error_output_argument<read_directory_error>
+		end
+		
+		command loop_directories
+			in filter type:directory_filter voidable:yes default:void end
+			in sort_by_path type:yes_no default:yes end // TD sort_kind_list
+			in include_child_directories type:yes_no default:no end
+			in item_handler type:directory_loop_item_handler end
+			%system_error_handler_input_argument
+			in_check check: i_object_.exists end
+			
+			%error_output_argument<read_directory_error>
+		end
+		
+		command loop_files
+			in filter type:file_filter voidable:yes default:void end
+			in sort_by_path type:yes_no default:yes end // TD sort_kind_list
+			in include_child_directories type:yes_no default:no end
+			in item_handler type:file_loop_item_handler end
+			%system_error_handler_input_argument
+			in_check check: i_object_.exists end
+			
+			%error_output_argument<read_directory_error>
+		end
+	
+	end command_list
+	
+end type

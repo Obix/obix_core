@@ -1,0 +1,24 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type check_script
+
+	inherit script
+		attribute scope_is_object and_check: not i_scope_is_object default:no end
+		attribute set_public_attribute_instruction_permitted and_check: not i_set_public_attribute_instruction_permitted default:no end
+	end
+
+	attribute input_argument_list type:input_argument_list voidable:yes end
+	attribute output_argument type:output_argument end
+
+	attribute check_script_kind type:ty_check_script_kind.enumerated end
+
+	attribute is_defined_from_check_property type:yes_no end
+
+	// attribute parent_check_script type:check_script voidable:yes end
+
+end type

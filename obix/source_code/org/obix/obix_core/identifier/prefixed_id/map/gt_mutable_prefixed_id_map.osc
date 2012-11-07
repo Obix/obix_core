@@ -1,0 +1,34 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic type mutable_prefixed_id_map
+
+	param item_type child_of:prefixed_id_object end
+	param item_id_type child_of:prefixed_id end
+
+	type
+
+		inherit !mutable_or_immutable_prefixed_id_map < &
+			item_type: {item_type} &
+			item_id_type: {item_id_type} > end
+
+		command add
+			in item type:{item_type} check: not i_object_.contains_id ( i_item.id ) end
+		end
+
+		command make_immutable
+			// in_check check: not i_object_.is_empty end
+
+			out result type:!gt_prefixed_id_map < &
+				item_type: {item_type} &
+				item_id_type: {item_id_type} > end
+		end
+		
+	end
+
+end generic
+

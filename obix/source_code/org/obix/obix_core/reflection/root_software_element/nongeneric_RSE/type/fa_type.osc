@@ -1,0 +1,319 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory type type:type
+
+	attribute_list private:yes
+
+		attribute cached_object_type type:object_type voidable:yes kind:variable end
+		attribute cached_enumerated_object_type type:enumerated_object_type voidable:yes kind:variable end
+		
+	end
+
+	%te_nongeneric_RSE_factory_attributes < type >
+	
+	attribute uninherited_attribute_list
+		get
+			script
+				if a_attribute_list =r void then
+					o_uninherited_attribute_list = void
+					exit script
+				end if
+					
+				const mutable_type_attribute_list temp_uninherited_attribute_list = fa_mutable_type_attribute_list.create ( se_id_prefix.attribute )
+
+				repeat for each type_attribute attribute in a_attribute_list
+					case type of c_attribute
+						when inherited_type_attribute; redefined_type_attribute then
+							next repeat
+						when type_attribute then
+							temp_uninherited_attribute_list.add ( c_attribute )
+					end case
+				end repeat
+				
+				if not temp_uninherited_attribute_list.is_empty then
+					o_uninherited_attribute_list = temp_uninherited_attribute_list.make_immutable
+				end if
+			end
+		end
+	end
+
+	attribute uninherited_command_list
+		get
+			script
+				if a_command_list =r void then
+					o_uninherited_command_list = void
+					exit script
+				end if
+					
+				const mutable_type_command_list temp_uninherited_command_list = fa_mutable_type_command_list.create ( se_id_prefix.command )
+
+				repeat for each type_command command in a_command_list
+					case type of c_command
+						when inherited_type_command; redefined_type_command then
+							next repeat
+						when type_command then
+							temp_uninherited_command_list.add ( c_command )
+					end case
+				end repeat
+				
+				if not temp_uninherited_command_list.is_empty then
+					o_uninherited_command_list = temp_uninherited_command_list.make_immutable
+				end if
+			end
+		end
+	end
+
+	attribute uninherited_event_definition_list
+		get
+			script
+				if a_event_definition_list =r void then
+					o_uninherited_event_definition_list = void
+					exit script
+				end if
+					
+				const mutable_type_event_definition_list temp_uninherited_event_definition_list = fa_mutable_type_event_definition_list.create ( se_id_prefix.event )
+
+				repeat for each type_event_definition event_definition in a_event_definition_list
+					case type of c_event_definition
+						when inherited_type_event_definition; redefined_type_event_definition then
+							next repeat
+						when type_event_definition then
+							temp_uninherited_event_definition_list.add ( c_event_definition )
+					end case
+				end repeat
+				
+				if not temp_uninherited_event_definition_list.is_empty then
+					o_uninherited_event_definition_list = temp_uninherited_event_definition_list.make_immutable
+				end if
+			end
+		end
+	end
+
+
+	%te_RSE_factory_commands
+
+	command base_type_of_generic_type
+		script
+			o_result = a_generic_RSE_reference.base_type_id_path
+		end
+	end
+
+	// TD this command is SLOW!
+	// this command should only be used by compiler components (semantic analyser)
+	// for other cases (to test type compatibility at runtime) java.lang.Class.isAssignableFrom(Class<?> cls) should be used in a utility command of se_reflection
+	command is_compatible_to
+		script
+			if i_target_type_id_path =v a_id_path then
+				o_result = yes
+				exit script
+			end if
+
+			if i_target_type_id_path =v se_common_type_id_paths.no_type then
+				o_result = no
+				o_not_compatible_reason = "No type is compatible to type '" & se_common_type_id_paths.no_type.to_string & "'."
+				exit script
+			end if
+
+			if i_target_type_id_path =v se_common_type_id_paths.any_type then
+				o_result = yes
+				exit script
+			end if
+
+			const type target_type = i_type_getter.get_type ( i_target_type_id_path )
+			check script c_target_type #r void error_message: "Type '" & i_target_type_id_path.to_string & "' could not be found."
+
+			if this.is_generified_RSE and c_target_type.is_generified_RSE and &
+				this.generic_RSE_reference.generic_RSE_id_path =v c_target_type.generic_RSE_reference.generic_RSE_id_path then
+				
+				if not this.is_base_type_of_generic_type and i_target_type_id_path =v co_base_type_of_generic_type then
+					// a generified type is always compatible to the base type of the generic type
+					o_result = yes
+					exit script
+				end if
+
+				// two types generified from the same generic type
+				// check type compatibility for all attributes, input and output arguments whose types are defined by a parameter of the generic type
+				
+				if a_attribute_list #r void and not a_attribute_list.is_empty then
+					repeat for each type_attribute attribute in a_attribute_list
+
+						const object_type source_object_type = c_attribute.object_type
+
+						if c_source_object_type.generic_parameter_id =r void then
+							next repeat
+						end if
+						
+						const type_attribute target_attribute = c_target_type.attribute_list.item_by_id ( c_attribute.id )
+						if c_attribute.setable #r ty_attribute_setable.all then
+							// readonly attribute
+
+							const type source_type = &
+								iif c_source_object_type.type #r void &
+								then c_source_object_type.type &
+								else i_type_getter.get_type ( c_source_object_type.type_id_path ) end if
+								
+							if not c_source_type.is_compatible_to.result ( &
+								target_type_id_path = c_target_attribute.object_type.type_id_path &
+								type_getter = i_type_getter ) then
+								o_result = no
+								o_not_compatible_reason = "The type '" & c_source_object_type.to_string & "' of attribute '" & c_attribute.id & "' in type '" & to_string & "' is not compatible to type '" & c_target_attribute.object_type.to_string & "' in type '" & target_type.to_string & "'."
+								exit script
+							end if
+						else
+							// read/write attribute
+							if c_source_object_type.type_id_path #v c_target_attribute.object_type.type_id_path then
+								o_result = no
+								o_not_compatible_reason = "The type '" & c_source_object_type.to_string & "' of read/write attribute '" & c_attribute.id & "' in type '" & to_string & "' is not compatible to type '" & c_target_attribute.object_type.to_string & "' in type '" & target_type.to_string & "'."
+								exit script
+							end if
+						end if
+
+					end repeat
+				end if
+
+				if a_command_list #r void and not a_command_list.is_empty then
+					repeat for each type_command command in a_command_list
+
+						const type_command target_type_command = c_target_type.command_list.item_by_id ( c_command.id )
+					
+						// input arguments
+						const command_input_argument_list input_argument_list = c_command.script.input_argument_list
+						if c_input_argument_list #r void and not c_input_argument_list.is_empty then
+						
+							const command_input_argument_list target_type_input_argument_list = c_target_type_command.script.input_argument_list
+						
+							repeat for each command_input_argument input_argument in c_input_argument_list
+
+								const object_type target_object_type = c_input_argument.object_type
+
+								if c_target_object_type.generic_parameter_id =r void then
+									next repeat
+								end if
+								
+								const command_input_argument source_input_argument = c_target_type_input_argument_list.item_by_id ( c_input_argument.id )
+								const type source_type = &
+									iif c_source_input_argument.object_type.type #r void &
+									then c_source_input_argument.object_type.type &
+									else i_type_getter.get_type ( c_source_input_argument.object_type.type_id_path ) end if
+
+								if not c_source_type.is_compatible_to.result ( &
+									target_type_id_path = c_target_object_type.type_id_path &
+									type_getter = i_type_getter ) then
+									o_result = no
+									o_not_compatible_reason = "The type '" & c_source_input_argument.object_type.to_string & "' of input argument '" & c_input_argument.id & "' of command '" & c_command.id & "' in type '" & target_type.to_string & "' is not compatible to type '" & c_target_object_type.to_string & "' in type '" & to_string & "'."
+									exit script
+								end if
+
+							end repeat
+
+						end if
+
+						// output arguments
+						const command_output_argument_list output_argument_list = c_command.script.output_argument_list
+						if c_output_argument_list #r void and not c_output_argument_list.is_empty then
+						
+							const command_output_argument_list target_type_output_argument_list = c_target_type_command.script.output_argument_list
+						
+							repeat for each command_output_argument output_argument in c_output_argument_list
+
+								const object_type source_object_type = c_output_argument.object_type
+
+								if c_source_object_type.generic_parameter_id =r void then
+									next repeat
+								end if
+								
+								const type source_type = &
+									iif c_source_object_type.type #r void &
+									then c_source_object_type.type &
+									else i_type_getter.get_type ( c_source_object_type.type_id_path ) end if
+								
+								const command_output_argument target_output_argument = c_target_type_output_argument_list.item_by_id ( c_output_argument.id )
+								if not c_source_type.is_compatible_to.result ( &
+									target_type_id_path = c_target_output_argument.object_type.type_id_path &
+									type_getter = i_type_getter ) then
+									o_result = no
+									o_not_compatible_reason = "The type '" & c_source_object_type.to_string & "' of output argument '" & c_output_argument.id & "' of command '" & c_command.id & "' in type '" & to_string & "' is not compatible to type '" & c_target_output_argument.object_type.to_string & "' in type '" & target_type.to_string & "'."
+									exit script
+								end if
+
+							end repeat
+
+						end if
+					end repeat
+				end if
+				
+				o_result = yes
+				exit script
+			end if
+			
+			if a_inherited_type_list #r void then
+				repeat for each type_id_path inherited_type_id_path in a_inherited_type_list
+
+					if c_inherited_type_id_path =v i_target_type_id_path then
+						o_result = yes
+						exit script
+					end if
+					
+					const type inherited_type = i_type_getter.get_type ( c_inherited_type_id_path )
+					
+					// recursively look up all ascendants
+					if c_inherited_type.is_compatible_to.result ( &
+						target_type_id_path = i_target_type_id_path &
+						type_getter = i_type_getter ) then
+						o_result = yes
+						exit script
+					end if
+				end repeat
+			end if
+			
+			o_result = no
+			o_not_compatible_reason = "Type '" & to_string & "' is not a child type of '" & target_type.to_string & "'."
+		end
+	end
+
+	command get_object_type
+		script
+			if i_generic_parameter_id =r void and a_cached_object_type #r void then
+				o_result = a_cached_object_type
+				exit script
+			end if
+
+			o_result = fa_object_type.create ( &
+				type_id_path = a_id_path &
+				generic_parameter_id = i_generic_parameter_id &
+				type = this )
+
+			if i_generic_parameter_id =r void then
+				a_cached_object_type = o_result
+			end if
+		end
+	end
+
+	command get_enumerated_object_type
+		script
+			if i_generic_parameter_id =r void and a_cached_enumerated_object_type #r void then
+				o_result = a_cached_enumerated_object_type
+				exit script
+			end if
+
+			o_result = fa_enumerated_object_type.create ( &
+				type_id_path = se_common_type_id_paths.enumerated &
+				generic_parameter_id = i_generic_parameter_id &
+				type = void &
+				underlying_enumerated_type_id_path = a_id_path &
+				underlying_enumerated_type = this )
+
+			if i_generic_parameter_id =r void then
+				a_cached_enumerated_object_type = o_result
+			end if
+		end
+	end
+
+	creator create kind:in_all end
+
+end factory

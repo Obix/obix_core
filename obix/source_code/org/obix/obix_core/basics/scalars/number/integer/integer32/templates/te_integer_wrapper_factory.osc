@@ -1,0 +1,180 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template integer_wrapper_factory
+
+	param remainder_factory end
+	param unary_minus_factory end
+	param abs_factory end
+	
+	command to_string
+		script
+			result = a_value.co_to_string
+		end
+	end
+
+	// equalable
+
+	command is_equal_to
+		script
+			o_result = a_value.co_is_equal_to ( i_other.a_value )
+		end
+	end
+	
+	// extended_comparable
+
+	command compare_to
+		script
+			o_result = a_value.co_compare_to ( i_other.a_value )
+		end
+	end
+
+	command min
+		script
+			if this <= i_other then
+				o_result = this
+			else
+				o_result = co_create ( i_other.a_value )
+			end if
+		end
+	end
+
+	command max
+		script
+			if this >= i_other then
+				o_result = this
+			else
+				o_result = co_create ( i_other.a_value )
+			end if
+		end
+	end
+
+	command is_between
+		script
+			o_result = a_value.co_is_between ( i_min = i_min.a_value; i_max = i_max.a_value )
+		end
+	end
+
+	// arithmeticable
+
+	command add
+		script
+			o_result = fa_signed_integer32.create ( a_value.co_add ( i_operand.a_value ) )
+		end
+	end
+
+	command subtract
+		script
+			o_result = fa_signed_integer32.create ( a_value.co_subtract ( i_operand.a_value ) )
+		end
+	end
+
+	command multiply
+		script
+			o_result = fa_signed_integer32.create ( a_value.co_multiply ( i_operand.a_value ) )
+		end
+	end
+
+	command divide
+		script
+			o_result = fa_signed_integer32.create ( a_value.co_divide ( i_operand.a_value ) )
+		end
+	end
+
+	command remainder
+		script
+			o_result = {remainder_factory}.co_create ( a_value.co_remainder ( i_operand.a_value ) )
+		end
+	end
+
+	command unary_minus
+		script
+			o_result = {unary_minus_factory}.co_create ( a_value.co_unary_minus )
+		end
+	end
+
+	command abs
+		script
+			o_result = {abs_factory}.co_create ( a_value.co_abs )
+		end
+	end
+	
+	// booleanable
+
+	command and
+		script
+			o_result = co_create ( a_value.co_and ( i_operand.a_value ) )
+		end
+	end
+
+	command or
+		script
+			o_result = co_create ( a_value.co_or ( i_operand.a_value ) )
+		end
+	end
+
+	command xor
+		script
+			o_result = co_create ( a_value.co_xor ( i_operand.a_value ) )
+		end
+	end
+
+	command not
+		script
+			o_result = co_create ( a_value.co_not )
+		end
+	end
+	
+	// bitshiftable
+
+	command shift_left
+		script
+			o_result = co_create ( a_value.co_shift_left ( i_count ) )
+		end
+	end
+
+	command shift_left_once
+		script
+			o_result = co_create ( a_value.co_shift_left_once )
+		end
+	end
+
+	command shift_right
+		script
+			o_result = co_create ( a_value.co_shift_right ( i_count ) )
+		end
+	end
+
+	command shift_right_once
+		script
+			o_result = co_create ( a_value.co_shift_right_once )
+		end
+	end
+	
+	// integer_to_string_converter
+
+	command to_hexadecimal_string
+		script
+			o_result = a_value.co_to_hexadecimal_string
+		end
+	end
+
+	command to_octal_string
+		script
+			o_result = a_value.co_to_octal_string
+		end
+	end
+
+	command to_binary_string
+		script
+			o_result = a_value.co_to_binary_string
+		end
+	end
+
+//	creator create kind:in_all end
+
+end template

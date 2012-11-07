@@ -1,0 +1,40 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic type bitshiftable
+
+	param result end
+	// TD
+	// param max_count end
+
+	type
+
+		command shift_left
+			// in count type:positive32 check: i_count <= {max_count} end
+			in count type:positive32 end
+
+			out result type:{result} end
+		end
+
+		command shift_left_once
+			out result type:{result} end
+		end
+
+		command shift_right
+			// in count type:positive32 check: i_count <= {max_count} end
+			in count type:positive32 end
+
+			out result type:{result} end
+		end
+
+		command shift_right_once
+			out result type:{result} end
+		end
+
+	end type
+
+end generic

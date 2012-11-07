@@ -1,0 +1,43 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory system_program_error type:system_program_error
+
+	command to_string
+		script
+			const mutable_string temp_result = fa_mutable_string.create
+			
+			temp_result.append ( se_program_error.co_program_error_to_string ( this ) )
+			
+			se_program_error.co_append_label_value ( &
+				string = temp_result &
+				i_label = "System error" &
+				i_value = a_system_error_description )
+			
+			o_result = temp_result.to_non_empty_string
+		end script
+	end command
+
+
+	creator create kind:in_all end
+
+	creator create_with_defaults
+		in source_code_location type:bug_source_code_location end
+		in script_state type:script_state voidable:yes end
+		in system_error_description type:string end
+		
+		out result type:system_program_error end
+		
+		script
+			o_result = co_create ( &
+				source_code_location = i_source_code_location &
+				script_state = i_script_state &
+				system_error_description = i_system_error_description )
+		end
+	end
+
+end factory

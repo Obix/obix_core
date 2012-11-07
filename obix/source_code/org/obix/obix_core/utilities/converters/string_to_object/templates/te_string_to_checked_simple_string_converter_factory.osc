@@ -1,0 +1,50 @@
+template string_to_checked_simple_string_converter_factory
+
+	param type_id_suffix end
+
+factory string_to_{type_id_suffix}_converter type:string_to_{type_id_suffix}_converter
+
+	command convert
+		script
+			o_result = fa_{type_id_suffix}.create ( i_input.value ) on_error:continue
+
+			if v_program_error_ =r void then
+				exit script
+			end if
+			
+			if i_input =r void then
+				if a_config.void_input_allowed then
+					o_result = void
+					exit script
+				end if
+
+			else if i_input =v se_string_constants.empty_string then
+				if a_config.empty_string_is_void then
+					o_result = void
+					exit script
+				end if
+
+			else if a_config.void_value_as_string #r void and i_input =v a_config.void_value_as_string then
+				o_result = void
+				exit script
+
+			end if
+			
+			var string error_description = """'{{i_input}}' cannot be converted to an object of type '{type_id_suffix}'. Reason:
+{{se_program_error.get_source_error_of_program_error ( v_program_error_ ).description}}"""
+
+			o_error = fa_string_to_object_conversion_error.create ( &
+				i_id = "string_to_{type_id_suffix}_conversion_error" &
+				description = v_error_description &
+				data = i_input &
+				type_of_result = "{type_id_suffix}" &
+				error_position = void )
+			i_error_handler.handle_system_error ( o_error )
+		end
+	end
+	
+	creator create kind:in_all end
+	
+end
+
+end template

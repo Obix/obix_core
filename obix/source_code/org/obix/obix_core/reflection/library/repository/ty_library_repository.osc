@@ -1,0 +1,119 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type library_repository
+
+	inherit type_getter end
+
+	attribute root_library_list type:!collection<library> end
+	
+	attribute_list kind:readonly_constant
+
+		// TD attribute library_list type:!collection<library> end
+
+		attribute nongeneric_RSE_list type:!collection<nongeneric_RSE> end
+
+		attribute type_list type:!collection<type> end
+		attribute factory_list type:!collection<factory> end
+		attribute service_list type:!collection<service> end
+		
+		attribute generic_type_list type:!collection<generic_type> end
+		attribute generic_factory_list type:!collection<generic_factory> end
+		attribute generic_service_list type:!collection<generic_service> end
+
+		attribute source_code_template_list type:!collection<source_code_template> end
+
+	end
+	
+	command contains_library
+		in library_id_path type:library_id_path end
+		
+		out result type:yes_no end
+	end
+
+	command library_by_id_path
+		in library_id_path type:library_id_path end
+		
+		out result type:library voidable:yes end
+	end
+
+	// %library_repository_type_getters<RSE>
+
+	%library_repository_type_getters<type>
+	%library_repository_type_getters<factory>
+	%library_repository_type_getters<service>
+
+	%library_repository_type_getters<generic_type>
+	%library_repository_type_getters<generic_factory>
+	%library_repository_type_getters<generic_service>
+
+	%library_repository_type_getters<source_code_template>
+	
+	command get_direct_child_type_list
+		in type_id_path type:type_id_path check: i_object_.contains_type ( i_type_id_path ) end
+		
+		out result type:type_map voidable:yes end
+	end
+
+	///
+	command get_deep_child_type_list
+		in type_id_path type:type_id_path end
+		
+		out result type:!indexed_list<type> voidable:yes end
+	end
+	end ///
+
+	command get_create_creator_for_type
+		in type_id_path type:type_id_path check: i_object_.contains_type ( i_type_id_path ) end
+		%system_error_handler_input_argument
+		
+		out factory type:factory voidable:yes end
+		out creator type:factory_command voidable:yes end
+		out error type:reflection_error voidable:yes end
+		out_check check: ( i_factory =r void xor i_error =r void ) and ( i_creator =r void xor i_error =r void ) end
+	end
+
+	command get_creator_for_type
+		in type_id_path type:type_id_path check: i_object_.contains_type ( i_type_id_path ) end
+		in creator_id type:command_id end
+		%system_error_handler_input_argument
+		
+		out factory type:factory voidable:yes end
+		out creator type:factory_command voidable:yes end
+		out error type:reflection_error voidable:yes end
+		out_check check: ( i_factory =r void xor i_error =r void ) and ( i_creator =r void xor i_error =r void ) end
+	end
+
+	command get_factories_implementing_type
+		in type_id_path type:type_id_path check: i_object_.contains_type ( i_type_id_path ) end
+		
+		out result type:factory_map voidable:yes end
+	end
+
+	command type_has_factories
+		in type_id_path type:type_id_path check: i_object_.contains_type ( i_type_id_path ) end
+		
+		out result type:yes_no end
+	end
+	
+	command get_virtual_root_library
+		in virtual_root_library_id type:library_id default:fa_library_id.create ( "li_virtual_root".value ) end
+		
+		out result type:library end
+	end
+
+	command store_to_file
+		in file type:file end
+		in overwrite_file_if_exists type:yes_no end
+		%message_handler_input_argument
+		%system_error_handler_input_argument
+		in_check check: not i_file.exists or i_overwrite_file_if_exists end
+		
+		%resource_error_output_argument
+	end
+
+end type

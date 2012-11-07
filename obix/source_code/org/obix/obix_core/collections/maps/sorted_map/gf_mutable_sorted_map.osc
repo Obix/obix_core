@@ -1,0 +1,109 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic factory mutable_sorted_map
+
+	param key_type child_of:simple_string end
+	param item_type end
+	
+	factory type:!gt_mutable_sorted_map<key_type:{key_type}; item_type:{item_type}>
+	
+		java_header
+			import java.util.ArrayList;
+			import java.util.Collections;
+			import java.util.List;
+			import java.util.SortedMap;
+			import java.util.TreeMap;
+			import java.util.concurrent.ConcurrentSkipListMap;
+			
+			import org.obix.obix_core.basics.scalars.string.simple_string.in_simple_string;
+			import org.obix.obix_core.collections.se_collection;
+			import org.obix.obix_core.collections.java.fa_java_collection_wrapper;
+			import org.obix.obix_core.collections.java.fa_java_unmodifiable_list_wrapper;
+			import org.obix.obix_core.collections.java.fa_java_unmodifiable_sorted_map_wrapper;
+		end java_header
+
+		java
+			private SortedMap < in_simple_string, in_any_type > a_map ;
+
+			/* TD needed?
+			// converted to unmodifiableSortedMap because a_map can be passed to an immutable map
+			public SortedMap < in_simple_string, in_any_type > java_map() { return Collections.unmodifiableSortedMap ( a_map ); }
+			*/
+		end java
+
+		%mutable_or_immutable_map_factory_attributes
+	
+		%mutable_or_immutable_map_factory_commands<key_type:{key_type}; item_type:{item_type}>
+		
+		%mutable_map_factory_commands
+	
+		%mutable_or_immutable_sorted_map_factory_commands
+		
+		command to_string
+			script
+				o_result = "Sorted mutable map containing " & a_item_count.to_string & " item(s)."
+			end
+		end
+		
+		command copy_to_immutable
+			script
+				var java_unmodifiable_sorted_map_wrapper wrapper
+				java
+					SortedMap<in_simple_string, in_any_type> copy = new TreeMap<in_simple_string, in_any_type> ( a_map );
+					v_wrapper = new fa_java_unmodifiable_sorted_map_wrapper ( Collections.unmodifiableSortedMap ( copy ) );
+				end java
+				o_result = !gf_sorted_map<key_type:{key_type}; item_type:{item_type}>.create_from_unmodifiable_sorted_java_map ( v_wrapper )
+			end
+		end
+
+		command make_immutable
+			script
+				var java_unmodifiable_sorted_map_wrapper wrapper
+				java
+					a_map = Collections.unmodifiableSortedMap ( a_map );
+					v_wrapper = new fa_java_unmodifiable_sorted_map_wrapper ( a_map );
+				end java
+				o_result = !gf_sorted_map<key_type:{key_type}; item_type:{item_type}>.create_from_unmodifiable_sorted_java_map ( v_wrapper )
+			end
+		end
+
+		creator co_create
+			in support_concurrent_access type:yes_no default:yes end
+
+			out result type:!gt_mutable_sorted_map<key_type:{key_type}; item_type:{item_type}> end
+
+			script
+				java
+					if ( i_support_concurrent_access.java_value() ) {
+						o_result.a_map = new ConcurrentSkipListMap<in_simple_string, in_any_type>() ;
+					}
+					else {
+						o_result.a_map = new TreeMap<in_simple_string, in_any_type>() ;
+					}
+				end java
+			end
+		end
+
+		creator create_singleton
+			in key type:{key_type} end
+			in item type:{item_type} voidable:yes end
+			in support_concurrent_access type:yes_no default:yes end
+
+			out result type:!gt_mutable_sorted_map<key_type:{key_type}; item_type:{item_type}> end
+
+			script
+				o_result = co_create ( i_support_concurrent_access )
+				o_result.add ( &
+					key = i_key &
+					item = i_item )
+			end
+		end
+
+	end factory
+
+end generic

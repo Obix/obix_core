@@ -1,0 +1,120 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory character type:character
+
+	java_header
+		import org.obix.obix_core.basics.scalars.character.character_value.fa_character_value;
+	end java_header
+
+	java
+		public char java_value() { return a_value.java_value(); }
+
+		public fa_character ( char i_java_value ) {
+			this.a_value = new fa_character_value ( i_java_value ) ;
+		}
+	end java
+
+	%te_character_wrapper_factory<result_factory:fa_character>
+
+	creator create kind:in_all end
+
+	creator create_from_string
+		in string type:simple_string voidable:yes end
+		in config type:string_to_object_converter_config default:se_string_to_object_converter_config.default_value end
+		%system_error_handler_input_argument
+		
+		%result_or_string_to_object_conversion_error_void_output < character >
+
+		script
+			section convert
+				if i_string =r void then
+					if i_config.void_input_allowed then
+						o_result = void
+						exit script
+					else
+						exit section
+					end if
+				end if
+				
+				if i_string.value.item_count =v 1 then
+					var character_value character_value
+					java
+						char ch = i_string.getValue().java_value().charAt ( 0 );
+						v_character_value = new fa_character_value ( ch );
+					end java
+					o_result = create ( v_character_value )
+					exit script
+
+				else if i_string.value =v se_string_constants.empty_string.value then
+					if i_config.empty_string_is_void then
+						o_result = void
+						exit script
+					else
+						exit section
+					end if
+
+				else if i_config.void_value_as_string #r void and i_string.value =v i_config.void_value_as_string.value then
+					o_result = void
+					exit script
+
+				end if
+
+			end section
+
+			o_result = void
+			o_error = fa_string_to_object_conversion_error.create ( &
+				id = "string_to_character_conversion_error" &
+				description = """'{{se_any_type.force_object_to_string ( i_string )}}' cannot be converted to a character value.
+A character must consists of exactly one character.""" &
+				java_exception = void &
+				data = i_string &
+				type_of_result = "character" &
+				error_position = void )
+			i_error_handler.handle_system_error ( o_error )
+		end
+		
+		test
+			script
+				test string = "a"
+				verify v_result =v 'a'
+
+				test string = '''\'''
+				verify v_result =v '\\'
+				
+				test string = "aa"
+				verify v_result =r void
+				verify v_error #r void
+				
+				test string = "\t"
+				verify v_result =v '\t'
+				
+				test string = "\u0009"
+				verify v_result =v '\t'
+				
+				test string = '''\u0009'''
+				verify v_result =r void
+				verify v_error #r void
+				
+				// void
+
+				test string = void
+				verify v_result =r void
+				verify v_error =r void
+				
+				test string = ""
+				verify v_result =r void
+				verify v_error =r void
+				
+				test string = se_any_type.void_object_as_string
+				verify v_result =r void
+				verify v_error =r void
+			end
+		end
+	end
+
+end factory

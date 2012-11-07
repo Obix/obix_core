@@ -1,0 +1,59 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory object_type type:object_type
+
+	attribute is_parameter_of_generified_type
+		get
+			script
+				o_is_parameter_of_generified_type = a_generic_parameter_id #r void
+			end
+		end
+	end
+	
+	command is_equal_to
+		script
+			if this =r i_other then
+				o_result = yes
+				exit script
+			end if
+			
+			case type of i_other
+				when enumerated_object_type; factory_object_type then
+					o_result = no
+				when object_type then
+					o_result = a_type_id_path =v i_other.type_id_path
+			end case
+		end
+	end
+
+	command to_string
+		script
+			o_result = a_type_id_path.id.to_string & " (" & a_type_id_path.library_id_path & ")"
+		end
+	end
+	
+	creator create kind:in_all end
+	
+	/// needed ?
+	creator create_simple
+		in type_id_path type:type_id_path end
+		
+		out result type:object_type end
+		
+		script
+			o_result = co_create ( &
+				type_id_path = i_type_id_path &
+				generic_parameter_id = void &
+				type = void )
+				
+		end
+	end
+	end ///
+	
+
+end factory

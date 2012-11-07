@@ -1,0 +1,20 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type RSE_feature
+
+	inherit RSE_component end
+
+	attribute a_private type:yes_no end
+
+	attribute obsolete type:yes_no end
+
+	attribute scope_is_object type:yes_no end
+
+	attribute target_code_instructions type:target_code_instructions voidable:yes transient:yes end
+
+end type

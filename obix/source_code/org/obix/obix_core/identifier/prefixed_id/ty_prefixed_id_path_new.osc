@@ -1,0 +1,32 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type prefixed_id_path_new
+
+	inherit simple_non_empty_string
+		/// TD3
+		attribute value
+			and_check
+				script
+					check i_value.matches_regex ( se_prefixed_id_path.regex ) &
+						error_message: "'" & fa_string.co_create ( i_value ) & "' is an invalid prefixed identifier path." &
+						error_id:invalid_prefixed_id_path
+				end script
+			end
+		end
+		end ///
+	end
+
+	///
+	inherit !indexed_list<prefixed_id>
+		command to_string
+			out result type:non_empty_string end
+		end
+	end
+	end ///
+
+end type

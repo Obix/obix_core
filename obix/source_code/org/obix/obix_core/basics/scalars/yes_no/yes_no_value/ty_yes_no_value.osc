@@ -1,0 +1,34 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type yes_no_value
+
+	java
+		public boolean java_value() ;
+	end java
+	
+	inherit scalar_value
+		command to_string
+			out result type:non_empty_string end
+		end
+	end
+
+	inherit !equalable<yes_no_value> end
+	
+	inherit !booleanable<operand: yes_no_value; result: yes_no_value> end
+
+	// conversion
+	
+	command to_integer
+		out result type:zero_positive32 end // TD type zero_or_one
+	end
+	
+	command to_character
+		out result type:character end
+	end
+	
+end type

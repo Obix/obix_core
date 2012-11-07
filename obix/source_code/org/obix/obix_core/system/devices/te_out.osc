@@ -1,0 +1,8 @@
+template out
+
+	param expression end
+	
+	se_system.out.write ( '''{expression}: ''' )
+	se_system.out.write_line ( se_any_type.force_object_to_string ( {expression} ) )
+	
+end

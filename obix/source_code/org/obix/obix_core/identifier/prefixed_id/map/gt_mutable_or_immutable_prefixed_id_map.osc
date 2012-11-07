@@ -1,0 +1,54 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic type mutable_or_immutable_prefixed_id_map
+
+	param item_type child_of:prefixed_id_object end
+	param item_id_type child_of:prefixed_id end
+
+	type
+
+		inherit !gt_collection<{item_type}> end
+		
+		command contains_id
+			in i_id type:{item_id_type} end 
+			
+			out result type:yes_no end
+		end
+
+		command item_by_id
+			in i_id type:{item_id_type} end 
+			
+			out result type:{item_type} voidable:yes end
+		end
+
+		command item_by_prefixed_id_string
+			in prefixed_id type:simple_string end
+			
+			out result type:{item_type} voidable:yes end
+		end
+
+		command item_by_unprefixed_id_string
+			in unprefixed_id type:simple_string end
+			
+			out result type:{item_type} voidable:yes end
+		end
+
+		command item_by_prefixed_or_unprefixed_id_string
+			in prefixed_or_unprefixed_id type:simple_string end
+			
+			out result type:{item_type} voidable:yes end
+		end
+		
+		command unprefixed_id_list
+			out result type:!indexed_list < simple_string > end
+		end
+
+	end type
+	
+end generic
+

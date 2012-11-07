@@ -1,0 +1,158 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory local_time type:local_time
+
+	java_header
+		import java.util.Date;
+	end java_header
+
+	attribute hours
+		get
+			script
+				o_hours = fa_hour_of_day.create ( fa_integer32_value.create_from_string_value.result ( value = a_value.extract_to ( 2 ) ) )
+			end
+			test
+				script
+					var local_time t = create ( "12:30:44"~ )
+					verify t.hours.value =v 12~
+
+					t = create ( "08:30:44"~ )
+					verify t.hours.value =v 8~
+				end
+			end
+		end
+	end
+
+	attribute minutes
+		get
+			script
+				o_minutes = fa_minutes_of_hour.create ( fa_integer32_value.create_from_string_value.result ( value = a_value.extract_from_to ( from = 4; to = 5 ) ) )
+			end
+			test
+				script
+					var local_time t = create ( "12:30:44"~ )
+					verify t.minutes.value =v 30~
+
+					t = create ( "12:07:44"~ )
+					verify t.minutes.value =v 7~
+				end
+			end
+		end
+	end
+
+	attribute seconds
+		get
+			script
+				o_seconds = fa_seconds_of_minute.create ( fa_integer32_value.create_from_string_value.result ( value = a_value.extract_from ( 7 ) ) )
+			end
+			test
+				script
+					var local_time t = create ( "12:30:44"~ )
+					verify t.seconds.value =v 44~
+
+					t = create ( "12:30:09"~ )
+					verify t.seconds.value =v 9~
+				end
+			end
+		end
+	end
+
+	%scalar_comparable_factory_code
+
+
+	creator create kind:in_all end
+	
+	creator create_current_time
+		out result type:local_time end
+		
+		script
+			var string_value value
+			java
+				v_value = new fa_string_value ( se_time.a_java_ISO_local_time_format.format ( new Date() ) );
+			end java
+			
+			o_result = create ( v_value )
+		end
+		test
+			script
+				var local_time t = create_current_time
+				system.out.write_line ( string = "current local time: " & t.to_string )
+			end
+		end
+	end
+	
+	%create_from_string_creator_for_simple_string<local_time>
+
+	creator create_from_integers
+		in hours type:zero_positive32 end
+		in minutes type:zero_positive32 end
+		in seconds type:zero_positive32 end
+		%system_error_handler_input_argument
+
+		%result_xor_error_output < &
+			result_type: local_time &
+			error_type: string_to_object_conversion_error >
+
+		script
+			const mutable_string string = fa_mutable_string.create
+			
+			if i_hours < 10 then
+				c_string.append ( "0" )
+			end if
+			c_string.append ( i_hours.to_string )
+			c_string.append ( se_time_constants.ISO_time_separator )
+
+			if i_minutes < 10 then
+				c_string.append ( "0" )
+			end if
+			c_string.append ( i_minutes.to_string )
+			c_string.append ( se_time_constants.ISO_time_separator )
+
+			if i_seconds < 10 then
+				c_string.append ( "0" )
+			end if
+			c_string.append ( i_seconds.to_string )
+			
+			create_from_string ( &
+				string = c_string.to_string &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error )
+		end
+		test
+			script
+				test hours = 8; minutes = 7; seconds = 6
+				verify v_result.hours.value =v 8~
+				verify v_result.minutes.value =v 7~
+				verify v_result.seconds.value =v 6~
+				verify v_result.value =v "08:07:06"~
+
+				test hours = 24; minutes = 7; seconds =6
+				verify v_result =r void
+				verify v_error #r void
+			end
+		end
+	end
+
+	test
+		script
+			const local_time t1 = create ( "08:07:06"~ )
+			const local_time t2 = create_from_string.result ( string = "08:07:06" )
+			const local_time t3 = create_from_integers.result ( hours = 8; minutes = 7; seconds = 6 )
+			verify t1 =v t2
+			verify t1 =v t3
+			verify t2 =v t3
+
+			const local_time after = create ( "08:07:07"~ )
+			const local_time before = create ( "08:07:05"~ )
+			verify after > t1
+			verify before < t1
+		end
+	end
+
+end factory

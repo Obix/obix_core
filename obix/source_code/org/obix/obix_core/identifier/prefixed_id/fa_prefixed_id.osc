@@ -1,0 +1,36 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory prefixed_id type:prefixed_id
+
+	%prefixed_id_child_factory_commands
+
+	creator create kind:in_all end
+	
+	%create_from_string_creator_for_simple_string<prefixed_id>
+
+
+	///
+	test
+		script
+			var ty_prefixed_id v_id = co_create ( "v_i" )
+			verify v_id.co_prefix.a_value =v "v"
+			verify v_id.co_suffix =v "i"
+			verify v_id =v "v_i"
+
+			v_id = co_create ( "co_delete_row_12" )
+			verify v_id.co_prefix.a_value =v "co"
+			verify v_id.co_suffix =v "delete_row_12"
+			verify v_id =v "co_delete_row_12"
+
+			v_id = co_create ( "co_invalid!" ) on_error:continue
+			verify v_program_error_ #r void
+		end script
+	end test
+	end ///
+
+end factory

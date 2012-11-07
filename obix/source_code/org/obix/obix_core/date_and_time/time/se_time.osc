@@ -1,0 +1,30 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service time
+
+	java_header
+		import java.text.SimpleDateFormat;
+	end java_header
+
+	java
+		public static SimpleDateFormat a_java_ISO_local_time_format;
+		static {
+			a_java_ISO_local_time_format = new SimpleDateFormat ( se_time_constants.getISO_local_time_format().getValue().java_value() );
+			a_java_ISO_local_time_format.setLenient(false);
+		}
+	end java
+
+	attribute current_local_time type:local_time kind:readonly_variable
+		get
+			script
+				o_current_local_time = fa_local_time.create_current_time
+			end
+		end
+	end
+
+end service

@@ -1,0 +1,80 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory java_exception type:java_exception
+
+	java
+		private Exception a_exception;
+		public Exception getException() { return a_exception; }
+
+		public fa_java_exception ( Exception i_exception ) {
+			a_exception = i_exception;
+		}
+		
+		private void append_cause ( StringBuilder i_string_builder, Throwable i_cause, String i_new_line ) {
+
+			if ( i_cause == null ) {
+				return;
+			}
+			
+			i_string_builder.append ( "Cause: " );
+			i_string_builder.append ( i_new_line );
+
+			i_string_builder.append ( i_cause.getMessage() );
+			i_string_builder.append ( i_new_line );
+			
+			fa_java_stack_trace.append_to_string_builder ( i_string_builder, i_cause.getStackTrace(), i_new_line );
+
+			append_cause ( i_string_builder, i_cause.getCause(), i_new_line );
+		}
+	end java
+
+	attribute message
+		get
+			script
+				java
+					if ( a_exception.getMessage() != null ) {
+						// o_message = new fa_string ( a_exception.getMessage() );
+						o_message = new fa_string ( a_exception.toString() );
+					}
+				end java
+				if o_message =r void then
+					o_message = se_any_type.void_object_as_string
+				end if
+			end
+		end
+	end
+
+
+	command to_string
+		script
+			java
+				o_result = new fa_string ( "Java exception: " + a_exception.getMessage() );
+			end java
+		end
+	end
+	
+	command to_long_string
+		script
+			java
+				final String new_line = se_string_constants.getCurrent_OS_new_line().getValue().java_value();
+
+				final StringBuilder string_builder = new StringBuilder();
+
+				string_builder.append ( a_exception.getMessage() );
+				string_builder.append ( new_line );
+				
+				fa_java_stack_trace.append_to_string_builder ( string_builder, a_exception.getStackTrace(), new_line );
+				
+				append_cause ( string_builder, a_exception.getCause(), new_line );
+				
+				o_result = new fa_string ( string_builder.toString() );
+			end java
+		end
+	end
+
+end

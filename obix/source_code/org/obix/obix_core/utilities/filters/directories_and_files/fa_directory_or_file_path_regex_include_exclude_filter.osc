@@ -1,0 +1,41 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory directory_or_file_path_regex_include_exclude_filter type: directory_or_file_filter
+
+	attribute_list type:regex voidable:yes private:yes
+		attribute regex_include_pattern end
+		attribute regex_exclude_pattern end
+	end
+
+	command is_accepted
+		script
+			if a_regex_exclude_pattern =r void then
+				o_result = i_object.value.matches_regex ( regex_include_pattern )
+			else if a_regex_include_pattern =r void then
+				o_result = not i_object.value.matches_regex ( regex_exclude_pattern )
+			else
+				o_result = i_object.value.matches_regex ( regex_include_pattern ) and &
+					not i_object.value.matches_regex ( regex_exclude_pattern )
+			end if
+		end
+	end
+	
+	creator create
+		in regex_include_pattern type:regex voidable:yes end
+		in regex_exclude_pattern type:regex voidable:yes end
+		in_check check: not ( i_regex_include_pattern =r void and i_regex_exclude_pattern =r void ) end
+		
+		out result type:directory_or_file_filter end
+		
+		script
+			o_result.regex_include_pattern = i_regex_include_pattern
+			o_result.regex_exclude_pattern = i_regex_exclude_pattern
+		end
+	end
+	
+end

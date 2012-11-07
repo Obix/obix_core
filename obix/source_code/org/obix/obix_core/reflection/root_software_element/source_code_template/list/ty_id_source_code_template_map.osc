@@ -1,0 +1,14 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type id_source_code_template_map
+
+	!gt_prefixed_id_map < &
+		item_type: source_code_template &
+		item_id_type: source_code_template_id >
+
+end type

@@ -1,0 +1,21 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type resource_positive32_min_max_error default_factory:yes
+
+	inherit resource_data_error
+		attribute a_id default:"positive32_min_max_error" end
+		attribute description default: "Value out of bounds" end
+		attribute data type:positive32 end
+	end
+
+	attribute_list type:positive32
+		attribute min end
+		attribute max end
+	end
+
+end

@@ -1,0 +1,18 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template loop_item_handler_type
+
+	param item_type end
+	
+	type {item_type}_loop_item_handler
+	
+		!loop_item_handler<{item_type}>
+		
+	end type
+	
+end

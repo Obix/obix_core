@@ -1,0 +1,39 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory string_value_iterator type:!iterator<character>
+
+	attribute string_value type:string_value private:yes end
+	attribute next_index type:positive32 private:yes kind:variable end
+
+	attribute has_next
+		get
+			script
+				o_has_next = a_next_index <= a_string_value.item_count
+			end script
+		end get
+	end attribute
+
+	command next
+		script
+			o_result = a_string_value.co_item_at_index ( a_next_index )
+			a_next_index = a_next_index + 1
+		end script
+	end command
+
+	creator create
+		in string_value type:string_value end
+		
+		out result type:!iterator<character> end
+		
+		script
+			o_result.a_string_value = i_string_value
+			o_result.a_next_index = 1
+		end script
+	end creator
+
+end factory

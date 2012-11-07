@@ -1,0 +1,19 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type non_zero_digit
+
+	inherit digit
+
+		attribute value &
+			and_check: i_value #v '0'.value &
+			error_message: "The value cannot be zero." &
+			error_id: zero end
+
+	end inherit
+
+end type

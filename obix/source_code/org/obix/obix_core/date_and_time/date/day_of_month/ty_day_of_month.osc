@@ -1,0 +1,16 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type day_of_month
+
+	%inherit_simple_positive32_with_maximum < se_date_constants.max_days_in_month >
+
+	inherit !comparable < other:day_of_month > end
+
+	attribute is_first_day_of_month type:yes_no kind:readonly_constant end
+
+end

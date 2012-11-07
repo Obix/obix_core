@@ -1,0 +1,23 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type directory_or_file_name
+
+	inherit simple_non_empty_string
+		attribute value
+			and_check
+				script
+					const regex regex = se_directory_or_file.directory_or_file_name_regex
+					check i_value.matches_regex ( c_regex ) &
+						error_message: """'{{i_value.to_string}}' is an invalid directory or file name, because it doesn't match the following regular expression: {{c_regex}}""" &
+						error_id:invalid_directory_or_file_name
+				end
+			end
+		end
+	end
+
+end

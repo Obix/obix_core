@@ -1,0 +1,16 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type attribute_set_script default_factory:yes
+
+	inherit script
+		attribute set_public_attribute_instruction_permitted and_check: i_set_public_attribute_instruction_permitted default:yes end
+	end inherit
+
+	attribute input_argument type:input_argument end
+
+end type

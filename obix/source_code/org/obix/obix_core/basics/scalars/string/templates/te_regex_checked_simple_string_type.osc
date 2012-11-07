@@ -1,0 +1,22 @@
+template regex_checked_simple_string_type
+
+	param type_id end
+	param regex end
+
+	type {type_id}
+
+		inherit simple_non_empty_string
+			attribute value
+				and_check
+					script
+						const regex regex = {regex}
+						check i_value.matches_regex ( c_regex ) &
+							error_message: """'{{i_value.to_string}}' is invalid because it doesn't match the regular expression '{{c_regex}}'""" &
+							error_id: matches_regex_violation
+					end
+				end
+			end
+		end
+	end
+	
+end

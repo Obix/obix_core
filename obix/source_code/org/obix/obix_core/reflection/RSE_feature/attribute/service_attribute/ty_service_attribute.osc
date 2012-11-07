@@ -1,0 +1,21 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type service_attribute
+
+	inherit attribute
+		attribute scope_is_object and_check: not i_scope_is_object default:no end
+	end
+	
+	attribute_list voidable:yes transient:yes
+
+		attribute get_script type:attribute_get_script end
+		attribute set_script type:attribute_set_script end
+
+	end
+
+end type

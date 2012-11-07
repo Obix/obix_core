@@ -1,0 +1,38 @@
+factory simple_timer type:simple_timer
+
+	java
+		long a_start;
+	end java
+
+	command start
+		script
+			java
+				a_start = System.currentTimeMillis();
+			end java
+		end
+	end
+	
+	command stop
+		script
+			java
+				long end = System.currentTimeMillis();
+
+				long time = end - a_start;
+				if ( time > Integer.MAX_VALUE ) {
+					throw new RuntimeException ( "Time in ty_simple_timer is too long (cannot be stored in 32 bit integer)" );
+				}
+
+				o_time_in_milliseconds = new fa_zero_positive32 ( (int) time );
+			end java
+		end
+	end
+	
+	creator create kind:in_all end
+	
+	creator create_and_start kind:in_all
+		script
+			o_result.start
+		end
+	end
+	
+end

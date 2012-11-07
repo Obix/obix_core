@@ -1,0 +1,248 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service program_error
+
+	java
+		public static in_program_error _co_create_java ( String i_rse_path, String i_rse_id, String i_feature_id, String i_script_kind, int i_script_line_number, String i_script_instruction, in_script_state i_script_state, Throwable i_throwable ) {
+
+/*
+
+// IMPORTANT!!!
+// enabling following lines can cause fa_unchecked_assignment_error
+
+System.out.println();
+System.out.println();
+
+System.out.println("se_program_error:");
+System.out.println("class  : " + i_throwable.getClass());
+System.out.println("message: " + i_throwable.getMessage());
+
+System.out.println();
+System.out.println("trace:");
+i_throwable.printStackTrace();			
+
+System.out.println();
+Throwable cause = i_throwable.getCause() ;
+if (cause != null) {
+	System.out.println("cause:");
+	System.out.println(cause.getMessage());
+	System.out.println();
+	System.out.println("trace:");
+	cause.printStackTrace();
+} else {
+	System.out.println("cause is null");
+}
+
+if (i_throwable instanceof ExceptionInInitializerError) {
+	ExceptionInInitializerError e = (ExceptionInInitializerError)  i_throwable;
+	System.out.println("");
+	System.out.println("ExceptionInInitializerError");
+	System.out.println("class  : " + e.getClass());
+	System.out.println("message: " + e.getMessage());
+
+	System.out.println();
+	System.out.println("trace:");
+	e.printStackTrace();			
+}
+
+System.out.println();
+System.out.println();
+
+System.exit(0);
+*/
+
+			try {
+				in_bug_source_code_location v_source_code_location = fa_bug_source_code_location.co_create_command ( 
+					new fa_non_empty_string ( i_rse_path ), 
+					new fa_non_empty_string ( i_rse_id ), 
+					new fa_non_empty_string ( i_feature_id ), 
+					new fa_non_empty_string ( i_script_kind ), 
+					i_script_line_number == 0 ? null : new fa_positive32 ( i_script_line_number ), 
+					i_script_instruction == null ? null : new fa_non_empty_string ( i_script_instruction ) ) ;
+				
+				if ( i_throwable instanceof in_program_error ) {
+					in_program_error v_supplier_error = (in_program_error) i_throwable ;
+					return fa_supplier_error.co_create_with_defaults_command ( v_source_code_location, i_script_state, v_supplier_error ) ;
+				}
+
+				if ( i_throwable instanceof NullPointerException ) {
+					return fa_void_object_error.co_create_with_defaults_command ( v_source_code_location, i_script_state ) ;
+				}
+				
+				Throwable v_cause = i_throwable.getCause() ;
+				if (v_cause == null) {
+					return fa_system_program_error.co_create_with_defaults_command ( v_source_code_location, i_script_state, _co_system_error_message ( i_throwable ) );
+				}
+				else {
+					in_program_error v_cause_error = _co_create_cause_error ( v_cause, v_source_code_location, i_script_state );
+					return fa_supplier_error.co_create_with_defaults_command ( v_source_code_location, i_script_state, v_cause_error ) ;
+				}
+
+			} catch ( Throwable t ) {
+
+				System.err.println ( "UNEXPECTED ERROR:" );
+				t.printStackTrace();
+				
+				System.err.println();
+				System.err.println ( "The above unexpected error occured during creation of the following program error:" );
+
+				try {
+					System.err.println();
+					System.err.println ( _co_system_error_message ( i_throwable ).getValue().java_value() );
+				} catch ( Throwable tt ) {}
+
+				System.err.println();
+				System.err.println ( "i_rse_path          : " + i_rse_path );
+				System.err.println ( "i_rse_id            : " + i_rse_id );
+				System.err.println ( "i_feature_id        : " + i_feature_id );
+				System.err.println ( "i_script_line_number: " + i_script_line_number );
+				System.err.println ( "i_script_instruction: " + i_script_instruction );
+				System.err.println();
+				
+				System.exit(1);
+			}
+			
+			return null;
+		}
+		
+		private static in_program_error _co_create_cause_error ( Throwable i_cause, in_bug_source_code_location i_source_code_location, in_script_state i_script_state ) {
+			
+			if (i_cause.getCause() != null) {
+				return _co_create_cause_error ( i_cause.getCause(), i_source_code_location, i_script_state );
+			}
+			else {
+				if ( i_cause instanceof in_program_error ) {
+					return (in_program_error) i_cause ;
+				}
+				else {
+					return fa_system_program_error.co_create_with_defaults_command ( i_source_code_location, i_script_state, _co_system_error_message ( i_cause ) );
+				}
+			}
+		}
+
+		public static in_non_empty_string _co_system_error_message ( Throwable i_throwable ) {
+
+			String v_new_line = se_string_constants.getCurrent_OS_new_line().getValue().java_value() ;
+
+			// error message
+			String v_error_message = "System error: " + i_throwable.toString() + v_new_line ;
+
+			// trace
+			v_error_message = v_error_message + "trace:" + v_new_line + _co_trace ( i_throwable, v_new_line ) ;
+
+			// cause
+			Throwable v_cause = i_throwable.getCause() ;
+			while ( v_cause != null ) {
+				v_error_message = v_error_message + v_new_line + "cause: " ;
+				if ( v_cause instanceof in_program_error ) {
+					v_error_message = v_error_message + ((in_program_error) v_cause).co_to_string_command().getValue().java_value() + v_new_line ;
+				} else {
+					v_error_message = v_error_message + v_cause.toString() + v_new_line + _co_trace ( v_cause, v_new_line ) ;
+				}
+				v_cause = v_cause.getCause();
+			}
+
+			return new fa_non_empty_string ( v_error_message );
+		}
+
+		private static String _co_trace ( Throwable i_throwable, String i_new_line ) {
+		
+			String o_result = "" ;
+
+			StackTraceElement[] v_trace_list = i_throwable.getStackTrace() ;
+			for ( int i = 0; i < v_trace_list.length; i++ ) {
+				o_result = o_result + v_trace_list[i].toString() + i_new_line ;
+			}
+
+			return o_result ;
+		}
+
+	end java
+
+	attribute label_width type:positive32 default:15 end
+
+	command program_error_to_string
+		in program_error type:program_error end
+
+		out result type:non_empty_string end
+		
+		script
+			const mutable_string temp_result = fa_mutable_string.create
+			
+			temp_result.co_append ( se_any_type.force_object_to_string ( i_program_error.a_source_code_location ) )
+			
+			co_append_label_value ( &
+				string = temp_result &
+				i_label = "time" &
+				i_value = se_any_type.force_object_to_string ( i_program_error.a_date_time ) )
+			
+			co_append_label_value ( &
+				string = temp_result &
+				i_label = "description" &
+				i_value = se_any_type.force_object_to_string ( i_program_error.a_description & " [" & i_program_error.a_id & "]" ) )
+
+			if i_program_error.a_script_state #r void then
+				// temp_result.append_new_line
+				// temp_result.co_append ( se_any_type.force_object_to_string ( i_program_error.script_state.to_long_string ) )
+				repeat for each script_state_item item in i_program_error.a_script_state.item_list counter:index
+					co_append_label_value ( &
+						string = c_temp_result &
+						label = iif c_index =v 1 then "Script state" else se_string_constants.space end if &
+						value = se_any_type.force_object_to_string ( c_item ) )
+				end repeat
+				
+			end if
+			
+			o_result = temp_result.to_non_empty_string
+		end script
+	end command
+
+
+	command append_label_value
+		in string type:mutable_string end
+		in label type:non_empty_string end
+		in value type:string end
+
+		script
+			// TD value of i_result_width should be a system dependent parameter
+			i_string.append ( se_label_value_utility.label_value ( &
+				i_label = i_label &
+				i_value = i_value &
+				i_label_width = a_label_width &
+				i_result_width = 79 ) )
+
+			//o_result = i_label & ":" & se_string_constants.current_OS_new_line & i_value & se_string_constants.current_OS_new_line & se_string_constants.current_OS_new_line
+		end
+	end
+	
+	command get_source_error_of_program_error
+		in program_error type:program_error end
+		
+		out result type:program_error end
+		
+		script
+			case type of i_program_error
+				when supplier_error supplier_error then
+					o_result = c_supplier_error.source_error
+				otherwise
+					o_result = i_program_error
+			end case
+		end
+	end
+
+	command get_source_description_of_program_error
+		in program_error type:program_error end
+		
+		out result type:string end
+		
+		script
+			o_result = co_get_source_error_of_program_error ( i_program_error ).description
+		end
+	end
+
+end service

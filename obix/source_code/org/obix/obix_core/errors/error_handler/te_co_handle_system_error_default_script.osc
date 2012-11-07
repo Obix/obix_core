@@ -1,0 +1,68 @@
+template co_handle_system_error_default_script
+
+			const simple_string_writer err = se_system.err
+
+			case type of i_error
+				when user_input_error then
+					if se_system.console #r void then
+						se_system.console.write_line ( i_error.description )
+					else
+						c_err.write_line ( string = i_error.description )
+					end if
+					
+				when invalid_data_error invalid_data_error then
+					c_err.write_line ( string = i_error.description )
+
+					c_err.write_line ( string = "data: " & se_any_type.force_object_to_string ( c_invalid_data_error.data ) )
+					
+					case type of i_error
+						when resource_data_error resource_data_error then
+							c_err.write_line ( string = "Resource: " & se_any_type.force_object_to_string ( c_resource_data_error.resource ) )
+						otherwise
+					end
+
+					case type of i_error
+						when resource_string_data_error resource_string_data_error then
+							if c_resource_string_data_error.line_number #r void then
+								c_err.write_line ( string = "line number  : " & c_resource_string_data_error.line_number.to_string )
+							end if
+							if c_resource_string_data_error.column_number #r void then
+								c_err.write_line ( string = "column number: " & c_resource_string_data_error.column_number.to_string )
+							end if
+						otherwise
+					end case
+
+					c_err.write_new_line
+					c_err.write_line ( "Java stack trace:" )
+					c_err.write_line ( i_error.java_stack_trace.to_long_string )
+					
+					if i_error.java_exception #r void then
+						c_err.write_new_line
+						c_err.write_line ( "The error was initiated by the following Java exception: " )
+						c_err.write_line ( i_error.java_exception.to_long_string )
+					end
+
+				// when resource_failure_error; resource_security_error then
+				otherwise
+
+					c_err.write_new_line
+					c_err.write_line ( string = "SYSTEM ERROR" )
+
+					c_err.write ( string = "Time:    " )
+					c_err.write_line ( string = i_error.date_time.to_string )
+
+					c_err.write ( string = "Message: " )
+					c_err.write_line ( string = i_error.description )
+
+					c_err.write_new_line
+					c_err.write_line ( "Java stack trace:" )
+					c_err.write_line ( i_error.java_stack_trace.to_long_string )
+					
+					if i_error.java_exception #r void then
+						c_err.write_new_line
+						c_err.write_line ( "The error was initiated by the following Java exception: " )
+						c_err.write_line ( i_error.java_exception.to_long_string )
+					end
+
+			end case
+end

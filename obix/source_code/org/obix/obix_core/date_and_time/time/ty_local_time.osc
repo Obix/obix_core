@@ -1,0 +1,84 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type local_time
+
+	inherit simple_non_empty_string
+		attribute value
+			and_check
+				script
+					const regex time_regex = se_time_constants.ISO_local_time_regex
+					check i_value.matches_regex ( c_time_regex ) &
+						error_message: """'{{i_value.to_string}}' is invalid because it doesn't match the regular expression '{{c_time_regex}}'.""" &
+						error_id: invalid_time_format
+				end
+				test
+					script
+						test "08:30:44"~
+						verify v_error =r void
+
+						test "8:30:44"~
+						verify v_error #r void
+					end
+				end
+			end
+		end
+	end
+
+	inherit !comparable<other:local_time> end
+
+	attribute_list kind:readonly_constant
+
+		attribute hours type:hour_of_day end
+
+		attribute minutes type:minutes_of_hour end
+
+		attribute seconds type:seconds_of_minute end
+		
+	end
+
+///	TD
+
+	attribute_list type:yes_no kind:readonly_constant
+
+		attribute is_start_of_day end
+		attribute is_end_of_day end
+
+	end
+
+	attribute duration_from_midnight type:duration kind:readonly_constant end
+	attribute seconds_from_midnight type:zero_positive32 kind:readonly_constant end
+	
+	command to_formatted_string
+		in format type:time_format end
+
+		out result type:non_empty_string end
+	end
+	
+	command add_duration
+		in duration type:duration end
+		
+		out result type:local_time end
+	end
+
+	command subtract_duration
+		in duration type:duration end
+		
+		out result type:local_time end
+	end
+
+	command create_modified
+		in hours type:hour_of_day voidable:yes default:void end
+		in minutes type:minutes_of_hour voidable:yes default:void end
+		in seconds type:seconds_of_minute voidable:yes default:void end
+		
+		out result type:date end
+	end
+
+end ///
+
+end type

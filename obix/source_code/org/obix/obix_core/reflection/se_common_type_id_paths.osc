@@ -1,0 +1,205 @@
+service common_type_id_paths
+
+	// attribute use_standard_paths type:yes_no default: not fa_file.create ( iif se_system.OS_is_Windows then '''F:\use_new_paths.txt'''~ else '''/use_new_paths.txt'''~ end if ).exists end
+	attribute use_standard_paths type:yes_no default: yes end
+
+	attribute_list type:type_id_path
+
+		a_any_type default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.any_type.ty_any_type"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.any_type.ty_any_type"~ ) end if end
+			
+		a_comparator_result default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.any_type.object_comparison.ty_comparator_result"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.any_type.object_comparison.ty_comparator_result"~ ) end if end
+
+		a_no_type default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.no_type.ty_no_type"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.no_type.ty_no_type"~ ) end if end
+
+		a_void default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.void_type.ty_void"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.void_type.ty_void"~ ) end if end
+			
+		// scalars
+			
+		a_scalar default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.ty_scalar"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.ty_scalar"~ ) end if end
+
+		// strings
+
+		a_string default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.string.ty_string"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.string.ty_string"~ ) end if end
+
+		a_non_empty_string default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.string.ty_non_empty_string"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.string.ty_non_empty_string"~ ) end if end
+
+		a_string_value default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.string.string_value.ty_string_value"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.string.string_value.ty_string_value"~ ) end if end
+
+		a_simple_string default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.string.simple_string.ty_simple_string"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.string.simple_string.ty_simple_string"~ ) end if end
+
+		a_text default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.string.text.ty_text"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.string.text.ty_text"~ ) end if end
+			
+		// numbers
+
+		a_number default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.number.ty_number"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.number.ty_number"~ ) end if end
+
+		a_integer_number default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.number.integer.ty_integer_number"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.number.integer.ty_integer_number"~ ) end if end
+
+		a_integer32_value default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.number.integer.integer32.integer32_value.ty_integer32_value"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.number.integer.integer32.integer32_value.ty_integer32_value"~ ) end if end
+			
+		a_simple_signed_integer32 default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.number.integer.integer32.ty_simple_signed_integer32"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.number.integer.integer32.ty_simple_signed_integer32"~ ) end if end
+
+		a_signed_integer32 default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.number.integer.integer32.ty_signed_integer32"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.number.integer.integer32.ty_signed_integer32"~ ) end if end
+
+		a_positive32 default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.number.integer.integer32.positive32.ty_positive32"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.number.integer.integer32.positive32.ty_positive32"~ ) end if end
+
+		a_zero_positive32 default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.number.integer.integer32.zero_positive32.ty_zero_positive32"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.number.integer.integer32.zero_positive32.ty_zero_positive32"~ ) end if end
+
+		// characters
+
+		a_character default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.character.ty_character"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.character.ty_character"~ ) end if end
+
+		a_simple_character default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.character.simple_character.ty_simple_character"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.character.simple_character.ty_simple_character"~ ) end if end
+
+		a_character_value default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.character.character_value.ty_character_value"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.character.character_value.ty_character_value"~ ) end if end
+			
+		// yes_no
+
+		a_yes_no default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.yes_no.ty_yes_no"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.yes_no.ty_yes_no"~ ) end if end
+			
+		// enumerated
+
+		a_enumerated default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.enumerated.ty_enumerated"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.basics.scalars.enumerated.ty_enumerated"~ ) end if end
+			
+		// date_time
+
+		a_local_date_time default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.date_and_time.date_time.ty_local_date_time"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.date_and_time.date_time.ty_local_date_time"~ ) end if end
+			
+		// iteratable
+
+		a_iteratable_base_ default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.collections.iterators.ty_iteratable_base_"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.collections.iterators.ty_iteratable_base_"~ ) end if end
+			
+		a_iterator_base_ default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.collections.iterators.ty_iterator_base_"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.collections.iterators.ty_iterator_base_"~ ) end if end
+			
+		// program_errors
+
+		a_program_error default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.ty_program_error"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.ty_program_error"~ ) end if end
+
+		a_test_error default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.testing.test_error.ty_test_error"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.testing.test_error.ty_test_error"~ ) end if end
+
+		a_program_error_check_values default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.checks.ty_check_values"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.checks.ty_check_values"~ ) end if end
+
+		a_program_error_location default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.location.ty_bug_source_code_location"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.location.ty_bug_source_code_location"~ ) end if end
+
+		a_program_error_script_state default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.state.ty_script_state"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.state.ty_script_state"~ ) end if end
+
+		a_program_error_script_state_item_list default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.state.item.list.ty_script_state_item_list"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.state.item.list.ty_script_state_item_list"~ ) end if end
+			
+		a_attribute_check_error default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.ty_attribute_check_error"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.ty_attribute_check_error"~ ) end if end
+			
+		a_attribute_list_check_error default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.ty_attribute_list_check_error"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.ty_attribute_list_check_error"~ ) end if end
+			
+		a_input_argument_check_error default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.ty_input_argument_check_error"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.ty_input_argument_check_error"~ ) end if end
+			
+		a_in_check_error default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.ty_in_check_error"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.ty_in_check_error"~ ) end if end
+			
+		a_output_argument_check_error default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.ty_output_argument_check_error"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.ty_output_argument_check_error"~ ) end if end
+			
+		a_out_check_error default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.ty_out_check_error"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.errors.runtime_errors.program_errors.ty_out_check_error"~ ) end if end
+			
+		// events
+
+		a_object_event default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.events.ty_object_event"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.events.ty_object_event"~ ) end if end
+
+		a_service_event default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.events.ty_service_event"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.events.ty_service_event"~ ) end if end
+
+		a_event_handler default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.events.ty_event_handler"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.events.ty_event_handler"~ ) end if end
+
+		a_event_source default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.events.event_source.ty_event_source"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.events.event_source.ty_event_source"~ ) end if end
+
+		a_event_script default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.events.event_script.ty_event_script"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.events.event_script.ty_event_script"~ ) end if end
+			
+		// testing
+
+		a_test_context default: iif a_use_standard_paths &
+			then fa_type_id_path.create ( "org.obix.obix_core.testing.ty_test_context"~ ) &
+			else fa_type_id_path.create ( "org.obix.obix_core.testing.ty_test_context"~ ) end if end
+			
+		end
+	end
+	
+end service

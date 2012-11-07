@@ -1,0 +1,49 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic type mutable_or_immutable_map
+
+	param key_type child_of:simple_string end
+	param item_type end
+	
+	type
+		
+		inherit !mutable_or_immutable_collection<{item_type}> end
+	
+		command key_iterator
+			out result type:!iterator<{key_type}> end
+		end
+		
+		command key_list
+			out result type:!indexed_list<{key_type}> end
+		end
+		
+		command item_list
+			out result type:!indexed_list<{item_type}> end
+		end
+		
+		command contains_key
+			in key type:{key_type} voidable:no end
+			
+			out result type:yes_no end
+		end
+		
+		command get_item_if_contained
+			in key type:{key_type} voidable:no end
+			
+			out result type:{item_type} voidable:yes end
+		end
+
+		command require_item
+			in key type:{key_type} voidable:no check: i_object_.co_contains_key ( i_key ) end
+			
+			out result type:{item_type} voidable:yes end
+		end
+
+	end type
+
+end generic

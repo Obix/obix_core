@@ -1,0 +1,20 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type java_unmodifiable_sorted_map_wrapper
+
+	java_header
+		import java.util.SortedMap;
+
+		import org.obix.obix_core.basics.scalars.string.simple_string.in_simple_string;
+	end java_header
+
+	java
+		public SortedMap<in_simple_string,in_any_type> java_map() ;
+	end java
+
+end type

@@ -1,0 +1,27 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service character_constants
+
+	attribute_list type:character
+
+		attribute carriage_return default: '\r' end
+		attribute line_feed       default: '\n' end
+		attribute tab             default: '\t' end
+		attribute backspace       default: '\b' end
+		attribute form_feed       default: '\f' end
+		attribute space           default: ' ' end
+		attribute single_quote    default: '\'' end
+		attribute double_quote    default: '"' end
+		attribute slash           default: '/' end
+		attribute backslash       default: '\\' end
+		attribute underline       default: '_' end
+		attribute hyphen          default: '-' end
+
+	end
+
+end service

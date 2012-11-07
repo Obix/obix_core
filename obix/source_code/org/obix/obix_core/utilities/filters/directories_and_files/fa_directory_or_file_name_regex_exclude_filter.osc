@@ -1,0 +1,28 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory directory_or_file_name_regex_exclude_filter type: directory_or_file_filter
+
+	attribute regex type:regex private:yes end
+
+	command is_accepted
+		script
+			o_result = not i_object.name.value.matches_regex ( a_regex )
+		end
+	end
+	
+	creator create
+		in regex type:regex end
+		
+		out result type:directory_or_file_filter end
+		
+		script
+			o_result.regex = i_regex
+		end
+	end
+	
+end

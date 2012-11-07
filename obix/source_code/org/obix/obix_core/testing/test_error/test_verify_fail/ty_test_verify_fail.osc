@@ -1,0 +1,17 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type test_verify_fail
+
+	inherit test_verify_fail_base end
+	
+	attribute_list type:any_type voidable:yes default:void
+		attribute left_value end
+		attribute right_value end
+	end
+
+end

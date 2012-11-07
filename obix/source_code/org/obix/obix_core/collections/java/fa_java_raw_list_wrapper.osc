@@ -1,0 +1,23 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory java_raw_list_wrapper type:java_raw_list_wrapper
+
+	java_header
+		import java.util.List;
+	end java_header
+
+	java
+		private List a_java_list;
+		public List java_list() { return a_java_list; }
+		
+		public fa_java_raw_list_wrapper ( List i_java_list ) {
+			a_java_list = i_java_list;
+		}
+	end java
+
+end factory

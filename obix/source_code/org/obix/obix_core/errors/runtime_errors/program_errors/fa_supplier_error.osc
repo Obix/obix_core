@@ -1,0 +1,56 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory supplier_error type:supplier_error
+
+	attribute source_error
+		get
+			script
+				case type of a_supplier_error
+					when supplier_error child_supplier_error then
+						o_source_error = c_child_supplier_error.source_error
+					otherwise
+						o_source_error = a_supplier_error
+				end case
+			end
+		end
+	end
+
+	command to_string
+		script
+			const mutable_string temp_result = fa_mutable_string.create
+			
+			temp_result.append ( se_any_type.force_object_to_string ( a_supplier_error ) )
+			temp_result.append_new_line
+			temp_result.append ( ">" )
+			temp_result.append_new_line
+
+			temp_result.append ( se_program_error.co_program_error_to_string ( this ) )
+			
+			o_result = temp_result.to_non_empty_string
+		end script
+	end command
+
+
+	creator create kind:in_all end
+
+	creator create_with_defaults
+		in source_code_location type:bug_source_code_location end
+		in script_state type:script_state voidable:yes end
+		in supplier_error type:program_error end
+		
+		out result type:supplier_error end
+		
+		script
+			o_result = co_create ( &
+				source_code_location = i_source_code_location &
+				script_state = i_script_state &
+				supplier_error = i_supplier_error )
+		end
+	end
+
+end factory

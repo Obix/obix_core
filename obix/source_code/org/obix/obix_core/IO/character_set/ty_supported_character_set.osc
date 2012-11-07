@@ -1,0 +1,16 @@
+type supported_character_set default_factory:yes
+
+	inherit character_set_base
+		attribute value
+			and_check
+				script
+					check se_character_set.is_supported ( i_value.to_string ) &
+						error_message: """Character set '{{i_value.to_string}}' is not supported in the current Java implementation.""" &
+						error_id: unsupported_character_set
+				end
+			end
+		end
+	end
+	
+end
+

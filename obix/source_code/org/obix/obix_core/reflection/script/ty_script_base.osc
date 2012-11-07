@@ -1,0 +1,28 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type script_base
+
+	// TD2 remove
+	attribute a_id type:id end
+	
+	// TD2 remove
+	attribute a_private type:yes_no end
+	
+	// TD2 remove
+	attribute scope_is_object type:yes_no end
+
+	attribute implicit_const_var_list type:mutable_indexed_any_type_list voidable:yes transient:yes end
+
+	attribute instruction_list type:mutable_indexed_any_type_list voidable:yes kind:variable setable:all transient:yes end
+
+	// TD2 remove
+	attribute set_public_attribute_instruction_permitted type:yes_no end
+
+	attribute source_code type:source_code_text voidable:yes end
+	
+end type

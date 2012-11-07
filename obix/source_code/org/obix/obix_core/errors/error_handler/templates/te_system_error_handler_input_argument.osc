@@ -1,0 +1,12 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template system_error_handler_input_argument
+
+	in error_handler type:system_error_handler default:se_system_utilities.default_system_error_handler end
+
+end

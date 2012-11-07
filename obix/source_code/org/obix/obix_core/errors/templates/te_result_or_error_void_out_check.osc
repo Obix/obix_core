@@ -1,0 +1,14 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template result_or_error_void_out_check
+
+	out_check check: i_result =r void or i_error =r void &
+		error_message: "o_result or o_error or both must be void" &
+		error_id: result_or_error_void_violation end
+
+end

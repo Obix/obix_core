@@ -1,0 +1,102 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory library_id_path type:library_id_path
+
+	attribute_list private:yes
+
+		attribute private_parent_id_path type:library_id_path voidable:yes end
+		attribute private_target_id type:library_id end
+
+	end
+	
+	attribute value
+		get
+			script
+				if a_private_parent_id_path #r void then
+					o_value = a_private_parent_id_path.value & se_id_path.id_separator.value & a_private_target_id.value
+				else
+					o_value = a_private_target_id.value
+				end if
+			end
+		end
+		set
+			script
+			end
+		end
+	end
+
+	attribute target_id
+		get
+			script
+				o_target_id = a_private_target_id
+			end
+		end
+	end
+
+	attribute parent_id_path
+		get
+			script
+				o_parent_id_path = a_private_parent_id_path
+			end
+		end
+	end
+
+	attribute id_list
+		get
+			script
+				const !indexed_list<string_value> string_value_list = a_value.split ( se_id_path.id_separator.value )
+				const !mutable_indexed_list<library_id> list = !mutable_indexed_list_factory<library_id>.create
+				repeat for each string_value string_value in c_string_value_list
+					c_list.append ( fa_library_id.create ( c_string_value ) )
+				end repeat
+				o_id_list = c_list.make_immutable
+			end
+		end
+	end
+
+	%scalar_is_equal_to_factory_command
+	
+	creator create kind:in_all
+		script
+			const positive32 last_separator_index = i_value.find_last ( se_id_path.id_separator.value )
+			if c_last_separator_index =r void then
+				o_result = co_create_from_id ( fa_library_id.create ( i_value ) )
+			else
+				const library_id_path parent_id_path = co_create ( i_value.extract_to ( c_last_separator_index - 1 ) )
+				const library_id id = fa_library_id.create ( i_value.extract_from ( c_last_separator_index + 1 ) )
+				o_result = co_create_from_parent_id_path_and_id ( &
+					parent_id_path = c_parent_id_path &
+					id = c_id )
+			end if
+		end
+	end
+
+	creator create_from_id
+		in i_id type:library_id end
+
+		out result type:library_id_path end
+		
+		script
+			o_result.a_private_target_id = i_id
+		end
+	end
+
+	creator create_from_parent_id_path_and_id
+		in parent_id_path type:library_id_path end
+		in i_id type:library_id end
+
+		out result type:library_id_path end
+		
+		script
+			// o_result.a_value = i_parent_id_path.value & se_id_path.id_separator.value & i_id.value
+			o_result.a_private_parent_id_path = i_parent_id_path
+			o_result.a_private_target_id = i_id
+		end
+	end
+
+end factory

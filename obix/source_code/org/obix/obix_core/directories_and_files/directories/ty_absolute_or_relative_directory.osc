@@ -1,0 +1,65 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type absolute_or_relative_directory
+
+	///
+	inherit !tree_node< &
+		node_type:directory; &
+		child_type:directory_item; &
+		branch_type:directory; &
+		leaf_type:file>
+	end
+	end ///
+
+	inherit absolute_or_relative_directory_or_file
+
+		attribute value
+			and_check
+				script
+					// must end with / or \
+					check i_value.ends_with ( se_directory.Unix_directory_separator.value ) or &
+						i_value.ends_with ( se_directory.Windows_directory_separator.value ) &
+						error_message: """'{{i_value.to_string}}' is an invalid directory path, because it doesn't end with '{{se_directory.Unix_directory_separator}}' or '{{se_directory.Windows_directory_separator}}'""" &
+						error_id:invalid_directory_path
+				end
+			end
+		end
+
+		attribute name type:directory_name end
+
+	end
+
+	attribute_list kind:readonly_constant
+
+		// The direct parent directory of this directory (e.g. '/root_dir/my_application/')
+		// If this directory is a root directory then the value of this attribute is 'void'
+		attribute parent_directory type:absolute_or_relative_directory voidable:yes end
+
+		attribute is_root_directory type:yes_no end
+
+	end
+
+	command append_child_name
+		in child_name type:directory_name end
+		
+		out result type:absolute_or_relative_directory end
+	end
+
+	command append_child_directory
+		in child_directory type:relative_directory end
+		
+		out result type:absolute_or_relative_directory end
+	end
+
+	command append_relative_file
+		in file type:relative_file end
+		
+		out result type:absolute_or_relative_file end
+	end
+
+end

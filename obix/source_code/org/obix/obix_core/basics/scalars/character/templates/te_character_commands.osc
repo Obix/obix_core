@@ -1,0 +1,68 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template te_character_commands
+
+	param character_output_type end
+
+	// checks
+	
+	command is_digit
+		out result type:yes_no end
+	end
+
+	command is_non_zero_digit
+		out result type:yes_no end
+	end
+
+	command is_letter
+		out result type:yes_no end
+	end
+
+	command is_lower_case_letter
+		out result type:yes_no end
+	end
+
+	command is_upper_case_letter
+		out result type:yes_no end
+	end
+
+	command is_digit_or_letter
+		out result type:yes_no end
+	end
+
+	command is_obix_identifier_character
+		out result type:yes_no end
+	end
+
+	command is_obix_identifier_start_character
+		out result type:yes_no end
+	end
+
+	command is_space
+		out result type:yes_no end
+	end
+
+	command is_whitespace
+		out result type:yes_no end
+	end
+
+	// conversion
+
+	command to_lower_case
+		out result type:{character_output_type} end
+	end
+
+	command to_upper_case
+		out result type:{character_output_type} end
+	end
+
+	command to_integer
+		out result type:zero_positive32 end
+	end
+
+end template

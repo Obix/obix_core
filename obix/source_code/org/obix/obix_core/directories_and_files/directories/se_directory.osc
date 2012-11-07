@@ -1,0 +1,85 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service directory
+
+	// directory_separator
+	attribute Unix_directory_separator type:string default:"/" end
+	attribute Windows_directory_separator type:string default:"\\" end
+	attribute current_OS_directory_separator type:string default: se_java_config.get_system_property ( "file.separator" ) end
+	
+	// path_separator
+	attribute Unix_path_separator type:string default: ":" end
+	attribute Windows_path_separator type:string default: ";" end
+	attribute current_OS_path_separator type:string default: se_java_config.get_system_property ( "path.separator" ) end
+	
+	// parent_directory_token
+	attribute Unix_parent_directory_token type:string default: ".." & a_Unix_directory_separator end
+	attribute Windows_parent_directory_token type:string default: ".." & a_Windows_directory_separator end
+	attribute current_OS_parent_directory_token type:string default: ".." & a_current_OS_directory_separator end
+	
+	// converters
+	attribute default_string_to_directory_converter type:string_to_directory_converter default: fa_string_to_directory_converter.create end
+	attribute default_string_to_relative_directory_converter type:string_to_relative_directory_converter default: fa_string_to_relative_directory_converter.create end
+	attribute default_string_to_absolute_or_relative_directory_converter type:string_to_absolute_or_relative_directory_converter default: fa_string_to_absolute_or_relative_directory_converter.create end
+	
+	command get_existing_directory_from_absolute_or_relative_path
+		in path type:simple_string end
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output<directory>
+
+		script
+			co_get_directory_from_absolute_or_relative_path ( &
+				path = i_path &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			if not o_result.exists then
+				o_error = fa_directory_inexistant_error.create ( &
+					description = """Directory {{o_result}} doesn't exist""" &
+					resource = o_result )
+				i_error_handler.handle_system_error ( o_error )
+				o_result = void
+			end if
+		end
+	end
+
+	command get_directory_from_absolute_or_relative_path
+		in path type:simple_string end
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output<directory>
+
+		script
+			if se_directory_or_file.is_absolute_path ( i_path ) then
+				fa_directory.create_from_string ( &
+					string = i_path &
+					error_handler = i_error_handler ) &
+					( o_result = result &
+					o_error = error )
+			else
+				var relative_directory relative_directory
+				fa_relative_directory.create_from_string ( &
+					string = i_path &
+					error_handler = i_error_handler ) &
+					( v_relative_directory = result &
+					o_error = error )
+				if o_error #r void then
+					exit script
+				end if
+				
+				o_result = v_relative_directory.make_absolute_directory
+			end if
+		end
+	end
+
+end service

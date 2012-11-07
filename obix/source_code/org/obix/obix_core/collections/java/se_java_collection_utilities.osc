@@ -1,0 +1,81 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service java_collection_utilities
+
+	java_header
+		import java.util.ArrayList;
+		import java.util.Collections;
+		import java.util.HashMap;
+		import java.util.List;
+		import java.util.Map;
+
+		import org.obix.obix_core.basics.scalars.string.simple_string.in_simple_string;
+	end java_header
+	
+	java
+		private static in_string string_item = new fa_string ( "a" );
+		private static in_string unexistant_key = new fa_string ( "KjhGYYGkjhkjhFGY876[]{}jhgGFkjhUFjjjjja" );
+
+		// see: http://stackoverflow.com/questions/8364856/how-to-test-if-a-list-extends-object-is-an-unmodifablelist
+
+		public static boolean is_unmodifiable_list ( List<in_any_type> i_java_list ) {
+			Exception e = null;
+			try {
+				i_java_list.add ( string_item );
+				i_java_list.remove ( i_java_list.size() - 1 ) ;
+			} catch ( UnsupportedOperationException uoe ) {
+				e = uoe;
+			}
+			
+			return e != null;
+		}
+
+		public static boolean is_unmodifiable_map ( Map<in_simple_string,in_any_type> i_java_map ) {
+			Exception e = null;
+			try {
+				i_java_map.put ( unexistant_key, null );
+				i_java_map.remove ( unexistant_key ) ;
+			} catch ( UnsupportedOperationException uoe ) {
+				e = uoe;
+			}
+			
+			return e != null;
+		}
+	end java
+	
+	test
+		script
+			var yes_no is_unmodifiable_list
+			java
+				List<in_any_type> l = new ArrayList<in_any_type>();
+				v_is_unmodifiable_list = is_unmodifiable_list ( l ) ? fa_yes_no.a_yes : fa_yes_no.a_no;
+			end java
+			verify not v_is_unmodifiable_list
+
+			java
+				l = Collections.unmodifiableList ( l );
+				v_is_unmodifiable_list = is_unmodifiable_list ( l ) ? fa_yes_no.a_yes : fa_yes_no.a_no;
+			end java
+			verify v_is_unmodifiable_list
+
+			var yes_no is_unmodifiable_map
+			java
+				Map<in_simple_string, in_any_type> m = new HashMap<in_simple_string, in_any_type>();
+				v_is_unmodifiable_map = is_unmodifiable_map ( m ) ? fa_yes_no.a_yes : fa_yes_no.a_no;
+			end java
+			verify not v_is_unmodifiable_map
+
+			java
+				m = Collections.unmodifiableMap ( m );
+				v_is_unmodifiable_map = is_unmodifiable_map ( m ) ? fa_yes_no.a_yes : fa_yes_no.a_no;
+			end java
+			verify v_is_unmodifiable_map
+		end
+	end
+
+end

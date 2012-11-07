@@ -1,0 +1,7 @@
+type reflection_execution_error default_factory:yes
+
+	inherit reflection_error
+		attribute a_id default:"reflection_execution_error" end
+	end
+
+end

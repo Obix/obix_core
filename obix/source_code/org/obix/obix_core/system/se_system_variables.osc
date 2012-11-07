@@ -1,0 +1,103 @@
+service system_variables
+
+	java_header
+		import java.util.Map;
+
+		import org.obix.obix_core.java.fa_java_exception;
+		import org.obix.obix_core.basics.scalars.string.simple_string.fa_simple_non_empty_string;
+		import org.obix.obix_core.basics.scalars.string.string_value.fa_string_value;
+	end java_header
+
+	command contains_variable
+		in variable_name type:string end
+		%system_error_handler_input_argument
+		
+		%result_xor_error_output < &
+			result_type: yes_no &
+			error_type: resource_security_error >
+
+		script
+			var string value
+			get_value_if_exists ( &
+				variable_name = i_variable_name &
+				error_handler = i_error_handler ) &
+				( v_value = result &
+				o_error = error )
+			if o_error =r void then
+				o_result = v_value #r void
+			end if
+		end
+	end
+	
+	command get_value_if_exists
+		in variable_name type:string end
+		%system_error_handler_input_argument
+		
+		%result_or_error_void_output < &
+			result_type: string &
+			error_type: resource_security_error >
+
+		script
+			var java_exception java_exception
+			java
+				try {
+					String java_value = System.getenv ( i_variable_name.getValue().java_value() );
+					if ( java_value != null ) {
+						o_result = new fa_string ( java_value );
+					}
+				}
+				catch ( SecurityException e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+			end java
+			
+			if v_java_exception #r void then
+				o_error = fa_resource_security_error.create ( &
+					description = """Could not get system environment variable '{{i_variable_name}}' because of a security violation. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception &
+					resource = void )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+	
+	command get_all_values
+		%system_error_handler_input_argument
+		
+		%result_xor_error_output < &
+			result_type: string_string_map &
+			error_type: resource_security_error >
+
+		script
+			const string_string_mutable_map mutable_map = fa_string_string_mutable_map.create
+			var java_exception java_exception
+			java
+				try {
+					Map<String,String> java_map = System.getenv();
+
+					// TD2 slow!; should use creator that accepts Map<String,String>
+					for ( String key: java_map.keySet() ) {
+						String value = java_map.get( key );
+						c_mutable_map.co_add_command ( fa_simple_non_empty_string.co_create_command(new fa_string_value(key)), new fa_string(value) );
+					}
+				}
+				catch ( SecurityException e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+			end java
+			
+			if v_java_exception =r void then
+				o_result = c_mutable_map.make_immutable
+			else
+				o_error = fa_resource_security_error.create ( &
+					description = """Could not get system environment variables because of a security violation. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception &
+					resource = void )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+	
+end

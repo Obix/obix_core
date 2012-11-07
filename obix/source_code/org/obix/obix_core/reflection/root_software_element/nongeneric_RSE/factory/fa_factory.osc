@@ -1,0 +1,67 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory factory type:factory
+
+	attribute_list private:yes
+
+		attribute cached_object_type type:factory_object_type voidable:yes kind:variable end
+		
+	end
+
+	%te_nongeneric_RSE_factory_attributes < factory >
+
+	attribute creator_list
+		get
+			script
+				if a_command_list =r void then
+					o_creator_list = void
+					exit script
+				end if
+					
+				const mutable_factory_command_list temp_creator_list = fa_mutable_factory_command_list.create ( se_id_prefix.command )
+
+				repeat for each factory_command command in a_command_list
+					case type of c_command
+						when factory_creator_command then
+							temp_creator_list.add ( c_command )
+						otherwise
+					end case
+				end repeat
+				
+				if not temp_creator_list.is_empty then
+					o_creator_list = temp_creator_list.make_immutable
+				end if
+			end
+		end
+	end
+
+	%te_RSE_factory_commands
+
+	command get_object_type
+		script
+			if i_generic_parameter_id =r void and a_cached_object_type #r void then
+				o_result = a_cached_object_type
+				exit script
+			end if
+
+			o_result = fa_factory_object_type.create ( &
+				type_id_path = a_type_implemented &
+				generic_parameter_id = i_generic_parameter_id &
+				type = void &
+				factory_id_path = a_id_path &
+				factory = this )
+
+			if i_generic_parameter_id =r void then
+				a_cached_object_type = o_result
+			end if
+		end
+	end
+
+	creator create kind:in_all end
+
+end

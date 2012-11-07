@@ -1,0 +1,40 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory service_script_event_script type:service_script_event_script
+
+	java_header
+		import org.obix.obix_core.reflection.se_java_reflection;
+	end java_header
+
+	java
+		private java.lang.reflect.Method _a_event_script_method;
+		private java.lang.reflect.Method _a_execute_event_script_method;
+	end java
+
+	command co_execute
+		script
+			java
+				// TD see remarks in fa_object_command_event_script for better performance
+				if (_a_event_script_method == null) {
+					// Class v_class = Class.forName(a_RSE_proxy.co_to_string_command().getValue().java_value());
+					Class v_class = Class.forName(a_RSE.getId_path().getValue().java_value());
+
+					_a_event_script_method = se_java_reflection._co_require_method_by_name ( v_class, a_script_id.getValue().java_value(), false );
+
+					_a_execute_event_script_method = se_java_reflection._co_require_method_by_name ( v_class, "_co_execute_event_script", false );
+				}
+				//_a_event_script_method.invoke(null, i_event_object );
+				//_a_class._invoke_event_script (_a_event_script_method, i_event_object );
+				_a_execute_event_script_method.invoke(null, _a_event_script_method, i_event_object );
+			end java
+		end script
+	end command
+	
+	creator create kind:in_all end
+
+end factory

@@ -1,0 +1,24 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template simple_character_factory
+
+	param id_suffix end
+
+	factory fa_{id_suffix} type: ty_{id_suffix}
+
+		command to_string
+			script
+				o_result = fa_non_empty_string.co_create_from_character ( this )
+			end
+		end
+
+		creator create kind:in_all end
+
+	end factory
+
+end template

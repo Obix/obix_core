@@ -1,0 +1,35 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type library_id_path
+
+	inherit id_path
+		/// TD4
+		attribute value
+			and_check
+				script
+					check i_value.matches_regex ( se_prefixed_id_path.regex ) &
+						error_message: "'" & fa_string.co_create ( i_value ) & "' is an invalid prefixed identifier path." &
+						error_id:invalid_prefixed_id_path
+				end script
+			end
+		end
+		end ///
+		
+		attribute id_list type:!indexed_list<library_id> end
+	end
+	
+	inherit !equalable<other:library_id_path> end
+	
+	attribute_list kind:readonly_constant
+
+		attribute target_id type:library_id end
+		attribute parent_id_path type:library_id_path voidable:yes end
+		
+	end
+
+end type

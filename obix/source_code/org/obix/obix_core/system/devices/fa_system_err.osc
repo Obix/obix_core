@@ -1,0 +1,54 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory system_err type:simple_string_writer
+
+	// TD4 check for errors and define o_error
+
+	command write
+		script
+			java
+				System.err.print ( i_string.getValue().java_value() );
+			end java
+		end
+	end
+
+	command write_line
+		script
+			java
+				System.err.println ( i_string.getValue().java_value() );
+			end java
+		end
+	end
+
+	command write_new_line
+		script
+			java
+				System.err.println("");
+			end java
+		end
+	end
+	
+	command close
+		script
+			java
+				System.err.close();
+			end java
+		end
+	end
+	
+	command flush
+		script
+			java
+				System.err.flush();
+			end java
+		end
+	end
+	
+	creator create kind:in_all end
+
+end factory

@@ -1,0 +1,128 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory mutable_string type:mutable_string
+
+	java
+		//private StringBuffer java_value ;
+		private StringBuilder java_value ; // not synchronized!
+		public StringBuilder java_value() { return java_value; }
+	end java
+	
+	command is_empty
+		script
+			java
+				o_result = java_value.length() == 0 ? fa_yes_no.a_yes : fa_yes_no.a_no;
+			end java
+		end
+	end
+
+	command item_count
+		script
+			java
+				o_result = new fa_zero_positive32 ( java_value.length() );
+			end java
+		end
+	end
+
+	command append
+		script
+			java
+				java_value.append ( i_string.getValue().java_value() ) ;
+			end java
+			o_result = this
+		end
+	end
+	
+	command append_line
+		script
+			append ( i_string )
+			o_result = append_new_line
+		end
+	end
+	
+	command append_value
+		script
+			java
+				java_value.append ( i_value.java_value() ) ;
+			end java
+			o_result = this
+		end
+	end
+	
+	command append_mutable
+		script
+			java
+				java_value.append ( i_mutable.java_value().toString() ) ;
+			end java
+			o_result = this
+		end
+	end
+	
+	command append_new_line
+		script
+			o_result = co_append ( se_string_constants.current_OS_new_line )
+		end
+	end
+
+	command append_character
+		script
+			java
+				java_value.append ( i_character.getValue().java_value() ) ;
+			end java
+			o_result = this
+		end
+	end
+
+	command remove_all
+		script
+			java
+				java_value.delete ( 0, java_value.length() ) ;
+			end java
+			o_result = this
+		end
+	end
+	
+	command to_string
+		script
+			java
+				o_result = new fa_string ( java_value.toString() ) ;
+			end java
+		end
+	end
+	
+	command to_non_empty_string
+		script
+			java
+				o_result = new fa_non_empty_string ( java_value.toString() ) ;
+			end java
+		end
+	end
+
+	creator create
+		out result type:mutable_string end
+
+		script
+			java
+				o_result.java_value = new StringBuilder() ;
+			end java
+		end
+	end
+
+	creator create_with_string
+		in string type:simple_string end
+
+		out result type:mutable_string end
+
+		script
+			java
+				o_result.java_value = new StringBuilder(i_string.getValue().java_value()) ;
+			end java
+		end
+	end
+
+end factory

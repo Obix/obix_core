@@ -1,0 +1,13 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type attribute_setable
+
+	// values must be ordered from lowest to highest level (used by fa_semantic_analyzer)
+	enumerated none; creator; factory; service; all end
+
+end type

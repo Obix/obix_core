@@ -1,0 +1,61 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type local_date_time
+
+	inherit simple_non_empty_string
+		attribute value
+			and_check
+				script
+					const regex date_time_regex = se_date_time_constants.ISO_local_date_time_regex
+					check i_value.matches_regex ( c_date_time_regex ) &
+						error_message: """'{{i_value.to_string}}' is invalid because it doesn't match the regular expression '{{c_date_time_regex}}'.""" &
+						error_id: invalid_date_time_format
+						
+					const string_value date_value = i_value.extract_to ( 10 )
+					check ty_date.value.check ( c_date_value ) =r void &
+						error_message: """'{{i_value.to_string}}' contains an invalid date.""" &
+						error_id: invalid_date_time_format
+				end
+				test
+					script
+						// ok
+						test "2011-08-31T08:30:44"~
+						verify v_error =r void
+						test "1900-01-01T00:00:00"~
+						verify v_error =r void
+						test "2099-12-31T23:59:59"~
+						verify v_error =r void
+
+						// not ok
+						test "2099-12-31 23:59:59"~
+						verify v_error #r void
+						test "2011-8-31 08:30:44"~
+						verify v_error #r void
+						test "2011-08-31 8:30:44"~
+						verify v_error #r void
+						test "2011-06-31 08:30:44"~
+						verify v_error #r void
+					end
+				end
+			end
+		end
+	end
+
+	inherit !comparable<other:local_date_time> end
+
+	attribute_list kind:readonly_constant
+
+		attribute date type:date end
+
+		attribute time type:local_time end
+
+	end
+	
+	// TD see ty_date and ty_time
+
+end type

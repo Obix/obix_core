@@ -1,0 +1,17 @@
+type character_set_base
+
+	inherit simple_non_empty_string
+		attribute value
+			and_check
+				script
+					const regex regex = fa_regex.create ( '''^[a-zA-Z0-9][a-zA-Z0-9\.:_-]*$'''~ ) // according to Java documentation of java.nio.charset.Charset
+					check i_value.matches_regex ( c_regex ) &
+						error_message: """'{{i_value.to_string}}' is an invalid character set because it doesn't match the regular expression '{{c_regex}}'""" &
+						error_id: invalid_character_set
+				end
+			end
+		end
+	end
+	
+end
+

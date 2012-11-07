@@ -1,0 +1,22 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service regex_constants
+
+	attribute Unix_new_line_regex type:regex default: fa_regex.create ( '''\n'''.value ) end
+	attribute Windows_new_line_regex type:regex default: fa_regex.create ( '''\r\n'''.value ) end
+
+	attribute current_OS_new_line_regex type:regex default: iif se_system.OS_is_Windows then a_Windows_new_line_regex else a_Unix_new_line_regex end if end
+
+	attribute whitespace_regex type:regex default: fa_regex.create ( '''\s'''.value ) end
+
+	attribute string_literal_regex type:regex default: fa_regex.create ( '''"([^"\\]|\\.)*"'''.value ) end
+
+	// http://www.regular-expressions.info/email.html
+	// attribute email_address_regex type:regex default:fa_regex.create ( """^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$""".value ) end
+
+end service

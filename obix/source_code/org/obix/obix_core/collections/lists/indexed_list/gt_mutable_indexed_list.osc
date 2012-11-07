@@ -1,0 +1,83 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic type mutable_indexed_list
+
+	param item_type end
+	
+	type
+	
+		inherit !mutable_list<{item_type}>
+			command copy_to_immutable
+				out result type:!indexed_list<{item_type}> end
+			end
+
+			command append
+				out result type:!mutable_indexed_list<{item_type}> end
+			end
+
+			command prepend
+				out result type:!mutable_indexed_list<{item_type}> end
+			end
+
+			command remove_first
+				out result type:!mutable_indexed_list<{item_type}> end
+			end
+
+			command remove_last
+				out result type:!mutable_indexed_list<{item_type}> end
+			end
+
+			command remove_all
+				out result type:!mutable_indexed_list<{item_type}> end
+			end
+
+			command replace_first
+				out result type:!mutable_indexed_list<{item_type}> end
+			end
+
+			command replace_last
+				out result type:!mutable_indexed_list<{item_type}> end
+			end
+		end
+
+		inherit !mutable_or_immutable_indexed_list<{item_type}> end
+
+		command insert_before
+			in item type:{item_type} voidable:yes end
+			%index_input_argument
+
+			out result type:!mutable_indexed_list<{item_type}> end
+		end
+
+		command insert_after
+			in item type:{item_type} voidable:yes end
+			%index_input_argument
+
+			out result type:!mutable_indexed_list<{item_type}> end
+		end
+
+		command remove_at_index
+			%index_input_argument
+
+			out result type:!mutable_indexed_list<{item_type}> end
+		end
+
+		command replace_at_index
+			in new_item type:{item_type} voidable:yes end
+			%index_input_argument
+
+			out result type:!mutable_indexed_list<{item_type}> end
+		end
+		
+		command make_immutable
+			out result type:!indexed_list<{item_type}> end
+		end
+
+	end type
+
+end generic

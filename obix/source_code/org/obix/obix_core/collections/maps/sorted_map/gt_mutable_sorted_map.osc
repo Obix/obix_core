@@ -1,0 +1,51 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic type mutable_sorted_map
+
+	param key_type child_of:simple_string end
+	param item_type end
+	
+	type
+	
+		inherit !gt_mutable_map<key_type:{key_type}; item_type:{item_type}>
+
+			command add
+				out result type:!gt_mutable_sorted_map<key_type: {key_type}; item_type: {item_type}> end
+			end
+
+			command add_or_replace
+				out result type:!gt_mutable_sorted_map<key_type: {key_type}; item_type: {item_type}> end
+			end
+
+			command replace
+				out result type:!gt_mutable_sorted_map<key_type: {key_type}; item_type: {item_type}> end
+			end
+
+			command remove
+				out result type:!gt_mutable_sorted_map<key_type: {key_type}; item_type: {item_type}> end
+			end
+
+			command remove_all
+				out result type:!gt_mutable_sorted_map<key_type: {key_type}; item_type: {item_type}> end
+			end
+
+			command copy_to_immutable
+				out result type:!gt_sorted_map<key_type: {key_type}; item_type: {item_type}> end
+			end
+
+			command make_immutable
+				out result type:!gt_sorted_map<key_type: {key_type}; item_type: {item_type}> end
+			end
+
+		end
+
+		inherit !gt_mutable_or_immutable_sorted_map<key_type:{key_type}; item_type:{item_type}> end
+
+	end type
+
+end generic

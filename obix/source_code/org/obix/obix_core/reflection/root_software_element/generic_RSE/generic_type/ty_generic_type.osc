@@ -1,0 +1,21 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type generic_type
+
+	inherit generic_RSE
+		attribute id_path type:generic_type_id_path end
+		attribute a_id type:generic_type_id end
+
+		command is_equal_to
+			in other type:generic_type end
+		end
+	end
+	
+	attribute base_type_id_path type:type_id_path end
+
+end type

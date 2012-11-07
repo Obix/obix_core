@@ -1,0 +1,112 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type prefixed_id
+
+	inherit ty_id
+
+		attribute value
+			and_check
+				script
+					check i_value.matches_regex ( se_prefixed_id.regex ) &
+						error_message: "'" & fa_string.co_create ( i_value ) & "' is an invalid prefixed identifier." &
+						error_id:invalid_prefixed_id
+				end script
+
+				test
+					script
+						// invalid values
+
+						test void
+						verify v_error #r void
+
+						test "".value
+						verify v_error #r void
+
+						// no prefix terminator
+
+						test "a".value
+						verify v_error #r void
+
+						test "aa".value
+						verify v_error #r void
+
+						test "abc123".value
+						verify v_error #r void
+
+						// invalid prefix
+
+						test "_aaa".value
+						verify v_error #r void
+
+						test "1_".value
+						verify v_error #r void
+
+						test "a1_aa".value
+						verify v_error #r void
+
+						test "ab!c_aaa".value
+						verify v_error #r void
+
+						// invalid suffix
+
+						test "a_".value
+						verify v_error #r void
+
+						test "a_1".value
+						verify v_error #r void
+
+						test "a__a".value
+						verify v_error #r void
+
+						test "a_-".value
+						verify v_error #r void
+
+						test "a_1a".value
+						verify v_error #r void
+
+						test "a_abc!123".value
+						verify v_error #r void
+
+						test "a_abc_123:".value
+						verify v_error #r void
+
+						//  valid values
+
+						test "a_a".value
+						verify v_error =r void
+
+						test "a_a1".value
+						verify v_error =r void
+
+						test "aAzZ_aA_zZ_09_".value
+						verify v_error =r void
+
+						test "co_remove_first_item".value
+						verify v_error =r void
+
+						test "v_index_1".value
+						verify v_error =r void
+
+						test "V_INDEX_1".value
+						verify v_error =r void
+					end script
+				end test
+			end and_check
+		end attribute
+
+	end inherit
+			
+	command prefix
+		out result type:id_prefix end
+	end command
+
+	command suffix
+		out result type:id end
+	end command
+	
+end type

@@ -1,0 +1,5 @@
+factory variable_id type:variable_id
+
+	%prefixed_id_child_factory<type_of_factory:"variable_id"; prefix:"se_id_prefix.a_variable">
+
+end factory

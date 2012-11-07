@@ -1,0 +1,16 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template result_xor_resource_error_list_output
+
+	param result_type end
+	
+	out result type:{result_type} voidable:yes end
+	%error_list_output_argument < resource_error >
+	%result_xor_error_list_void_out_check
+	
+end

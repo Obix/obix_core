@@ -1,0 +1,38 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory system_err_system_error_handler_with_history type:system_error_handler_with_history
+
+	attribute private_error_list type:!mutable_indexed_list<system_error> default:!mutable_indexed_list_factory<system_error>.create private:yes end
+	
+	attribute error_count
+		get
+			script
+				o_error_count = a_private_error_list.item_count
+			end
+		end
+	end
+
+	attribute system_error_list
+		get
+			script
+				o_system_error_list = a_private_error_list.copy_to_immutable
+			end
+		end
+	end
+
+	command handle_system_error
+		script
+			a_private_error_list.append ( i_error )
+			
+			%co_handle_system_error_default_script
+		end
+	end
+	
+	creator create kind:in_all end
+
+end factory

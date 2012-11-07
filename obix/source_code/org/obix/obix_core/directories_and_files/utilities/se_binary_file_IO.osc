@@ -1,0 +1,184 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service binary_file_IO
+
+	java_header
+		import java.io.FileOutputStream;
+		import java.io.FileInputStream;
+		import java.io.BufferedOutputStream;
+		import java.io.BufferedInputStream;
+		import java.io.ObjectOutputStream;
+		import java.io.ObjectInputStream;
+		import java.io.IOException;
+
+		import java.util.zip.ZipInputStream;
+		import java.util.zip.ZipOutputStream;
+		import java.util.zip.ZipEntry;
+
+		import org.obix.obix_core.java.se_java_IO;
+		import org.obix.obix_core.java.fa_java_exception;
+	end java_header
+	
+	command store_object_to_new_file
+		in object type:any_type end
+		%new_file_input_argument
+		in store_in_zipped_format type:yes_no default:yes end
+		%system_error_handler_input_argument
+
+		%file_error_output_argument
+		%file_exists_or_error_output
+		
+		script
+			o_error = co_object_to_file ( &
+				object = i_object &
+				file = i_file &
+				store_in_zipped_format = i_store_in_zipped_format &
+				error_handler = i_error_handler )
+		end
+	end
+
+	command store_object_to_existing_file
+		in object type:any_type end
+		%existing_file_input_argument
+		in store_in_zipped_format type:yes_no default:yes end
+		%system_error_handler_input_argument
+
+		%file_error_output_argument
+		%file_exists_or_error_output
+		
+		script
+			o_error = co_object_to_file ( &
+				object = i_object &
+				file = i_file &
+				store_in_zipped_format = i_store_in_zipped_format &
+				error_handler = i_error_handler )
+		end
+	end
+
+	command store_object_to_new_or_existing_file
+		in object type:any_type end
+		%new_or_existing_file_input_argument
+		in store_in_zipped_format type:yes_no default:yes end
+		%system_error_handler_input_argument
+
+		%file_error_output_argument
+		%file_exists_or_error_output
+		
+		script
+			o_error = co_object_to_file ( &
+				object = i_object &
+				file = i_file &
+				store_in_zipped_format = i_store_in_zipped_format &
+				error_handler = i_error_handler )
+		end
+	end
+
+	command object_to_file private:yes
+		in object type:any_type end
+		in file type:file end
+		in store_in_zipped_format type:yes_no default:yes end
+		%system_error_handler_input_argument
+		
+		%file_error_output_argument
+		
+		script
+			var java_exception java_exception = void
+
+			java
+				FileOutputStream v_file_output_stream = null ;
+				ZipOutputStream v_zip_output_stream = null ;
+				BufferedOutputStream v_buffered_output_stream = null ;
+				ObjectOutputStream v_object_output_stream = null ;
+				try	{
+					v_file_output_stream = new FileOutputStream ( i_file.getValue().java_value() );
+
+					if ( i_store_in_zipped_format.java_value() ) {
+						v_zip_output_stream = new ZipOutputStream ( v_file_output_stream );
+						v_zip_output_stream.putNextEntry ( new ZipEntry ( "object" ) );
+						v_buffered_output_stream = new BufferedOutputStream ( v_zip_output_stream );
+					} else {
+						v_buffered_output_stream = new BufferedOutputStream ( v_file_output_stream );
+					}
+
+					v_object_output_stream = new ObjectOutputStream ( v_buffered_output_stream ) ;
+					v_object_output_stream.writeObject ( i_object ) ;
+
+				} catch ( Exception e ) {
+					v_java_exception = new fa_java_exception ( e );
+
+				} finally {
+					se_java_IO.close_output_stream ( v_object_output_stream );
+				}
+			end java
+			
+			if v_java_exception #r void then
+				o_error = fa_file_error.create ( &
+					id = "store_object_to_file" &
+					description = """Object could not be stored to file '{{i_file}}'. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception &
+					resource = i_file )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+
+		end script
+	end command
+
+
+	command restore_object_from_file
+		%existing_file_input_argument
+		in file_content_is_zipped type:yes_no default:yes end
+		%system_error_handler_input_argument
+		
+		%result_xor_file_error_output<any_type>
+		
+		script
+			var java_exception java_exception = void
+
+			java
+				FileInputStream v_file_input_stream = null ;
+				ZipInputStream v_zip_input_stream = null ;
+				BufferedInputStream v_buffered_input_stream = null ;
+				ObjectInputStream v_object_input_stream = null ;
+				try	{
+					v_file_input_stream = new FileInputStream ( i_file.getValue().java_value() );
+
+					if ( i_file_content_is_zipped.java_value() ) {
+						v_zip_input_stream = new ZipInputStream ( v_file_input_stream );
+						v_zip_input_stream.getNextEntry();
+						v_buffered_input_stream = new BufferedInputStream ( v_zip_input_stream );
+					} else {
+						v_buffered_input_stream = new BufferedInputStream ( v_file_input_stream );
+					}
+
+					v_object_input_stream = new ObjectInputStream ( v_buffered_input_stream ) ;
+					o_result = (in_any_type) v_object_input_stream.readObject() ;
+
+				} catch ( Exception e ) {
+					v_java_exception = new fa_java_exception ( e );
+
+				} finally {
+					se_java_IO.close_input_stream ( v_object_input_stream );
+				}
+			end java
+
+			if v_java_exception #r void then
+				o_result = void
+				o_error = fa_file_error.create ( &
+					id = "restore_object_from_file" &
+					description = """Object could not be restored from file '{{i_file}}'. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception &
+					resource = i_file )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+
+		end script
+	end command
+	
+end service

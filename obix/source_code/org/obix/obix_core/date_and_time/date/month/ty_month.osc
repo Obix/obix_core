@@ -1,0 +1,35 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type month
+
+	%inherit_simple_positive32_with_maximum < se_date_constants.months_in_year >
+
+	inherit !comparable < other:month > end
+
+/// TD
+
+	attribute_list kind:readonly_constant
+
+		attribute is_first_month_of_year type:yes_no end
+		attribute is_last_month_of_year type:yes_no end
+
+		// attribute standardized_name type:non_empty_string end
+		attribute english_name type:non_empty_string end
+		attribute local_name type:non_empty_string end
+
+	end
+
+	command localized_name
+		in locale type:locale end
+
+		out result type:non_empty_string end
+	end
+
+end ///
+
+end type

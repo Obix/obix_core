@@ -1,0 +1,38 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic factory mutable_id_map
+
+	param item_type child_of:type_with_id end
+	param id_type child_of:id end
+
+	factory type: !gt_mutable_id_map < item_type:{item_type} id_type:{id_type} >
+
+		attribute map type:!mutable_map < key_type: simple_string item_type: {item_type} > default:!mutable_map_factory < key_type: simple_string item_type: {item_type} >.create private:yes end
+
+		%id_map_factory_code
+
+		command add
+			script
+				a_map.add ( &
+					key = i_item.id &
+					item = i_item )
+			end
+		end
+
+		command make_immutable
+			script
+				o_result = !gf_id_map < item_type: {item_type}; id_type: {id_type} >.create ( a_map.make_immutable )
+			end
+		end
+		
+		creator create kind:in_all end
+
+	end factory
+	
+end generic
+

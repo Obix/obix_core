@@ -1,0 +1,21 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template prefixed_id_child_type_new
+
+	param parent_type end
+	param prefix_with_terminator end
+
+	inherit {parent_type}
+
+		attribute value	and_check: i_value.starts_with ( {prefix_with_terminator}.a_value ) &
+			error_message: "The id must start with '" & {prefix_with_terminator} & "'"
+		end
+
+	end
+
+end template

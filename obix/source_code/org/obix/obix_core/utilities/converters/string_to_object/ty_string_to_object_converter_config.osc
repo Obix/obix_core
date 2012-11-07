@@ -1,0 +1,8 @@
+type string_to_object_converter_config default_factory:yes
+
+	attribute empty_string_is_void type:yes_no default:yes end
+	attribute void_value_as_string type:simple_non_empty_string voidable:yes default:se_any_type.void_object_as_string end
+	attribute void_input_allowed type:yes_no default:yes end
+	
+end
+	

@@ -1,0 +1,28 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory file_name_starts_with_filter type: file_filter
+
+	attribute starts_with type:simple_string private:yes end
+
+	command is_accepted
+		script
+			o_result = i_object.name.value.starts_with ( a_starts_with.value )
+		end
+	end
+	
+	creator create
+		in starts_with type:simple_string end
+		
+		out result type:file_filter end
+		
+		script
+			o_result.starts_with = i_starts_with
+		end
+	end
+	
+end

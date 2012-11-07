@@ -1,0 +1,66 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type mutable_string
+
+	java
+		public StringBuilder java_value() ;
+	end java
+
+	command is_empty
+		out result type:yes_no end
+	end
+
+	command item_count
+		out result type:zero_positive32 end
+	end
+
+	command append
+		in string type:simple_string end
+		
+		out result type:mutable_string end
+	end
+	
+	command append_line
+		in string type:simple_string end
+		
+		out result type:mutable_string end
+	end
+	
+	command append_value
+		in value type:string_value end
+		
+		out result type:mutable_string end
+	end
+	
+	command append_mutable
+		in mutable type:mutable_string end
+		
+		out result type:mutable_string end
+	end
+	
+	command append_new_line
+		out result type:mutable_string end
+	end
+	
+	command append_character
+		in character type:character end
+		
+		out result type:mutable_string end
+	end
+	
+	command remove_all
+		out result type:mutable_string end
+	end
+	
+	command to_non_empty_string
+		in_check check: not i_object_.is_empty end
+
+		out result type:non_empty_string end
+	end
+	
+end type

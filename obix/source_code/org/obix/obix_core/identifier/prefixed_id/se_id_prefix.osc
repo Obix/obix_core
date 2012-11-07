@@ -1,0 +1,43 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service id_prefix
+
+	attribute regex type:regex default: fa_regex.create ( "[a-zA-Z]*".value ) end
+
+	// TD all id prefixes should be transferred to services of the software elements (see se_type for an example)
+	// id prefixes
+	attribute_list type:id_prefix kind:constant 
+		//attribute a_type default: fa_id_prefix.create ( "ty"~ ) end
+		// TD obsolete; use se_factory
+		attribute factory default: fa_id_prefix.create ( "fa"~ ) end
+		// TD obsolete; use se_service
+		attribute service default: fa_id_prefix.create ( "se"~ ) end
+
+		// TD obsolete; use se_command
+		attribute command default: fa_id_prefix.create ( "co"~ ) end
+		// TD obsolete; use se_event
+		attribute event default: fa_id_prefix.create ( "ev"~ ) end
+
+		// TD obsolete; use se_attribute
+		attribute attribute default: fa_id_prefix.create ( "a"~ ) end
+		// TD obsolete; use se_input_argument
+		attribute input_argument default: fa_id_prefix.create ( "i"~ ) end
+		// TD obsolete; use se_output_argument
+		attribute output_argument default: fa_id_prefix.create ( "o"~ ) end
+		attribute constant default: fa_id_prefix.create ( "c"~ ) end
+		attribute variable default: fa_id_prefix.create ( "v"~ ) end
+
+		// TD obsolete; use se_template
+		attribute generic default: fa_id_prefix.create ( "ge"~ ) end
+		// TD obsolete; use se_template
+		attribute template default: fa_id_prefix.create ( "te"~ ) end
+		attribute template_parameter default: fa_id_prefix.create ( "pa"~ ) end
+
+	end attribute_list
+
+end service

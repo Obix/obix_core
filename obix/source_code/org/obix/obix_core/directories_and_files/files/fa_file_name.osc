@@ -1,0 +1,43 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory file_name type:file_name
+
+	attribute name_without_extension
+		get
+			script
+				var positive32 separator_index = a_value.find_last ( se_file.file_name_extension_separator.value )
+				if separator_index #r void and separator_index > 1 then
+					o_name_without_extension = fa_file_name.create ( a_value.extract_to ( separator_index - 1 ) )
+				else
+					o_name_without_extension = this
+				end if
+			end
+		end
+	end
+
+	attribute extension
+		get
+			script
+				var positive32 separator_index = a_value.find_last ( se_file.file_name_extension_separator.value )
+				if separator_index #r void and separator_index < a_value.item_count then
+					o_extension = fa_file_name_extension.create ( a_value.extract_from ( separator_index + 1 ) )
+				else
+					o_extension = void
+				end if
+			end
+		end
+	end
+
+
+	%scalar_is_equal_to_factory_command
+	
+	creator create kind:in_all end
+	
+	%create_from_string_creator_for_simple_string<file_name>
+
+end

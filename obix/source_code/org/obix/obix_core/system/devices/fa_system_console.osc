@@ -1,0 +1,265 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory system_console type:system_console
+
+	java_header
+		import java.io.Console;
+		import java.io.PrintWriter;
+
+		import java.util.Arrays;
+
+		import org.obix.obix_core.basics.scalars.string.simple_string.in_simple_string;
+	end java_header
+
+	java
+		private Console a_java_console;
+		private PrintWriter a_java_writer;
+		
+		private in_string ask ( in_simple_string i_message ) {
+
+			String input;
+			if ( i_message == null ) {
+				input = a_java_console.readLine();
+			} else {
+				input = a_java_console.readLine ( "%s", i_message.getValue().java_value() );
+			}
+
+			// input is null if EOF (end of file), for example Ctrl-Z on Windows, has been pressed
+			if ( input != null ) {
+				return new fa_string ( input );
+			} else {
+				return null;
+			}
+		}
+	end java
+	
+	attribute string_yes_no_validator type:string_validator default:fa_string_yes_no_validator.create ( accept_yn_characters = yes ) private:yes end
+
+	command write
+		script
+			java
+				a_java_writer.print ( i_string.getValue().java_value() );
+				a_java_writer.flush();
+			end java
+		end
+	end
+
+	command write_line
+		script
+			java
+				a_java_writer.println ( i_string.getValue().java_value() );
+			end java
+		end
+	end
+
+	command write_new_line
+		script
+			java
+				a_java_writer.println("");
+			end java
+		end
+	end
+	
+	command ask_press_Enter
+		script
+			java
+				ask ( i_message );
+			end java
+		end
+	end
+
+	command ask_confirm
+		script
+			co_write_line ( i_message )
+			co_ask_press_Enter ( ty_system_console.ask_press_Enter.i_message.default )
+		end
+	end
+	
+	command ask_string
+		script
+			java
+				o_result = ask ( i_message );
+			end java
+		end
+	end
+	
+	command ask_string_and_validate
+		script
+			repeat i_max_retry_count times
+				
+				write_line ( i_message )
+
+				if i_default_value #r void then
+					write ( "[" & i_default_value & "] " )
+				end if
+				
+				o_result = ask_string ( void )
+				if o_result =r void then
+					o_error = fa_user_input_error.create ( &
+						description = "Please enter a value!" &
+						data = void )
+					i_error_handler.handle_system_error ( o_error )
+					next repeat
+				end if
+
+				if o_result =v "" and i_default_value #r void then
+					o_result = i_default_value.to_string
+				end if
+
+				if i_validator #r void then
+					var yes_no is_valid
+					var validation_error validation_error
+					i_validator.is_valid ( &
+						object = o_result &
+						error_handler = se_system_utilities.do_nothing_system_error_handler ) &
+						( is_valid = result &
+						v_validation_error = error )
+					if v_validation_error #r void then
+						o_error = fa_user_input_error.create ( &
+							description = "'" & o_result & "' is invalid. Reason:" & se_string_constants.current_OS_new_line & v_validation_error.description &
+							data = o_result )
+						i_error_handler.handle_system_error ( o_error )
+						o_result = void
+						next repeat
+					end if
+				end if
+				
+				o_error = void
+				exit repeat
+				
+			end repeat
+		end
+	end
+
+	command ask_password
+		script
+			java
+				char[] char_array = a_java_console.readPassword ( "%s", i_message.getValue().java_value() );
+				if ( char_array != null ) {
+					String input = new String ( char_array );
+					Arrays.fill ( char_array, ' ' ); // Java doc says: If an application needs to read a password, it should manually zero the returned character array after processing to minimize the lifetime of sensitive data in memory.
+					o_result = new fa_string ( input );
+				}
+			end java
+		end
+	end
+	
+	command ask_zero_positive32_and_validate
+		script
+			repeat i_max_retry_count times
+
+				const string string_input = ask_string ( i_message )
+				if c_string_input =r void or c_string_input.is_empty then
+					o_result = void
+					o_error = fa_user_input_error.create ( &
+						description = "Please enter a value!" &
+						data = c_string_input )
+					i_error_handler.handle_system_error ( o_error )
+					next repeat
+				end if
+
+				var conversion_error conversion_error
+				i_converter.convert ( &
+					input = c_string_input &
+					error_handler = se_system_utilities.do_nothing_system_error_handler ) &
+					( o_result = result &
+					v_conversion_error = error )
+				if v_conversion_error #r void then
+					o_result = void
+					o_error = fa_user_input_error.create ( &
+						description = "'" & c_string_input & "' is not a valid number." &
+						data = c_string_input )
+					i_error_handler.handle_system_error ( o_error )
+					next repeat
+				end if
+
+				if i_validator #r void then
+					var yes_no is_valid
+					var validation_error validation_error
+					i_validator.is_valid ( &
+						object = o_result &
+						error_handler = se_system_utilities.do_nothing_system_error_handler ) &
+						( is_valid = result &
+						v_validation_error = error )
+					if v_validation_error #r void then
+						o_result = void
+						o_error = fa_user_input_error.create ( &
+							description = "'" & c_string_input & "' is invalid. Reason:" & se_string_constants.current_OS_new_line & v_validation_error.description &
+							data = c_string_input )
+						i_error_handler.handle_system_error ( o_error )
+						next repeat
+					end if
+				end if
+				
+				o_error = void
+				exit repeat
+				
+			end repeat
+		end
+	end
+
+	command ask_yes_no
+		script
+			var string default_string = void
+			if i_default_value #r void then
+				v_default_string = iif i_default_value then se_string_constants.a_yes else se_string_constants.a_no end if
+			end if
+			
+			var string string_result
+			co_ask_string_and_validate ( &
+				message = i_message &
+				default_value = v_default_string &
+				validator = a_string_yes_no_validator &
+				error_handler = i_error_handler &
+				max_retry_count = i_max_retry_count ) &
+				( v_string_result = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			var string_to_object_conversion_error conversion_error
+			i_string_to_yes_no_converter.convert ( &
+				input = v_string_result &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				v_conversion_error = error )
+			if v_conversion_error #r void then
+				o_error = fa_user_input_error.create ( &
+					description = v_conversion_error.description &
+					data = v_string_result )
+			end if
+		end
+	end
+
+
+	creator create
+		
+		out result type:system_console voidable:yes end
+
+		script
+			java
+				// Google app engine:
+				// System.console() raises NoClassDefFoundError
+				// class java.io.Console isn't supported (see http://code.google.com/appengine/docs/java/jrewhitelist.html)
+				Console console = null;
+				try {
+					console = System.console();
+				} catch ( Throwable e ) {}
+
+				if ( console == null ) {
+					o_result = null;
+				} else {
+					o_result.a_java_console = console;
+					o_result.a_java_writer = console.writer();
+				}
+			end java
+		end
+	end
+
+end factory

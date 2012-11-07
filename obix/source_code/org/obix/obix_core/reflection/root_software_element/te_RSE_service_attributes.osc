@@ -1,0 +1,40 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template RSE_service_attributes
+
+	param RSE_kind end
+	param id_prefix end
+	
+
+	attribute id_prefix type:id_prefix default: fa_id_prefix.co_create ( "{id_prefix}".value ) end
+
+	attribute id_prefix_with_terminator type:non_empty_string default: a_id_prefix.append_terminator end
+
+	attribute id_prefix_with_terminator_length type:positive32 default: a_id_prefix_with_terminator.item_count end
+	
+	command string_starts_with_{RSE_kind}_prefix
+		in string type:simple_string end
+		
+		out result type:yes_no end
+
+		script
+			o_result = i_string.value.starts_with ( a_id_prefix_with_terminator.value )
+		end
+	end
+	
+	command suffix_of_prefixed_id_string
+		in string type:simple_string check: co_string_starts_with_{RSE_kind}_prefix ( i_string ) and i_string.value.item_count > a_id_prefix_with_terminator_length + 1 end
+		
+		out result type:non_empty_string end
+
+		script
+			o_result = fa_non_empty_string.create ( i_string.value.co_extract_from ( a_id_prefix_with_terminator_length + 1 ) )
+		end
+	end
+
+end template

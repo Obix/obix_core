@@ -1,0 +1,192 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service system_directories
+
+	attribute_list type:directory kind:readonly_variable // TD? readonly_constnat
+		
+		attribute current_working_directory
+			get
+				script
+					o_current_working_directory = fa_directory.create ( se_java_config.get_system_property ( "user.dir" ).value )
+				end
+			end
+		end
+	
+		attribute temporary_files_directory
+			get
+				script
+					o_temporary_files_directory = fa_directory.create ( se_java_config.get_system_property ( "java.io.tmpdir" ).value )
+				end
+			end
+		end
+
+	end
+
+	attribute_list type:directory kind:readonly_constant
+
+		attribute user_home_directory
+			get
+				script
+					o_user_home_directory = fa_directory.create ( se_java_config.get_system_property ( "user.home" ).value )
+				end
+			end
+		end
+	
+		attribute java_lib_directory
+			get
+				script
+					o_java_lib_directory = a_obix_system_jar_file.directory
+				end
+			end
+		end
+
+		attribute obix_lib_directory
+			get
+				script
+					o_obix_lib_directory = a_java_lib_directory.parent_directory.append_child_name ( se_reflection.obix_lib_directory_name )
+				end
+			end
+		end
+
+	end
+	
+
+	attribute cached_application_home_directory type:directory voidable:yes private:yes kind:variable end
+
+	attribute application_home_directory type:directory kind:readonly_constant // TD? check: i_application_home_directory.exists
+		get
+			script
+				if a_cached_application_home_directory =r void then
+
+					co_define_obix_system_location
+
+					if a_cached_obix_system_jar_file #r void then
+						a_cached_application_home_directory = a_cached_obix_system_jar_file.directory.parent_directory
+					else if a_cached_obix_system_classes_directory #r void then
+						a_cached_application_home_directory = a_cached_obix_system_classes_directory.parent_directory
+					else
+						se_system_utilities.default_system_error_handler.handle_system_error ( fa_resource_error.create ( &
+							description = "se_system_directories.application_home_directory could not be determined." &
+							resource = void ) )
+						exit script
+					end if
+						
+					if a_cached_application_home_directory.name.value =v se_reflection.WEBINF_directory_name.value then
+						a_cached_application_home_directory = a_cached_application_home_directory.parent_directory
+					end if
+					
+				end if
+
+				o_application_home_directory = a_cached_application_home_directory
+			end
+		end
+	end
+
+
+	attribute cached_obix_system_jar_file type:file voidable:yes private:yes kind:variable end
+
+	attribute obix_system_jar_file type:file voidable:yes kind:readonly_constant
+		get
+			script
+				co_define_obix_system_location
+				
+				o_obix_system_jar_file = a_cached_obix_system_jar_file
+			end
+		end
+	end
+		
+
+	attribute cached_obix_system_classes_directory type:directory voidable:yes private:yes kind:variable end
+
+	attribute obix_system_classes_directory type:directory voidable:yes kind:readonly_constant
+		get
+			script
+				co_define_obix_system_location
+				
+				o_obix_system_classes_directory = a_cached_obix_system_classes_directory
+			end
+		end
+	end
+
+
+	attribute obix_system_location_defined type:yes_no default:no private:yes kind:variable end
+
+	command define_obix_system_location private:yes
+		script
+			if a_obix_system_location_defined then
+				// execute this script only once
+				exit script
+			end if
+			
+			const string obix_string = se_string_constants.empty_string
+			var string obix_jar_file_path
+			var string obix_classes_directory
+			var string error
+			java
+				Class obix_string_class = c_obix_string.getClass();
+				String string_class_name = obix_string_class.getSimpleName() + ".class"; // fa_string.class
+
+				// get a URL like the following if fa_string.class is stored in a .jar file:
+				// file:/D:/obix/working/projects/pr_qwe/runtime/build/web/WEB-INF/lib/obix.jar!/li_obix/li_basics/li_scalars/li_string/fa_string.class
+				// or get a URL like the following if ty_string.class is stored in a 'classes' directory:
+				// file:/D:/obix/working/NetBeans_project/build/classes/li_obix/li_basics/li_scalars/li_string/fa_string.class
+				java.net.URL string_class_URL = obix_string_class.getResource(string_class_name);
+
+				if (string_class_URL == null) {
+					v_error = new fa_string ( "The location of " + string_class_name + " could not be determined by the classloader." );
+				} else {
+					String string_class_path = string_class_URL.getPath();
+					int separator_index = string_class_path.indexOf ( "!" );
+					boolean stored_in_jar_file = separator_index != -1;
+					if ( stored_in_jar_file ) {
+						string_class_path = string_class_path.substring ( 0, separator_index );
+						java.net.URI string_class_path_URI = new java.net.URI ( string_class_path );
+						java.io.File file = new java.io.File ( string_class_path_URI );
+						v_obix_jar_file_path = new fa_string ( file.getCanonicalPath() );
+					} else {
+						String string_class_file_path = (new java.io.File ( string_class_URL.toURI() )).getCanonicalPath();  // D:/obix/working/NetBeans_project/build/classes/li_obix_core/li_basics/li_scalars/li_string/fa_string.class
+						String string_class_canonical_name = obix_string_class.getCanonicalName(); // org.obix.obix_core.basics.scalars.string.fa_string
+						String classes_directory = string_class_file_path.substring ( 0, string_class_file_path.length() - string_class_canonical_name.length() - ".class".length() );
+						v_obix_classes_directory = new fa_string ( classes_directory ); // D:/obix/working/NetBeans_project/build/classes/
+					}
+				}
+			end java
+			
+			if v_error =r void then
+
+				if v_obix_jar_file_path #r void then
+					a_cached_obix_system_jar_file = fa_file.create_from_string.result ( string = v_obix_jar_file_path )
+					if not a_cached_obix_system_jar_file.exists then
+						v_error = """File '{{a_cached_obix_system_jar_file}}' doesn't exist."""
+						a_cached_obix_system_jar_file = void
+					end if
+
+				else if v_obix_classes_directory #r void then
+					a_cached_obix_system_classes_directory = fa_directory.create_from_string.result ( string = v_obix_classes_directory )
+					if not a_cached_obix_system_classes_directory.exists then
+						v_error = """Directory '{{a_cached_obix_system_classes_directory}}' doesn't exist"""
+						a_cached_obix_system_classes_directory = void
+					end if
+
+				end if
+
+			end if
+			
+			if v_error #r void then
+				se_system_utilities.default_system_error_handler.handle_system_error ( fa_resource_error.create ( &
+					description = "obix_system_location could not be determined. Reason: " & v_error &
+					resource = void ) )
+				exit script
+			end if
+
+			a_obix_system_location_defined = yes
+
+		end script
+	end command
+		
+end service

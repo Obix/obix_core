@@ -1,0 +1,75 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type id_prefix
+
+	inherit simple_non_empty_string
+
+		attribute value and_check: i_value.matches_regex ( se_id_prefix.regex ) &
+			error_message: "'" & fa_string.co_create ( i_value ) & "' is an invalid identifier prefix. An identifier prefix can only contain letters." error_id: invalid_id_prefix end
+
+	end inherit
+	
+	inherit !equalable<other:id_prefix> end
+
+	command append
+		in string type:simple_string end
+		
+		out result type:non_empty_string end
+	end
+	
+	command append_terminator
+		out result type:non_empty_string end
+	end
+	
+	///
+			test
+				script
+					// invalid values
+
+					test void
+					verify v_error #r void
+
+					test ""
+					verify v_error #r void
+
+					test "_"
+					verify v_error #r void
+
+					test ":"
+					verify v_error #r void
+
+					test "a1"
+					verify v_error #r void
+
+					test "1a"
+					verify v_error #r void
+
+					test "a_"
+					verify v_error #r void
+
+					test "ty_person"
+					verify v_error #r void
+
+					// valid values
+
+					test "a"
+					verify v_error =r void
+
+					test "Z"
+					verify v_error =r void
+
+					test "aAzZ"
+					verify v_error =r void
+
+					test "aVeryLongPrefix"
+					verify v_error =r void
+				end script
+			end test
+	end ///
+	
+end type

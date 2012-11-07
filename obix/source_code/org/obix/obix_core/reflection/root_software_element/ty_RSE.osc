@@ -1,0 +1,27 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type RSE
+
+	inherit !equalable<other:no_type> end
+	
+	inherit prefixed_id_object
+		attribute a_id type:RSE_id kind:readonly_constant end
+	end
+		
+
+	attribute id_path type:RSE_id_path end
+
+	attribute_list kind:readonly_constant
+
+		attribute library_id_path type:library_id_path end
+		
+		// attribute a_id type:RSE_id end
+		
+	end
+
+end type

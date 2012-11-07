@@ -1,0 +1,60 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template nongeneric_RSE_factory_attributes
+
+	param RSE_type end
+	
+	%RSE_factory_attributes
+
+	attribute public_attribute_list
+		get
+			script
+				if a_attribute_list =r void then
+					o_public_attribute_list = void
+					exit script
+				end if
+					
+				const mutable_{RSE_type}_attribute_list temp_public_attribute_list = fa_mutable_{RSE_type}_attribute_list.create ( se_id_prefix.attribute )
+
+				repeat for each {RSE_type}_attribute attribute in a_attribute_list
+					if not c_attribute.private then
+						temp_public_attribute_list.add ( c_attribute )
+					end if
+				end repeat
+				
+				if not temp_public_attribute_list.is_empty then
+					o_public_attribute_list = temp_public_attribute_list.make_immutable
+				end if
+			end
+		end
+	end
+
+	attribute public_command_list
+		get
+			script
+				if a_command_list =r void then
+					o_public_command_list = void
+					exit script
+				end if
+					
+				const mutable_{RSE_type}_command_list temp_public_command_list = fa_mutable_{RSE_type}_command_list.create ( se_id_prefix.command )
+
+				repeat for each {RSE_type}_command command in a_command_list
+					if not c_command.private then
+						temp_public_command_list.add ( c_command )
+					end if
+				end repeat
+				
+				if not temp_public_command_list.is_empty then
+					o_public_command_list = temp_public_command_list.make_immutable
+				end if
+			end
+		end
+	end
+
+end template

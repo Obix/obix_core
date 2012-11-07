@@ -1,0 +1,518 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory library_repository type:library_repository
+
+	attribute_list private:yes
+	
+		attribute library_map type:!mutable_map < key_type: library_id_path item_type: library > end
+
+		attribute id_type_map type:mutable_id_type_map end
+		attribute id_factory_map type:mutable_id_factory_map end
+		attribute id_service_map type:mutable_id_service_map end
+
+		attribute id_generic_type_map type:mutable_id_generic_type_map end
+		attribute id_generic_factory_map type:mutable_id_generic_factory_map end
+		attribute id_generic_service_map type:mutable_id_generic_service_map end
+		
+		attribute id_source_code_template_map type:mutable_id_source_code_template_map end
+		
+		attribute direct_child_type_map type:!mutable_map < key_type: type_id_path item_type: mutable_type_map > voidable:yes kind:variable end
+
+		attribute type_factory_map type:!mutable_map < key_type: type_id_path item_type: mutable_factory_map > voidable:yes kind:variable end
+		
+	end
+	
+	attribute nongeneric_RSE_list
+		get
+			script
+				// TD3 should be done faster with compound iterator
+
+				const !mutable_indexed_list<nongeneric_RSE> list = !mutable_indexed_list_factory<nongeneric_RSE>.create
+
+				repeat for each item type type in a_id_type_map
+					c_list.append ( c_type )
+				end
+
+				repeat for each item factory factory in a_id_factory_map
+					c_list.append ( c_factory )
+				end
+
+				repeat for each item service service in a_id_service_map
+					c_list.append ( c_service )
+				end
+
+				o_nongeneric_RSE_list = c_list.make_immutable
+			end
+		end
+	end
+	
+	attribute type_list
+		get
+			script
+				o_type_list = a_id_type_map.make_immutable
+			end
+		end
+	end
+	
+	attribute factory_list
+		get
+			script
+				o_factory_list = a_id_factory_map.make_immutable
+			end
+		end
+	end
+	
+	attribute service_list
+		get
+			script
+				o_service_list = a_id_service_map.make_immutable
+			end
+		end
+	end
+	
+	attribute generic_type_list
+		get
+			script
+				o_generic_type_list = a_id_generic_type_map.make_immutable
+			end
+		end
+	end
+	
+	attribute generic_factory_list
+		get
+			script
+				o_generic_factory_list = a_id_generic_factory_map.make_immutable
+			end
+		end
+	end
+	
+	attribute generic_service_list
+		get
+			script
+				o_generic_service_list = a_id_generic_service_map.make_immutable
+			end
+		end
+	end
+	
+	attribute source_code_template_list
+		get
+			script
+				o_source_code_template_list = a_id_source_code_template_map.make_immutable
+			end
+		end
+	end
+	
+	command get_type
+		script
+			o_result = type_by_id_path ( i_id_path )
+		end
+	end
+	
+	command contains_library
+		script
+			o_result = a_library_map.get_item_if_contained ( i_library_id_path ) #r void
+		end
+	end
+
+	command library_by_id_path
+		script
+			o_result = a_library_map.get_item_if_contained ( i_library_id_path )
+		end
+	end
+
+	%library_repository_factory_getters<type>
+	%library_repository_factory_getters<factory>
+	%library_repository_factory_getters<service>
+
+	%library_repository_factory_getters<generic_type>
+	%library_repository_factory_getters<generic_factory>
+	%library_repository_factory_getters<generic_service>
+
+	%library_repository_factory_getters<source_code_template>
+	
+
+	command get_direct_child_type_list
+		script
+			if a_direct_child_type_map =r void then
+				co_create_direct_child_type_map
+			end if
+			
+			const mutable_type_map child_type_map = a_direct_child_type_map.get_item_if_contained ( i_type_id_path )
+			o_result = iif c_child_type_map #r void and not c_child_type_map.is_empty &
+			then c_child_type_map.make_immutable &
+			else void end if
+		end
+	end
+	
+	
+	command get_create_creator_for_type
+		script
+			co_get_creator_for_type ( &
+				type_id_path = i_type_id_path &
+				creator_id = se_reflection.create_creator_id &
+				error_handler = i_error_handler ) &
+				( o_factory = factory &
+				o_creator = creator &
+				o_error = error )
+		end
+	end
+
+	command get_creator_for_type
+		script
+			var string error_message = void
+			
+			section get_creator
+			
+				// get first factory
+
+				const factory_map factory_map  = co_get_factories_implementing_type ( i_type_id_path )
+				if c_factory_map =r void or c_factory_map.is_empty then
+					v_error_message = """No factory exists for type '{{i_type_id_path}}'"""
+					exit section
+				end if
+				
+				o_factory = c_factory_map.item_iterator.next
+				
+				// get creator
+
+				const factory_command_list creator_list = o_factory.creator_list
+				if c_creator_list =r void then
+					v_error_message = """No creator exists for factory '{{o_factory.id_path}}'"""
+					exit section
+				end if
+				
+				o_creator = c_creator_list.item_by_id ( i_creator_id )
+				if o_creator =r void then
+					v_error_message = """No creator with id '{{i_creator_id}}' exists for factory '{{o_factory.id_path}}'"""
+					exit section
+				end if
+				
+			end section
+			
+			if v_error_message #r void then
+				o_factory = void
+				o_creator = void
+				o_error = fa_reflection_error.create ( description = v_error_message )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+				
+		end
+	end
+
+
+	command get_factories_implementing_type
+		script
+			if a_type_factory_map =r void then
+				co_create_type_factory_map
+			end if
+			
+			const mutable_factory_map mutable_factory_map = a_type_factory_map.get_item_if_contained ( i_type_id_path )
+			o_result = iif c_mutable_factory_map #r void &
+			then c_mutable_factory_map.make_immutable &
+			else void end if
+		end
+	end
+
+
+	command type_has_factories
+		script
+			o_result = co_get_factories_implementing_type ( i_type_id_path ) #r void
+		end
+	end
+
+
+	command get_virtual_root_library
+		script
+			const mutable_child_library_list mutable_child_library_list = fa_mutable_child_library_list.create
+			repeat for each library root_library in a_root_library_list 
+				// different projects can have libraries starting with the same root path (e.g. org.obix for obix_core and for obix_ext); therefore test first if library exists already
+				// TD5 must be changed bacause only obix_core will be included
+				if not c_mutable_child_library_list.contains_id ( c_root_library.id )
+					c_mutable_child_library_list.add ( c_root_library )
+				end if
+			end repeat
+
+			o_result = fa_library.create ( &
+				id_path = fa_library_id_path.create_from_id ( i_virtual_root_library_id ) &
+				child_library_list = c_mutable_child_library_list.make_immutable &
+				RSE_list = fa_RSE_list.create_empty )
+		end
+	end
+
+
+	command store_to_file
+		script
+			i_message_handler.co_info_message ( "Storing library repository to file '" & i_file & "'" )
+
+			o_error = se_binary_file_IO.store_object_to_new_or_existing_file ( &
+				object = a_root_library_list &
+				file = i_file &
+				store_in_zipped_format = yes &
+				error_handler = i_error_handler )
+		end
+	end
+	
+	command_list private:yes
+
+		command create_direct_child_type_map
+			script
+				a_direct_child_type_map = !mutable_map_factory < key_type: type_id_path item_type: mutable_type_map >.create
+
+				repeat for each type type in a_id_type_map
+					if c_type.inherited_type_list =r void then
+						next repeat
+					end if
+
+					repeat for each type_id_path inherited_type_id_path in c_type.inherited_type_list
+
+						var mutable_type_map child_type_map = a_direct_child_type_map.get_item_if_contained ( c_inherited_type_id_path )
+						if v_child_type_map =r void then
+							v_child_type_map = fa_mutable_type_map.create
+							a_direct_child_type_map.add ( &
+								key = c_inherited_type_id_path &
+								item = v_child_type_map )
+						end if
+
+						v_child_type_map.add ( &
+							key = c_type.id_path &
+							item = c_type )
+					end repeat
+
+				end repeat
+
+				// TD add loop for types in type_duplicate_list
+			end
+		end
+
+
+		command create_type_factory_map
+			script
+				a_type_factory_map = !mutable_map_factory < key_type: type_id_path item_type: mutable_factory_map >.create
+
+				repeat for each factory factory in a_id_factory_map
+					const type_id_path type_id_path = c_factory.type_implemented
+
+					var mutable_factory_map factory_map = a_type_factory_map.get_item_if_contained ( c_type_id_path )
+					if v_factory_map =r void then
+						v_factory_map = fa_mutable_factory_map.create
+						a_type_factory_map.add ( &
+							key = c_type_id_path &
+							item = v_factory_map )
+					end if
+
+					v_factory_map.add ( &
+						key = c_factory.id_path &
+						item = c_factory )
+
+				end repeat
+
+				// TD add loop for types in type_duplicate_list
+			end
+		end
+
+
+		command add_library
+			in library type:library end
+			
+			script
+				// different projects can have libraries starting with the same root path (e.g. org.obix for obix_core and for obix_ext); therefore test first if library exists already
+				if not a_library_map.contains_key ( i_library.id_path ) then
+					a_library_map.add ( &
+						key = i_library.id_path &
+						item = i_library )
+				end if
+
+				repeat for each library child_library in i_library.child_library_list
+					add_library ( c_child_library )
+				end repeat
+				
+				repeat for each RSE RSE in i_library.RSE_list
+					case type of c_RSE
+						when type type then
+							a_id_type_map.add ( c_type )
+						when factory factory then
+							a_id_factory_map.add ( c_factory )
+						when service service then
+							a_id_service_map.add ( c_service )
+						when generic_type generic_type then
+							a_id_generic_type_map.add ( c_generic_type )
+						when generic_factory generic_factory then
+							a_id_generic_factory_map.add ( c_generic_factory )
+						when generic_service generic_service then
+							a_id_generic_service_map.add ( c_generic_service )
+						when source_code_template source_code_template then
+							a_id_source_code_template_map.add ( c_source_code_template )
+					end case
+				end repeat
+			end
+		end
+		
+		///
+		command import_libraries_from_file
+			in file type:file end
+			in library_list type:!mutable_indexed_list<library> end
+			%message_handler_input_argument
+			%system_error_handler_input_argument
+			
+			%resource_error_output_argument
+			
+			script
+				i_message_handler.co_info_message ( "Restoring library repository from file '" & i_file & "'" )
+
+				var any_type object
+				se_binary_file_IO.co_restore_object_from_file ( &
+					file = i_file &
+					file_content_is_zipped = yes &
+					error_handler = i_error_handler ) &
+					( v_object = result &
+					o_error = error )
+				if o_error #r void then
+					// i_error_handler.handle_system_error ( o_error )
+					exit script
+				end if
+				
+				const !collection<library> library_collection = v_object type_check:no
+				
+				repeat for each library root_library in c_library_collection
+					i_library_list.append ( c_root_library )
+				end
+			end
+		end
+		end ///
+		
+	end
+	
+	creator create kind:in_all
+		script
+			o_result.root_library_list = i_root_library_list
+
+			o_result.library_map = !mutable_map_factory < key_type: library_id_path item_type: library >.create
+
+			o_result.id_type_map = fa_mutable_id_type_map.create ( se_type.id_prefix )
+			o_result.id_factory_map = fa_mutable_id_factory_map.create ( se_factory.id_prefix )
+			o_result.id_service_map = fa_mutable_id_service_map.create ( se_service.id_prefix )
+
+			o_result.id_generic_type_map = fa_mutable_id_generic_type_map.create ( se_generic_type.id_prefix )
+			o_result.id_generic_factory_map = fa_mutable_id_generic_factory_map.create ( se_generic_factory.id_prefix )
+			o_result.id_generic_service_map = fa_mutable_id_generic_service_map.create ( se_generic_service.id_prefix )
+
+			o_result.id_source_code_template_map = fa_mutable_id_source_code_template_map.create ( se_source_code_template.id_prefix )
+			
+			repeat for each library root_library in i_root_library_list
+				o_result.add_library ( c_root_library )
+			end
+		end
+	end
+	
+	creator create_for_single_root_library
+		in root_library type:library end
+		
+		out result type:library_repository end
+		
+		script
+			o_result = co_create ( !indexed_list_factory<library>.create_singleton ( i_root_library ) )
+		end 
+	end
+
+	creator create_from_file
+		%existing_file_input_argument
+		%message_handler_input_argument
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output<library_repository>
+
+		script
+			const !mutable_indexed_list<library> library_list = !mutable_indexed_list_factory<library>.create
+			
+			o_error = se_library_repository_utilities.add_libraries_in_file_to_list ( &
+				file = i_file &
+				library_list = c_library_list &
+				message_handler = i_message_handler &
+				error_handler = i_error_handler )
+			if o_error #r void then
+				o_result = void
+				exit script
+			end if
+
+			o_result = co_create ( c_library_list.make_immutable )
+		end
+	end
+
+	creator create_from_directory
+		%existing_directory_input_argument
+		in include_system_repository type:yes_no end
+		%message_handler_input_argument
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output<library_repository>
+
+		script
+			const !mutable_indexed_list<library> library_list = !mutable_indexed_list_factory<library>.create
+
+			var !indexed_list<file> file_list
+			se_file_list_in_file_utility.read_file_list_from_directory_and_file_list_file ( &
+				directory = i_directory &
+				include_child_directories = no &
+				file_list_file_name = se_file_list_in_file_utility.default_file_list_file_name &
+				check_if_files_in_file_list_file_exist = yes &
+				error_handler = i_error_handler ) &
+				( v_file_list = result &
+				o_error = error )
+			if o_error #r void then
+				o_result = void
+				exit script
+			end if
+
+			if not v_file_list.is_empty then
+				repeat for each file file in v_file_list
+					o_error = se_library_repository_utilities.add_libraries_in_file_to_list ( &
+						file = c_file &
+						library_list = c_library_list &
+						message_handler = i_message_handler &
+						error_handler = i_error_handler )
+					if o_error #r void then
+						o_result = void
+						exit script
+					end if
+				end repeat
+			end if
+			
+			if i_include_system_repository then
+				var file_list system_file_list
+				se_system_directories.obix_lib_directory.file_list ( &
+					include_child_directories = yes &
+					error_handler = i_error_handler ) &
+					( v_system_file_list = result &
+					o_error = error )
+				if o_error #r void then
+					o_result = void
+					exit script
+				end if
+				repeat for each file system_file in v_system_file_list
+					o_error = se_library_repository_utilities.add_libraries_in_file_to_list ( &
+						file = c_system_file &
+						library_list = c_library_list &
+						message_handler = i_message_handler &
+						error_handler = i_error_handler )
+					if o_error #r void then
+						o_result = void
+						exit script
+					end if
+				end repeat
+			end if
+
+			// TD necessary?
+			if c_library_list.is_empty then
+				i_message_handler.co_warning_message ( "No library repositories are imported, because directory '" & i_directory.to_string & "' is empty" )
+			end if
+
+			o_result = co_create ( c_library_list.make_immutable )
+		end
+	end
+
+end factory

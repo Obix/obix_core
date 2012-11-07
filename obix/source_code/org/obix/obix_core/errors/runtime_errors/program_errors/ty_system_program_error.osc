@@ -1,0 +1,17 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type system_program_error
+
+	inherit program_error
+		attribute a_id default:"system_program_error" end
+		attribute description default:"System error." end
+	end inherit
+	
+	attribute system_error_description type:string end
+
+end type

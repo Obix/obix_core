@@ -1,0 +1,92 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory test_context type:test_context
+
+	attribute_list private:yes kind:variable 
+	
+		attribute private_RSEs_tested_count type:zero_positive32 default:0 end
+
+		attribute private_test_error_list type:!mutable_indexed_list<test_error> default:!mutable_indexed_list_factory<test_error>.create end
+		
+	end
+	
+	attribute RSEs_tested_count
+		get
+			script
+				o_RSEs_tested_count = a_private_RSEs_tested_count
+			end
+		end
+	end
+	
+	attribute test_errors_found
+		get
+			script
+				o_test_errors_found = not a_private_test_error_list.is_empty
+			end
+		end
+	end
+	
+	attribute test_error_count
+		get
+			script
+				o_test_error_count = a_private_test_error_list.item_count
+			end
+		end
+	end
+	
+	attribute test_error_list
+		get
+			script
+				o_test_error_list = a_private_test_error_list.copy_to_immutable
+			end
+		end
+	end
+	
+	command start
+		script
+			a_private_RSEs_tested_count = 0
+			a_private_test_error_list = !mutable_indexed_list_factory<test_error>.create
+		end
+	end
+
+	command stop
+		script
+			a_message_handler.testing_finished ( &
+				RSEs_tested_count = a_private_RSEs_tested_count &
+				test_error_count = a_test_error_count )
+		end
+	end
+
+
+	command handle_RSE_test_start
+		script
+			a_private_RSEs_tested_count = a_private_RSEs_tested_count + 1
+
+			co_handle_info_message ( "testing " & i_RSE_id_path )
+		end
+	end
+
+	command handle_test_error
+		script
+			a_private_test_error_list.append ( i_test_error )
+
+			a_message_handler.handle_test_error ( i_test_error )
+		end
+	end
+
+	command handle_info_message
+		script
+			if a_display_info_messages then
+				a_message_handler.handle_info_message ( i_message )
+			end if
+		end
+	end
+
+	creator create kind:in_all end
+	
+end

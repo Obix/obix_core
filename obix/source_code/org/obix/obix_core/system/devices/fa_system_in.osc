@@ -1,0 +1,144 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory system_in type:simple_string_reader
+
+	// similar code in java_buffered_string_reader
+	// TD2 should use templates
+
+	java_header
+		import java.io.BufferedReader;
+		import java.io.InputStreamReader;
+		import java.io.IOException;
+
+		import org.obix.obix_core.java.se_java_IO;
+		import org.obix.obix_core.java.fa_java_exception;
+	end java_header
+	
+	java
+		BufferedReader a_reader = new BufferedReader ( new InputStreamReader ( System.in ) ) ;
+	end java
+
+	command read_character
+		script
+			var java_exception java_exception
+
+			java
+				try {
+					int v_input = a_reader.read() ;
+					if ( v_input != -1 ) {
+						o_result = new fa_string ( String.valueOf ( (char) v_input ) );
+					}
+				}
+				catch ( IOException e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+			end java
+			
+			if v_java_exception #r void then
+				o_error = fa_resource_error.create ( &
+					description = """Could not read from system's standard in. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception &
+					resource = this )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+	command read_line
+		script
+			var java_exception java_exception
+
+			java
+				try {
+					String v_input = a_reader.readLine() ;
+					if ( v_input != null ) {
+						o_result = new fa_string ( v_input );
+					}
+				}
+				catch ( IOException e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+			end java
+			
+			if v_java_exception #r void then
+				o_error = fa_resource_error.create ( &
+					description = """Could not read from system's standard in. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception &
+					resource = this )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+	command read_all
+		script
+			var java_exception java_exception
+
+			java
+				try {
+					char[] v_buffer = new char[se_java_IO.default_IO_buffer_size] ;
+					StringBuilder v_string_builder = new StringBuilder ( se_java_IO.default_IO_buffer_size ) ;
+					int v_length ;
+					while ( ( v_length = a_reader.read ( v_buffer ) ) != -1 ) {
+						v_string_builder.append ( v_buffer, 0, v_length ) ;
+					}
+					// if ( v_string_builder.length() > 0 ) {
+						o_result = new fa_string ( v_string_builder.toString() ) ;
+					// }
+				}
+				catch ( IOException e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+
+				finally {
+					if ( i_close_after_reading.java_value() ) {
+						a_reader.close();
+					}
+				}
+			end java
+			
+			if v_java_exception #r void then
+				o_error = fa_resource_error.create ( &
+					description = """Could not read from system's standard in. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception &
+					resource = this )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+	command close
+		script
+			var java_exception java_exception
+
+			java
+				try {
+					a_reader.close();
+				}
+				catch ( IOException e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+			end java
+			
+			if v_java_exception #r void then
+				o_error = fa_resource_error.create ( &
+					description = """Could not close system's standard in. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception &
+					resource = this )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+	
+	creator create kind:in_all end
+	
+end factory

@@ -1,0 +1,14 @@
+template simple_string_factory_with_create_from_string_creator
+
+	param type_id_suffix end
+	
+
+factory {type_id_suffix} type:{type_id_suffix}
+
+	creator create kind:in_all end
+	
+	%create_from_string_creator_for_simple_string<{type_id_suffix}>
+
+end
+
+end template

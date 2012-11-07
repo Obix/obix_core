@@ -1,0 +1,101 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory library type:library
+
+	attribute branch_node_iterator
+		get
+			script
+				o_branch_node_iterator = a_child_library_list.item_iterator
+			end
+		end
+	end
+
+	attribute leaf_node_iterator
+		get
+			script
+				// return iterator with types, then factories, services, generic RSEs and templates
+				const !mutable_indexed_list<RSE> RSE_list = !mutable_indexed_list_factory<RSE>.create
+				
+				// TD3 use cached attributes or 'repeat in voidable' to avoid scanning a_RSE_list 2 times in each step
+				
+				if a_generic_type_map #r void then
+					repeat for each generic_type generic_type in a_generic_type_map
+						c_RSE_list.append ( c_generic_type )
+					end
+				end if
+					
+				if a_type_map #r void then
+					repeat for each type type in a_type_map
+						if not c_type.is_base_type_of_generic_type and not c_type.is_on_the_fly_generified_RSE then
+							c_RSE_list.append ( c_type )
+						end
+					end
+				end if
+						
+				if a_generic_factory_map #r void then
+					repeat for each generic_factory generic_factory in a_generic_factory_map
+						c_RSE_list.append ( c_generic_factory )
+					end
+				end if
+						
+				if a_factory_map #r void then
+					repeat for each factory factory in a_factory_map
+						if not c_factory.is_on_the_fly_generified_RSE then
+							c_RSE_list.append ( c_factory )
+						end
+					end
+				end if
+						
+				if a_generic_service_map #r void then
+					repeat for each generic_service generic_service in a_generic_service_map
+						c_RSE_list.append ( c_generic_service )
+					end
+				end if
+						
+				if a_service_map #r void then
+					repeat for each service service in a_service_map
+						if not c_service.is_on_the_fly_generified_RSE then
+							c_RSE_list.append ( c_service )
+						end
+					end
+				end if
+				
+				// source_code_templates currently not included 
+
+				o_leaf_node_iterator = c_RSE_list.item_iterator
+			end
+		end
+	end
+
+	attribute a_id
+		get
+			script
+				o_id = a_id_path.target_id
+			end
+		end
+	end
+	
+	%library_factory_RSE_map_attribute<type>
+	%library_factory_RSE_map_attribute<factory>
+	%library_factory_RSE_map_attribute<service>
+
+	%library_factory_RSE_map_attribute<generic_type>
+	%library_factory_RSE_map_attribute<generic_factory>
+	%library_factory_RSE_map_attribute<generic_service>
+
+	%library_factory_RSE_map_attribute<source_code_template>
+	
+	command to_string
+		script
+			o_result = a_id_path.to_string
+		end
+	end
+	
+	creator create kind:in_all end
+
+end factory

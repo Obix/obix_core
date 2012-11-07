@@ -1,0 +1,119 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory relative_file type:relative_file
+
+	java_header
+		import java.io.File;
+		import org.obix.obix_core.basics.scalars.string.string_value.fa_string_value;
+	end java_header
+
+	java
+		private File a_file ;
+		public File java_value() {return a_file;}
+	end java
+
+	attribute name
+		get
+			script
+				var string_value value
+				java
+					v_value = new fa_string_value ( a_file.getName() ) ;
+				end java
+				o_name = fa_file_name.create ( v_value )
+			end
+		end
+	end
+
+	attribute directory
+		get
+			script
+				var string_value value
+				java
+					v_value = new fa_string_value ( a_file.getParent() ) ;
+				end java
+				o_directory = fa_relative_directory.co_create ( v_value )
+				// TD ? o_directory = fa_directory.co_create ( v_value & se_directory.current_OS_directory_separator.value )
+			end
+		end
+	end
+
+	attribute file_name_without_extension
+		get
+			script
+				const string_value file_name = a_name.value
+				var ty_positive32 v_prefix_index = c_file_name.find_last ( se_file.file_name_extension_separator.value )
+				if v_prefix_index #r void then
+					o_file_name_without_extension = fa_file_name.create ( c_file_name.co_extract_to ( v_prefix_index - 1 ) )
+				else
+					o_file_name_without_extension = a_name
+				end if
+			end
+		end
+	end
+
+	attribute file_name_extension
+		get
+			script
+				const string_value file_name = a_name.value
+				var ty_positive32 v_prefix_index = c_file_name.find_last ( se_file.file_name_extension_separator.value )
+				if v_prefix_index #r void and v_prefix_index < c_file_name.item_count then
+					o_file_name_extension = fa_file_name_extension.co_create ( c_file_name.co_extract_from ( v_prefix_index + 1 ) )
+				else
+					o_file_name_extension = void
+				end if
+			end
+		end
+	end
+	
+	%file_system_item_factory_commands
+
+	command make_absolute_file
+		script
+			o_result = fa_file.create_from_directory_and_relative_file ( &
+				directory = i_root_directory &
+				relative_file = this )
+		end
+	end
+
+	creator create kind:in_all
+		script
+			java
+				o_result.a_file = new File ( i_value.java_value() ) ;
+			end java
+			o_result.a_value = i_value
+		end
+	end
+
+	%create_from_string_creator_for_simple_string<relative_file>
+
+	creator create_from_directory_and_name
+		in directory type:relative_directory end
+		in name type:file_name end
+
+		out result type:relative_file end
+
+		script
+			o_result = co_create ( i_directory.value & i_name.value )
+		end
+	end
+
+	/// TD
+	creator create_from_directory_and_id
+		in directory type:directory end
+		in i_id type:id end
+		in file_name_extension type:file_name_extension end
+
+		out result type:file end
+
+		script
+			o_result = co_create ( i_directory.value & i_id.value & se_file.file_name_extension_separator.value & i_file_name_extension.value )
+		end
+	end
+	end ///
+
+end factory

@@ -1,0 +1,36 @@
+service character_set
+
+	java_header
+		import java.nio.charset.Charset;
+	end java_header
+	
+	attribute default_character_set type:supported_character_set
+		default
+			script
+				var string_value name
+				java
+					v_name = new fa_string_value ( Charset.defaultCharset().name() );
+				end java
+				
+				o_default_character_set = fa_supported_character_set.create ( v_name )
+			end
+		end
+	end
+	
+	// TD attribute supported_character_set_list type:!indexed_list<supported_character_set> end
+	// use Charset.availableCharsets() 
+			
+	// must be supported by Java: US-ASCII; ISO-8859-1; UTF-8; UTF-16BE; UTF-16LE; UTF-16 (see Java doc. of java.nio.charset.Charset)
+	command is_supported
+		in character_set type:string end
+		
+		out result type:yes_no end
+		
+		script
+			java
+				o_result = Charset.isSupported ( i_character_set.java_value() ) ? fa_yes_no.a_yes : fa_yes_no.a_no;
+			end java
+		end
+	end
+
+end

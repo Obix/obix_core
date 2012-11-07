@@ -1,0 +1,41 @@
+template string_to_checked_simple_integer32_converter_factory
+
+	param type_id_suffix end
+
+factory string_to_{type_id_suffix}_converter type:string_to_{type_id_suffix}_converter
+
+	command convert
+		script
+			var integer32_value integer32_value
+			fa_integer32_value.create_from_string ( &
+				string = i_input &
+				config = a_config &
+				error_handler = i_error_handler ) &
+				( v_integer32_value = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+			if v_integer32_value =r void then
+				exit script
+			end if
+
+			o_result = fa_{type_id_suffix}.create ( v_integer32_value ) on_error:continue
+
+			if v_program_error_ #r void then
+				o_error = fa_string_to_object_conversion_error.create ( &
+					id = "string_to_simple_integer32_type_converion_error" &
+					description = se_program_error.get_source_error_of_program_error ( v_program_error_ ).description &
+					data = i_input &
+					type_of_result = "{type_id_suffix}" &
+					error_position = void )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+	
+	creator create kind:in_all end
+	
+end
+
+end template

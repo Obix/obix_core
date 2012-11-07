@@ -1,0 +1,126 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type system_console
+
+	command write
+		in string type:simple_string end
+	end
+
+	command write_line
+		in string type:simple_string end
+	end
+
+	command write_new_line end
+	
+	command ask_press_Enter
+		in message type:simple_string default: "Please press <Enter> to continue: " end
+	end
+
+	command ask_confirm
+		in message type:simple_string end
+	end
+	
+	command ask_string
+		// EOF can be entered to return a void value (CTRL-Z on Windows)
+		in message type:simple_string voidable:yes default: "Please enter a string, then press <Enter>: " end
+		
+		out result type:string voidable:yes end
+	end
+	
+	command ask_string_and_validate
+		// EOF can be entered to return a void value (CTRL-Z on Windows)
+		in message type:simple_string end
+		in default_value type:simple_string voidable:yes end
+		// in default_value_message type:simple_string voidable:yes default: "Type <Return> to accept the default value." end
+		// in append_default_value_to_message type:yes_no default: yes end
+		in validator type:string_validator voidable:yes end
+		%system_error_handler_input_argument
+		in max_retry_count type: positive32 default: 3 end
+
+		%result_xor_error_output < &
+			result_type: string &
+			error_type: user_input_error >
+	end
+	
+	command ask_password
+		// EOF can be entered to return a void value (CTRL-Z on Windows)
+		in message type:simple_string default: "Please enter password, then press <Enter>: " end
+		
+		out result type:string voidable:yes end
+	end
+	
+	command ask_zero_positive32_and_validate
+		in message type:simple_string default: "Please enter an integer number (greater or equal to zero), then press <Enter>: " end
+		in converter type:string_to_zero_positive32_converter default: se_zero_positive32.default_string_to_zero_positive32_converter end
+		// TD2 in void_allowed
+		in validator type:zero_positive32_validator voidable:yes end
+		%system_error_handler_input_argument
+		in max_retry_count type: positive32 default: 3 end
+
+		%result_xor_error_output < &
+			result_type: zero_positive32 &
+			error_type: user_input_error >
+	end
+
+	command ask_yes_no
+		in message type:simple_string default: "Do you agree (y/n) ?" end
+		// TD2 in void_allowed
+		in default_value type:yes_no voidable:yes default:void end
+		in string_to_yes_no_converter type:string_to_yes_no_converter default: se_yes_no_converter.default_string_to_yes_no_converter end
+		%system_error_handler_input_argument
+		in max_retry_count type: positive32 default: 3 end
+
+		%result_xor_error_output < &
+			result_type: yes_no &
+			error_type: user_input_error >
+	end
+
+	/// TD
+	command ask_string_and_validate
+		in message type:simple_string default: "Please enter a string, then press <Enter>: " end
+		in validator type:string_validator end
+		in max_retry_count type:positive32 default: 3 end
+		
+		out result type:string voidable:yes end
+	end
+	
+	command ask_zero_positive32
+	command ask_positive32
+	command ask_positive32_and_validate
+
+	command ask_character
+		in message type:simple_string default: "Please enter a character, then press <Enter>: " end
+		
+		out result type:character end
+	end
+
+	command ask_character_and_validate
+
+	command ask_yes_no
+		in message type:simple_string default: "Do you agree (y/n)?: " end
+		
+		out result type:yes_no end
+	end
+
+	command ask_enumerated
+
+	command ask_date
+	command ask_date_and_validate
+	command ask_time
+	command ask_time_and_validate
+	command ask_date_time
+	command ask_date_time_and_validate
+
+	command ask_directory
+	command ask_directory_and_validate
+	command ask_file
+	command ask_file_and_validate
+
+	end ///
+
+end type

@@ -1,0 +1,187 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service java_utilities
+
+	java
+		// thanks to http://weblogs.java.net/blog/emcmanus/archive/2007/03/getting_rid_of.html
+		// can be used to suppress Java compiler warnings 'java uses unchecked or unsafe operations'
+		@SuppressWarnings("unchecked")
+		public static <T> T unchecked_cast ( Object object ) {
+			return (T) object;
+		}
+	end java
+
+	command start_java_application_class_in_new_terminal_and_continue
+		in java_exe_path type:string voidable:yes default:void end
+		in java_exe_options type:string voidable:yes default:void end
+		in classpath type:string voidable:yes end
+		in main_class type:string end
+		in command_line_arguments type:string voidable:yes default:void end
+		in working_directory type:directory voidable:yes default:void end
+		in open_java_console type:yes_no default:yes end
+		in window_title type:simple_string voidable:yes default:void end
+		%system_error_handler_input_argument
+		
+		%system_error_output_argument
+		
+		script
+			var string command
+			co_get_OS_command_for_class_execution ( &
+				java_exe_path = i_java_exe_path &
+				java_exe_options = i_java_exe_options &
+				classpath = i_classpath &
+				main_class = i_main_class &
+				command_line_arguments = i_command_line_arguments &
+				open_java_console = i_open_java_console &
+				error_handler = i_error_handler ) &
+				( v_command = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+
+			o_error = se_system_commands.start_OS_command_in_new_terminal_and_continue ( &
+				OS_command = v_command &
+				working_directory = i_working_directory &
+				window_title = i_window_title &
+				error_handler = i_error_handler )
+		end
+	end
+
+	command start_java_application_class_in_new_terminal_and_wait
+		in java_exe_path type:string voidable:yes default:void end
+		in java_exe_options type:string voidable:yes default:void end
+		in classpath type:string voidable:yes end
+		in main_class type:string end
+		in command_line_arguments type:string voidable:yes default:void end
+		in working_directory type:directory voidable:yes default:void end
+		in open_java_console type:yes_no default:yes end
+		in window_title type:simple_string voidable:yes default:void end
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output < signed_integer32 >
+		
+		script
+			var string command
+			co_get_OS_command_for_class_execution ( &
+				java_exe_path = i_java_exe_path &
+				java_exe_options = i_java_exe_options &
+				classpath = i_classpath &
+				main_class = i_main_class &
+				command_line_arguments = i_command_line_arguments &
+				open_java_console = i_open_java_console &
+				error_handler = i_error_handler ) &
+				( v_command = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+
+			se_system_commands.start_OS_command_in_new_terminal_and_wait ( &
+				OS_command = v_command &
+				working_directory = i_working_directory &
+				window_title = i_window_title &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error )
+		end
+	end
+
+	command get_OS_command_for_class_execution
+		in java_exe_path type:simple_string voidable:yes default:void end
+		in java_exe_options type:simple_string voidable:yes default:void end
+		in classpath type:simple_string voidable:yes end
+		in main_class type:simple_string end
+		// TD should be in unescaped_command_line_argument_list type:string_list voidable:yes end
+		in command_line_arguments type:simple_string voidable:yes default:void end
+		in open_java_console type:yes_no default:yes end
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output < string >
+		
+		script
+			var simple_string java_exe
+			if i_java_exe_path #r void then
+				v_java_exe = i_java_exe_path
+			else
+				se_java_config.get_java_exe_file ( &
+					use_javaw = not i_open_java_console &
+					error_handler = i_error_handler ) &
+					( v_java_exe = result &
+					o_error = error )
+				if o_error #r void then
+					exit script
+				end if
+			end if
+			
+			const yes_no OS_is_Windows = se_system.OS_is_Windows
+			
+			// using quotes causes error in Ubuntu ?
+			const string command_line_quote = se_system_commands.current_OS_command_line_quote
+			
+			const mutable_string command = fa_mutable_string.create
+
+			if v_java_exe.value.contains ( se_string_constants.space.value ) then
+				c_command.append ( c_command_line_quote )
+				c_command.append ( v_java_exe )
+				c_command.append ( c_command_line_quote )
+			else
+				c_command.append ( v_java_exe )
+			end if
+			
+			if i_java_exe_options #r void then
+				c_command.append ( " " )
+				c_command.append ( i_java_exe_options )
+			end if
+			
+			if i_classpath #r void then
+				const string OS_classpath = &
+					iif c_OS_is_Windows &
+					then i_classpath.to_string.replace_all ( to_replace = se_java_config.Unix_classpath_separator; replace_by = se_java_config.Windows_classpath_separator ) &
+					else i_classpath.to_string.replace_all ( to_replace = se_java_config.Windows_classpath_separator; replace_by = se_java_config.Unix_classpath_separator )  end if
+				c_command.append ( " -classpath " )
+				c_command.append ( c_OS_classpath )
+			end if
+
+			c_command.append ( " " )
+			c_command.append ( i_main_class )
+			
+			if i_command_line_arguments #r void then
+				c_command.append ( " " )
+				c_command.append ( i_command_line_arguments )
+			end if
+			
+			o_result = c_command.to_string
+		end
+	end
+
+	command get_current_stack_trace
+		in low_levels_to_skip type:zero_positive32 default:2 end
+
+		out result type:java_stack_trace end
+		
+		script
+			java
+				StackTraceElement[] full_stack_trace = Thread.currentThread().getStackTrace();
+				
+				// ignore the lowest level elements, for example to exclude the call to this script
+				int levels_to_skip = i_low_levels_to_skip.getValue().java_value();
+				int length = full_stack_trace.length - levels_to_skip;
+				if ( length < 0 ) {
+					length = 1;
+				}
+
+				StackTraceElement[] stack_trace = new StackTraceElement[length];
+				System.arraycopy ( full_stack_trace, levels_to_skip, stack_trace, 0, length );
+				
+				o_result = new fa_java_stack_trace ( stack_trace );
+			end java
+		end
+	end
+
+end service

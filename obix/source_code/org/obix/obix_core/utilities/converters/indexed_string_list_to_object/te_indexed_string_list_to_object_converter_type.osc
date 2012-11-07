@@ -1,0 +1,18 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template indexed_string_list_to_object_converter_type
+
+	param result_type end
+	
+	type indexed_string_list_to_{result_type}_converter
+	
+		!indexed_string_list_to_object_converter < {result_type} >
+
+	end
+
+end

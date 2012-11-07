@@ -1,0 +1,7 @@
+type has_to_long_string
+	
+	command to_long_string
+		out result type:string end
+	end
+
+end

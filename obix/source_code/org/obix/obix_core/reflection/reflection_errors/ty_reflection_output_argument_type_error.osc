@@ -1,0 +1,7 @@
+type reflection_output_argument_type_error default_factory:yes
+
+	inherit reflection_error
+		attribute a_id default:"reflection_output_argument_type_error" end
+	end
+
+end

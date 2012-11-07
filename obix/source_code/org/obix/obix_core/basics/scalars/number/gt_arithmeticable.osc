@@ -1,0 +1,55 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic type arithmeticable
+
+	param unary_minus_result_type end
+	param abs_result_type end
+
+	type
+
+		command add
+			in operand type:simple_signed_integer32 end
+
+			out result type:signed_integer32 end
+		end
+
+		command subtract
+			in operand type:simple_signed_integer32 end
+
+			out result type:signed_integer32 end
+		end
+
+		command multiply
+			in operand type:simple_signed_integer32 end
+
+			out result type:signed_integer32 end
+		end
+
+		command divide
+			in operand type:simple_signed_integer32 end
+
+			out result type:signed_integer32 end
+		end
+
+		command remainder
+			in operand type:simple_signed_integer32 end
+
+			out result type:signed_integer32 end
+		end
+
+		command unary_minus
+			out result type:{unary_minus_result_type} end
+		end
+
+		command abs
+			out result type:{abs_result_type} end
+		end
+
+	end type
+
+end generic

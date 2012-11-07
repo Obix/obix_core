@@ -1,0 +1,61 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service any_type
+
+	java_header
+		import org.obix.obix_core.basics.any_type.object_comparison.ty_comparator_result;
+	end java_header
+
+	java
+		public static final in_enumerated en_comparator_result_less = ty_comparator_result.en_1;
+		public static final in_enumerated en_comparator_result_equal = ty_comparator_result.en_2;
+		public static final in_enumerated en_comparator_result_greater = ty_comparator_result.en_3;
+	end java
+	
+	attribute void_object_as_string type:non_empty_string default: "#" & se_string_constants.a_void & "#" end
+
+	attribute error_object_as_string type:non_empty_string default: "#error#" end
+
+	// attribute invalid_object type:any_type default: fa_any_type.create end
+
+	command different_object_references
+		in object_1 type:any_type voidable:yes end
+		in object_2 type:any_type voidable:yes end
+		
+		out result type:yes_no end
+		
+		script
+			if i_object_1 =r void then
+				o_result = i_object_2 #r void
+			else if i_object_2 =r void then
+				o_result = i_object_1 #r void
+			else
+				o_result = i_object_1 #r i_object_2
+			end if
+		end
+	end
+
+	command force_object_to_string
+		in object type:any_type voidable:yes end
+		
+		out result type:string end
+		
+		script
+			if i_object =r void then
+				o_result = a_void_object_as_string
+				exit script
+			end if
+			
+			o_result = i_object.co_to_string on_error:continue
+			if o_result =r void then
+				o_result = a_error_object_as_string
+			end if
+		end
+	end
+	
+end service

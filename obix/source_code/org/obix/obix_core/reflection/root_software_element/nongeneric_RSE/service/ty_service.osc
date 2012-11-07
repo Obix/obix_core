@@ -1,0 +1,28 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type service
+
+	inherit nongeneric_RSE
+
+		attribute id_path type:service_id_path end
+		attribute a_id type:service_id end
+
+		attribute attribute_list type:service_attribute_list end
+		attribute public_attribute_list type:service_attribute_list end
+		attribute command_list type:service_command_list end
+		attribute public_command_list type:service_command_list end
+		attribute event_definition_list type:service_event_definition_list end
+
+		attribute generic_RSE_reference type:generic_service_reference end
+
+		command is_equal_to
+			in other type:service end
+		end
+	end
+	
+end type

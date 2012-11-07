@@ -1,0 +1,12 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory factory_id type:factory_id
+
+	%prefixed_id_child_factory<type_of_factory:"factory_id"; prefix:"se_id_prefix.a_factory">
+
+end factory

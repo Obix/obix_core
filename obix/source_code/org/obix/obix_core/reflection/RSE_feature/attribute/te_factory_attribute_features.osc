@@ -1,0 +1,33 @@
+template factory_attribute_features
+
+	attribute value_is_variable
+		get
+			script
+				o_value_is_variable = a_kind =r ty_attribute_kind.variable or a_kind =r ty_attribute_kind.readonly_variable
+			end
+		end
+	end
+	
+	attribute value_is_readonly
+		get
+			script
+				o_value_is_readonly = a_kind =r ty_attribute_kind.readonly_constant or a_kind =r ty_attribute_kind.readonly_variable
+			end
+		end
+	end
+	
+	attribute value_is_public_setable
+		get
+			script
+				o_value_is_public_setable = a_kind =r ty_attribute_kind.variable and a_setable =r ty_attribute_setable.all
+			end
+		end
+	end
+	
+	command to_string
+		script
+			o_result = "Attribute " & a_id
+		end
+	end
+
+end

@@ -1,0 +1,17 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type no_type
+
+	// This type implicitly inherits from all other types in the type system,
+	// and is thus compatible with every other type.
+	// No other type can inherit from this type.
+	// No factory can create objects of this type.
+
+	// The compiler manages this type in accordance to the above rule.
+
+end type

@@ -1,0 +1,30 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory no_infos_console_output_message_handler type:message_handler
+
+	command info_message
+		script
+			// do nothing
+		end
+	end
+
+	command warning_message
+		script
+			if se_system.console #r void then
+				se_system.console.write_line ( "WARNING:" )
+				se_system.console.write_line ( i_message )
+			else
+				se_system.out.write_line ( string = "WARNING:" )
+				se_system.out.write_line ( string = i_message )
+			end if
+		end
+	end
+
+	creator create kind:in_all end
+
+end factory

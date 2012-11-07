@@ -1,0 +1,179 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory character_value type:character_value
+
+	java
+		private char java_value ;
+
+		public char java_value() { return java_value; }
+
+		public fa_character_value ( char i_java_value ) {
+			this.java_value = i_java_value ;
+		}
+	end java
+
+	command to_string
+		script
+			java
+				o_result = new fa_non_empty_string ( String.valueOf ( java_value ) ) ;
+			end java
+		end
+	end
+
+	// extended_comparable
+
+	command is_equal_to
+		script
+			java
+				o_result = (this.java_value == i_other.java_value()) ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+			end java
+		end
+	end
+
+	command compare_to
+		script
+			java
+				o_result = ( this.java_value < i_other.java_value() ? se_any_type.en_comparator_result_less : ( this.java_value == i_other.java_value() ? se_any_type.en_comparator_result_equal : se_any_type.en_comparator_result_greater ) ) ;
+			end java
+		end
+	end
+
+	command min
+		script
+			java
+				o_result = (this.java_value <= i_other.java_value()) ? this : i_other ;
+			end java
+		end
+	end
+
+	command max
+		script
+			java
+				o_result = (this.java_value >= i_other.java_value()) ? this : i_other ;
+			end java
+		end
+	end
+
+	command is_between
+		script
+			java
+				o_result = (this.java_value >= i_min.java_value() && this.java_value <= i_max.java_value()) ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+			end java
+		end
+	end
+
+	//
+	
+	command is_digit
+		script
+			java
+				o_result = Character.isDigit ( java_value ) ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+			end java
+		end
+	end
+
+	command is_non_zero_digit
+		script
+			java
+				o_result = ( Character.isDigit ( java_value ) && java_value != '0' ) ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+			end java
+		end
+	end
+
+	command is_letter
+		script
+			java
+				o_result = Character.isLetter ( java_value ) ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+			end java
+		end
+	end
+
+	command is_lower_case_letter
+		script
+			java
+				o_result = Character.isLowerCase ( java_value ) ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+			end java
+		end
+	end
+
+	command is_upper_case_letter
+		script
+			java
+				o_result = Character.isUpperCase ( java_value ) ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+			end java
+		end
+	end
+
+	command is_digit_or_letter
+		script
+			java
+				o_result = ( Character.isLetter ( java_value ) || Character.isDigit ( java_value ) ) ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+			end java
+		end
+	end
+
+	command is_obix_identifier_character
+		script
+			java
+				o_result = ( Character.isDigit ( java_value ) || Character.isLetter ( java_value ) || java_value == '_' ) ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+			end java
+		end
+	end
+	
+	command is_obix_identifier_start_character
+		script
+			java
+				o_result = Character.isLetter ( java_value ) ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+			end java
+		end
+	end
+
+	command is_space
+		script
+			java
+				o_result = Character.isSpaceChar ( java_value ) ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+			end java
+		end
+	end
+
+	command is_whitespace
+		script
+			java
+				o_result = Character.isWhitespace ( java_value ) ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+			end java
+		end
+	end
+
+	// to_...
+
+	command to_lower_case
+		script
+			java
+				o_result = new fa_character_value ( Character.toLowerCase ( java_value ) ) ;
+			end java
+		end
+	end
+
+	command to_upper_case
+		script
+			java
+				o_result = new fa_character_value ( Character.toUpperCase ( java_value ) ) ;
+			end java
+		end
+	end
+
+	command to_integer
+		script
+			java
+				o_result = new fa_zero_positive32 ( (int) java_value ) ;
+			end java
+		end
+	end
+
+
+end factory

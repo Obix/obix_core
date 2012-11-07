@@ -1,0 +1,33 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic type mutable_or_immutable_sorted_map
+
+	param key_type child_of:simple_string end
+	param item_type end
+	
+	type
+		
+		inherit !mutable_or_immutable_map<key_type:{key_type}; item_type:{item_type}> end
+	
+		command first_key
+			%object_not_empty_in_check
+
+			out result type:{key_type} end
+		end
+
+		command last_key
+			%object_not_empty_in_check
+
+			out result type:{key_type} end
+		end
+		
+		// TD extract_from, extract_to, extract_from_to
+
+	end type
+
+end generic

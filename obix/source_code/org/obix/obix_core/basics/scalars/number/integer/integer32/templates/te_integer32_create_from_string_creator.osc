@@ -1,0 +1,47 @@
+template integer32_create_from_string_creator
+
+	param type_suffix end
+
+	creator create_from_string
+		in string type:simple_string voidable:yes end
+		in config type:string_to_object_converter_config default:se_string_to_object_converter_config.default_value end
+		%system_error_handler_input_argument
+		
+		%result_or_string_to_object_conversion_error_void_output < {type_suffix} >
+		
+		script
+			var integer32_value value
+			fa_integer32_value.create_from_string ( &
+				string = i_string &
+				config = i_config &
+				error_handler = i_error_handler ) &
+				( v_value = result &
+				o_error = error )
+			if o_error #r void then
+				o_result = void
+				exit script
+			end if
+			if v_value =r void then
+				o_result = void
+				exit script
+			end if
+			
+			const attribute_check_error attribute_check_error = ty_{type_suffix}.value.check ( v_value )
+			if c_attribute_check_error #r void then
+				o_result = void
+				o_error = fa_string_to_object_conversion_error.create ( &
+					id = "string_to_{type_suffix}_conversion_error" &
+					description = c_attribute_check_error.description &
+					java_exception = void &
+					data = i_string &
+					type_of_result = "{type_suffix}" &
+					error_position = void )
+				i_error_handler.handle_system_error ( o_error )
+				exit script
+			end if
+			
+			o_result = create ( v_value )
+		end
+	end
+
+end template

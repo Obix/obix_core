@@ -1,0 +1,23 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type string_find_result default_factory:yes
+
+	attribute start_index type:positive32 end
+	attribute end_index type:positive32 end
+
+	attribute found type:non_empty_string end
+	
+	attribute_check 
+		script
+			check i_end_index >= i_start_index
+			check i_end_index + 1 - i_start_index =v i_found.item_count
+		end
+	end
+		
+
+end

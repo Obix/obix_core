@@ -1,0 +1,19 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type program_error
+
+	inherit runtime_error
+		attribute a_id default:"program_error" end
+		attribute description default:"A program error occurred." end
+	end
+
+	attribute source_code_location type:bug_source_code_location end
+	attribute script_state type:script_state voidable:yes default:void end
+	attribute data type:any_type voidable:yes default:void end
+
+end type

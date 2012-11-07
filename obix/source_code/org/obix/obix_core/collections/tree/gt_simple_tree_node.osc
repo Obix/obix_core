@@ -1,0 +1,25 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic type simple_tree_node
+
+	param branch_node_type end
+	param leaf_node_type end
+	
+	type
+
+		attribute_list kind:readonly_variable
+
+			attribute branch_node_iterator type:!iterator < !simple_tree_node < branch_node_type: {branch_node_type}; leaf_node_type: {leaf_node_type} > > end
+
+			attribute leaf_node_iterator type:!iterator < {leaf_node_type} > end
+
+		end
+
+	end type
+
+end generic

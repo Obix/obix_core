@@ -1,0 +1,27 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory directory_exists_directory_validator type:directory_validator
+
+	command is_valid
+		script
+			o_result = i_object.exists
+			
+			if not o_result then
+				o_error = fa_validation_error.create ( &
+					id = "directory_non_existant" &
+					description = "Directory '" & i_object.to_string & "' doesn't exist." &
+					java_exception = void &
+					data = i_object )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+	
+	creator create kind:in_all end
+
+end

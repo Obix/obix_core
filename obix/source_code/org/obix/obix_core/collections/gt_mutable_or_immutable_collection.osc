@@ -1,0 +1,22 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+generic type mutable_or_immutable_collection
+
+	param item_type end
+	
+	type
+	
+		inherit !iteratable<{item_type}> end
+	
+		attribute is_empty type:yes_no kind:readonly_variable end
+		
+		attribute item_count type:zero_positive32 kind:readonly_variable end
+
+	end
+
+end generic

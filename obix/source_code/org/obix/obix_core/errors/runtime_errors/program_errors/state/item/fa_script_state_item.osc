@@ -1,0 +1,11 @@
+factory script_state_item type:script_state_item
+
+	command to_string
+		script
+			o_result = """{{a_type.id.suffix}} {{a_id}}: {{se_any_type.force_object_to_string ( a_value )}}"""
+		end
+	end
+	
+	creator create kind:in_all end
+
+end

@@ -1,0 +1,71 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type non_empty_string
+
+	java
+		public String java_value() ;
+	end java
+	
+	// inherit !non_empty_indexed_list<character> end
+	
+	inherit simple_non_empty_string end
+
+	inherit string
+
+		//attribute value &
+		//	and_check: i_value.item_count > 0 &
+		//	error_message: "The value cannot be empty. It must contain at least one character." &
+		//	error_id: empty end
+		
+		attribute item_count type:positive32 end
+
+///
+		command is_empty
+			out result and_check: not i_result end
+		end
+end ///
+
+		command first_item
+			// TD no_in_check:yes
+		end
+
+		command last_item
+			// TD no_in_check:yes
+		end
+
+		command append
+			out result type:non_empty_string end
+		end
+
+		command remove_first
+			// TD no_in_check:yes
+		end
+
+		command remove_last
+			// TD no_in_check:yes
+		end
+
+		command truncate
+			out result type:non_empty_string end
+		end
+
+		command to_lower_case
+			out result type:non_empty_string end
+		end
+
+		command to_upper_case
+			out result type:non_empty_string end
+		end
+
+		command to_first_upper_case
+			// TD no_in_check:yes
+		end
+
+	end inherit
+
+end type

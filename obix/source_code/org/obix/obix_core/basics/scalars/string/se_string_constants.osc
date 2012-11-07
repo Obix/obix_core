@@ -1,0 +1,37 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service string_constants
+
+	attribute_list type:string
+		attribute empty_string default: "" end
+	end
+
+	attribute_list type:non_empty_string
+		attribute carriage_return default: se_character_constants.carriage_return.to_string end
+		attribute line_feed       default: se_character_constants.line_feed.to_string end
+		attribute tab             default: se_character_constants.tab.to_string end
+		attribute backspace       default: se_character_constants.backspace.to_string end
+		attribute form_feed       default: se_character_constants.form_feed.to_string end
+		attribute space           default: se_character_constants.space.to_string end
+		attribute single_quote    default: se_character_constants.single_quote.to_string end
+		attribute double_quote    default: se_character_constants.double_quote.to_string end
+		attribute slash           default: se_character_constants.slash.to_string end
+		attribute backslash       default: se_character_constants.backslash.to_string end
+		attribute underline       default: se_character_constants.underline.to_string end
+		attribute hyphen          default: se_character_constants.hyphen.to_string end
+
+		attribute current_OS_new_line default: se_java_config.get_system_property ( "line.separator" ) end
+		attribute Unix_new_line default: line_feed end
+		attribute Windows_new_line default: carriage_return & line_feed end
+
+		attribute void default: "void" end
+		attribute yes  default: "yes" end
+		attribute no   default: "no" end
+	end
+
+end service

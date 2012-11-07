@@ -1,0 +1,102 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service date_constants
+
+///
+	java_header
+		import java.text.SimpleDateFormat;
+	end java_header
+
+	java
+		public static SimpleDateFormat a_java_ISO_date_format;
+		static {
+			a_java_ISO_date_format = new SimpleDateFormat ( getISO_date_format().getValue().java_value() );
+			a_java_ISO_date_format.setLenient(false);
+		}
+	end java
+end ///
+
+	attribute_list type:positive32
+		attribute gregorian_start_year default:1583 end
+		attribute max_year default:9999 end
+
+		attribute months_in_year default:12 end
+
+		attribute min_weeks_in_year default:52 end
+		attribute max_weeks_in_year default:53 end
+
+		attribute days_in_non_leap_year default:365 end
+		attribute days_in_leap_year default:366 end
+
+		attribute min_days_in_month default:28 end
+		attribute max_days_in_month default:31 end
+
+		attribute days_in_week default:7 end
+	end
+	
+	attribute ISO_date_separator type:string default:"-" end
+
+	attribute ISO_date_format type:non_empty_string default: "yyyy-MM-dd" end
+	
+	attribute ISO_date_regex type:regex
+		default
+			script
+				o_ISO_date_regex = fa_regex.create ( '''^(\d{4})-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$'''~ )
+			end
+			test
+				script
+					test
+					const regex r = v_ISO_date_regex
+					
+					// valid
+					verify "2011-07-06".matches_regex(r)
+					verify "1900-01-01".matches_regex(r)
+					verify "3900-12-31".matches_regex(r)
+					verify "0000-01-01".matches_regex(r)
+					verify "9999-12-31".matches_regex(r)
+
+					// invalid
+					verify not "06-07-2001".matches_regex(r)
+					verify not "2011-12-32".matches_regex(r)
+					verify not "2011-13-31".matches_regex(r)
+					verify not "2011-31-12".matches_regex(r)
+					verify not "01-01-12".matches_regex(r)
+					verify not "2011-12-1".matches_regex(r)
+					verify not "2011-6-12".matches_regex(r)
+					verify not "2011/07/06".matches_regex(r)
+					verify not "2011 07-06".matches_regex(r)
+					verify not "2011-July-06".matches_regex(r)
+				end
+			end
+		end
+	end
+
+///	
+	attribute month_names type:indexed_list
+		default
+			script
+				var ty_mutable_indexed_list v_list = fa_mutable_indexed_list.co_create
+				v_list.co_append ( "January" )
+				v_list.co_append ( "February" )
+				v_list.co_append ( "March" )
+				v_list.co_append ( "April" )
+				v_list.co_append ( "May" )
+				v_list.co_append ( "June" )
+				v_list.co_append ( "July" )
+				v_list.co_append ( "August" )
+				v_list.co_append ( "September" )
+				v_list.co_append ( "October" )
+				v_list.co_append ( "November" )
+				v_list.co_append ( "December" )
+				o_month_names = v_list.make_immutable
+			end script
+		end default
+	end attribute
+end ///
+
+end service

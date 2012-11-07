@@ -1,0 +1,24 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type character_value
+
+	java
+		public char java_value() ;
+	end java
+	
+	inherit scalar_value
+		command to_string
+			out result type:non_empty_string end
+		end
+	end
+
+	inherit !extended_comparable<other:character_value; min_max_result:character_value> end
+
+	%te_character_commands<character_value>
+
+end type

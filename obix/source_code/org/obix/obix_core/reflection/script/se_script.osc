@@ -1,0 +1,247 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service script
+
+	attribute_list type:non_empty_string
+			
+		// script id suffixes
+		attribute command_script_id_suffix			default: "command" end
+		attribute check_script_id_suffix			default: "check" end
+		attribute in_check_script_id_suffix			default: "in_check" end
+		attribute out_check_script_id_suffix		default: "out_check" end
+		attribute attribute_check_script_id_suffix	default: "attribute_check" end
+		attribute default_script_id_suffix			default: "default" end
+		attribute test_script_script_id_suffix		default: "test" end
+
+	end
+
+	attribute attribute_list_check_script_id type:id default:fa_id.create ( a_attribute_check_script_id_suffix.value ) end
+	
+	attribute RSE_test_script_id type:id default:fa_id.create ( a_test_script_script_id_suffix.value ) end
+	
+	// attribute
+	
+	command attribute_default_script_id
+		in attribute_id type:attribute_id end
+
+		out result type:id end
+
+		script
+			o_result = fa_id.create ( i_attribute_id.value & "_"~ & a_default_script_id_suffix.value )
+		end
+	end
+
+	command attribute_check_script_id
+		in attribute_id type:attribute_id end
+
+		out result type:id end
+
+		script
+			o_result = fa_id.create ( i_attribute_id.value & "_"~ & a_check_script_id_suffix.value )
+		end
+	end
+
+	command attribute_getter_script_id
+		in attribute_id type:attribute_id end
+
+		out result type:id end
+
+		script
+			o_result = fa_id.create ( "get"~ & i_attribute_id.suffix.to_string.to_first_upper_case.value )
+		end
+	end
+	
+	command attribute_setter_script_id
+		in attribute_id type:attribute_id end
+
+		out result type:id end
+
+		script
+			o_result = fa_id.create ( "set"~ & i_attribute_id.suffix.to_string.to_first_upper_case.value )
+		end
+	end
+	
+	
+	// command
+
+	command command_script_id
+		in command_id type:command_id end
+
+		out result type:id end
+
+		script
+			o_result = fa_id.create ( i_command_id.value & "_"~ & a_command_script_id_suffix.value )
+		end
+	end
+		
+	command input_argument_check_script_id
+		in command_id type:command_id end
+		in input_argument_id type:input_argument_id end
+
+		out result type:id end
+
+		script
+			o_result = fa_id.create ( i_command_id.value & "_"~ & i_input_argument_id.value & "_"~ & a_check_script_id_suffix.value )
+		end
+	end
+	
+	command input_argument_default_script_id
+		in command_id type:command_id end
+		in input_argument_id type:input_argument_id end
+
+		out result type:id end
+
+		script
+			o_result = fa_id.create ( i_command_id.value & "_"~ & i_input_argument_id.value & "_"~ & a_default_script_id_suffix.value )
+		end
+	end
+	
+	command output_argument_check_script_id
+		in command_id type:command_id end
+		in output_argument_id type:output_argument_id end
+
+		out result type:id end
+
+		script
+			o_result = fa_id.create ( i_command_id.value & "_"~ & i_output_argument_id.value & "_"~ & a_check_script_id_suffix.value )
+		end
+	end
+
+	command in_check_script_id
+		in command_id type:command_id end
+
+		out result type:id end
+
+		script
+			o_result = fa_id.create ( i_command_id.value & "_"~ & a_in_check_script_id_suffix.value )
+		end
+	end
+	
+	command out_check_script_id
+		in command_id type:command_id end
+
+		out result type:id end
+
+		script
+			o_result = fa_id.create ( i_command_id.value & "_"~ & a_out_check_script_id_suffix.value )
+		end
+	end
+	
+
+	// test script
+	
+	command script_test_script_script_id
+		in main_script_id type:id end
+
+		out result type:id end
+
+		script
+			o_result = fa_id.create ( i_main_script_id.value & "_"~ & a_test_script_script_id_suffix.value )
+		end
+	end
+	
+	// get script argument lists
+	
+	command script_input_argument_list
+		in script type:script_base end
+		
+		out result type:input_argument_list voidable:yes end
+		
+		script
+			case type of i_script
+				when attribute_get_script then
+					o_result = void
+
+				when attribute_set_script c_attribute_set_script then
+					o_result = fa_input_argument_list.create_singleton ( c_attribute_set_script.input_argument )
+
+				when command_script c_command_script then
+					o_result = c_command_script.a_input_argument_list
+
+				when check_script c_check_script then
+					o_result = c_check_script.a_input_argument_list
+
+				when default_value_script then
+					o_result = void
+					
+				when test_script_base c_test_script_base then
+					o_result = fa_input_argument_list.create_singleton ( c_test_script_base.input_argument )
+			end case
+		end
+	end
+
+
+	command script_output_argument_list
+		in script type:script_base end
+		
+		out result type:output_argument_list voidable:yes end
+		
+		script
+			case type of i_script
+				when attribute_get_script c_attribute_get_script then
+					o_result = fa_output_argument_list.create_singleton ( c_attribute_get_script.output_argument )
+
+				when attribute_set_script then
+					o_result = void
+
+				when command_script c_command_script then
+					o_result = c_command_script.a_output_argument_list
+
+				when check_script c_check_script then
+					o_result = fa_output_argument_list.create_singleton ( c_check_script.output_argument )
+
+				when default_value_script c_default_value_script then
+					o_result = fa_output_argument_list.create_singleton ( c_default_value_script.output_argument )
+
+				when test_script_base then
+					o_result = void
+			end case
+		end
+	end
+	
+	command command_script_has_error_output_argument
+		in command_script type:command_script end
+		
+		out result type:yes_no end
+		
+		script
+			if i_command_script.output_argument_list =r void then
+				o_result = no
+				exit script
+			end if
+
+			repeat for each output_argument output_argument in i_command_script.output_argument_list
+				if c_output_argument.id.value =v se_reflection.error_output_argument_id.value then
+					o_result = yes
+					exit script
+				end if
+			end repeat
+			o_result = no
+		end
+	end
+	
+///	
+	// check kind of script
+	
+	command is_creator_script
+		in script type:script_base end
+		
+		out result type:yes_no end
+		
+		script
+			case type of i_script
+				when factory_creator_script then
+					o_result = yes
+				otherwise
+					o_result = no
+			end case
+		end
+	end
+end ///
+
+end service

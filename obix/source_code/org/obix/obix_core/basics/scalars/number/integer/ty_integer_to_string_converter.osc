@@ -1,0 +1,22 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type integer_to_string_converter
+
+	command to_hexadecimal_string
+		out result type:non_empty_string end
+	end
+
+	command to_octal_string
+		out result type:non_empty_string end
+	end
+
+	command to_binary_string
+		out result type:non_empty_string end
+	end
+
+end type

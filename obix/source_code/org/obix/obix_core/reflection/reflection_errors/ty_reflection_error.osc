@@ -1,0 +1,7 @@
+type reflection_error default_factory:yes
+
+	inherit system_error
+		attribute a_id default:"reflection_error" end
+	end
+
+end

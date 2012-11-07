@@ -1,0 +1,410 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service text_file_IO
+
+	java_header
+		import java.io.*;
+		import java.nio.charset.Charset;
+
+		import org.obix.obix_core.java.se_java_IO;
+		import org.obix.obix_core.java.fa_java_exception;
+	end java_header
+	
+	// store string to file
+	
+	command store_string_to_new_file
+		in string type:simple_string end
+		%new_file_input_argument
+		// TD2 in store_in_zipped_format type:yes_no default:no end
+		%supported_character_set_input_argument
+		%system_error_handler_input_argument
+
+		%file_error_output_argument
+		%file_exists_or_error_output
+
+		script
+			o_error = co_string_to_file ( &
+				string = i_string &
+				file = i_file &
+				character_set = i_character_set &
+				append = no &
+				error_handler = i_error_handler )
+		end
+	end
+
+	command store_string_to_existing_file
+		in string type:simple_string end
+		%existing_file_input_argument
+		%supported_character_set_input_argument
+		%system_error_handler_input_argument
+
+		%file_error_output_argument
+		%file_exists_or_error_output
+
+		script
+			o_error = co_string_to_file ( &
+				string = i_string &
+				file = i_file &
+				character_set = i_character_set &
+				append = no &
+				error_handler = i_error_handler )
+		end
+	end
+
+	command store_string_to_new_or_existing_file
+		in string type:simple_string end
+		%new_or_existing_file_input_argument
+		%supported_character_set_input_argument
+		%system_error_handler_input_argument
+
+		%file_error_output_argument
+		%file_exists_or_error_output
+
+		script
+			o_error = co_string_to_file ( &
+				string = i_string &
+				file = i_file &
+				character_set = i_character_set &
+				append = no &
+				error_handler = i_error_handler )
+		end
+	end
+
+	command append_string_to_existing_file
+		in string type:simple_string end
+		%existing_file_input_argument
+		%supported_character_set_input_argument
+		%system_error_handler_input_argument
+
+		%file_error_output_argument
+
+		script
+			o_error = co_string_to_file ( &
+				string = i_string &
+				file = i_file &
+				character_set = i_character_set &
+				append = yes &
+				error_handler = i_error_handler )
+		end
+	end
+	
+	command append_string_to_new_or_existing_file
+		in string type:simple_string end
+		%new_or_existing_file_input_argument
+		%supported_character_set_input_argument
+		%system_error_handler_input_argument
+
+		%file_error_output_argument
+
+		script
+			o_error = co_string_to_file ( &
+				string = i_string &
+				file = i_file &
+				character_set = i_character_set &
+				append = yes &
+				error_handler = i_error_handler )
+		end
+	end
+	
+	command string_to_file private:yes
+		in string type:simple_string end
+		in file type:file end
+		%supported_character_set_input_argument
+		in append type:yes_no end
+		%system_error_handler_input_argument
+
+		%file_error_output_argument
+
+		script
+			var java_exception java_exception = void
+
+			java
+				FileWriter v_file_writer = null;
+				BufferedWriter v_buffered_writer = null;
+				try	{
+					FileOutputStream file_output_stream = new FileOutputStream ( i_file.getValue().java_value(), i_append.java_value() );
+					OutputStreamWriter output_stream_writer = 
+						i_character_set == null ?
+						new OutputStreamWriter ( file_output_stream ) :
+						new OutputStreamWriter ( file_output_stream, i_character_set.getValue().java_value() );
+					v_buffered_writer = new BufferedWriter ( output_stream_writer );
+
+					v_buffered_writer.write ( i_string.getValue().java_value() ) ;
+				}
+				catch ( Exception e ) {
+					v_java_exception = new fa_java_exception ( e );
+				}
+				finally {
+					se_java_IO.close_writer ( v_buffered_writer );
+				}
+			end java
+			
+			if v_java_exception #r void then
+				o_error = fa_file_error.create ( &
+					id = "store_string_to_file" &
+					description = """String could not be stored to file '{{i_file}}'. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception &
+					resource = i_file )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end script
+	end command
+	
+	command create_temporary_text_file
+		in directory type:directory default:se_system_directories.temporary_files_directory end
+		in file_name_extension type:file_name_extension default: fa_file_name_extension.co_create ( "txt".value ) end
+		in delete_file_on_exit type:yes_no end
+		in text type:string end
+		%supported_character_set_input_argument
+		%system_error_handler_input_argument
+	
+		out result type:file voidable:yes end
+		out error type:directory_or_file_error voidable:yes end
+		out_check check: ( i_result #r void and i_result.exists ) xor i_error #r void end
+		
+		script
+			se_file.co_create_temporary_file ( &
+				directory = i_directory &
+				file_name_extension = i_file_name_extension &
+				delete_file_on_exit = i_delete_file_on_exit &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			o_error = co_store_string_to_existing_file ( &
+				string = i_text &
+				file = o_result &
+				character_set = i_character_set &
+				error_handler = i_error_handler )
+			if o_error #r void then
+				o_result.delete_on_device ( ask_confirmation_in_system_console = no )
+				o_result = void
+				exit script
+			end if
+		end
+	end
+	
+	command restore_string_from_file
+		%existing_file_input_argument
+		// TD2 in file_content_is_zipped type:yes_no default:no end
+		%supported_character_set_input_argument
+		%system_error_handler_input_argument
+		
+		%result_xor_file_error_output<string>
+
+		script
+			var java_exception java_exception = void
+				
+			java
+				// The following code works, but if we write later to the same file, then the following error occurs:
+				// {file} (The requested operation cannot be performed on a file with a user-mapped section open)
+				/*
+				FileInputStream file_input_stream = null;
+				FileChannel file_channel = null;
+				try {
+					file_input_stream = new FileInputStream ( i_file.getValue().java_value() );
+					file_channel = file_input_stream.getChannel();
+					MappedByteBuffer byte_buffer = file_channel.map ( FileChannel.MapMode.READ_ONLY, 0, file_channel.size() );
+					CharBuffer char_buffer = Charset.defaultCharset().decode(byte_buffer);
+					o_result = new fa_string ( char_buffer.toString() );
+
+				} catch ( Exception e ) {
+					v_java_exception = new fa_java_exception ( e );
+
+				} finally {
+					se_java_IO.close_input_stream ( file_input_stream );
+					se_java_IO.close_file_channel ( file_channel );
+				}
+				*/
+
+				BufferedReader buffered_reader = null;
+
+				try {
+					FileInputStream file_input_stream = new FileInputStream ( i_file.getValue().java_value() );
+					InputStreamReader input_stream_reader = 
+						i_character_set == null ?
+						new InputStreamReader ( file_input_stream ) :
+						new InputStreamReader ( file_input_stream, i_character_set.getValue().java_value() );
+					int buffer_size = se_java_IO.default_IO_buffer_size;
+					buffered_reader = new BufferedReader ( input_stream_reader, buffer_size );
+
+					StringBuilder string_builder = new StringBuilder();
+
+					char[] buffer = new char[buffer_size] ;
+					int characters_read ;
+					while ( ( characters_read = buffered_reader.read ( buffer ) ) != -1 ) {
+						string_builder.append ( buffer, 0, characters_read ) ;
+					}
+					o_result = new fa_string ( string_builder.toString() ) ;
+
+				} catch ( java.io.IOException e ) {
+					v_java_exception = new fa_java_exception ( e );
+
+				} finally {
+					se_java_IO.close_reader ( buffered_reader );
+				}
+			end java
+
+			if v_java_exception #r void then
+				o_result = void
+				o_error = fa_file_error.create ( &
+					id = "restore_string_from_file" &
+					description = """String could not be read from file '{{i_file}}'. The following error occured:
+{{v_java_exception.message}}""" &
+					java_exception = v_java_exception &
+					resource = i_file )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+
+		end script
+	end command
+
+	command restore_lines_from_text_file
+		%existing_file_input_argument
+		%supported_character_set_input_argument
+		in line_separator type:simple_non_empty_string default:se_string_constants.current_OS_new_line end
+		%system_error_handler_input_argument
+		
+		%result_xor_resource_error_output < indexed_string_list >
+		
+		script
+			var string text
+			co_restore_string_from_file ( &
+				file = i_file &
+				character_set = i_character_set &
+				error_handler = i_error_handler ) &
+				( v_text = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			o_result = v_text.split ( i_line_separator )
+		end
+	end
+
+	command restore_filtered_lines_from_text_file
+		%existing_file_input_argument
+		%supported_character_set_input_argument
+		in line_separator type:simple_non_empty_string default:se_string_constants.current_OS_new_line end
+		in filter type:string_filter end
+		%system_error_handler_input_argument
+		
+		%result_xor_resource_error_output < indexed_string_list >
+		
+		script
+			var !indexed_list<string> all_lines
+			co_restore_lines_from_text_file ( &
+				file = i_file &
+				character_set = i_character_set &
+				line_separator = i_line_separator &
+				error_handler = i_error_handler ) &
+				( v_all_lines = result &
+				o_error = error )
+			if o_error #r void then
+				exit script
+			end if
+			
+			const mutable_indexed_string_list mutable_result = fa_mutable_indexed_string_list.create
+			repeat for each string line in v_all_lines
+				if i_filter.is_accepted ( c_line ) then
+					c_mutable_result.append ( c_line )
+				end if
+			end repeat
+			
+			o_result = c_mutable_result.make_immutable
+		end
+	end
+
+
+	command get_next_counter_from_text_file // TD3 synchronized:yes
+		in file type:file end
+		%supported_character_set_input_argument
+		%system_error_handler_input_argument
+		
+		%result_xor_system_error_output < positive32 >
+		
+		script
+			if not i_file.exists then
+				o_error = se_text_file_IO.store_string_to_new_file ( &
+					string = "2" &
+					file = i_file &
+					character_set = i_character_set &
+					error_handler = i_error_handler )
+				if o_error =r void then
+					o_result = 1
+				end if
+			else
+				var string file_content
+				se_text_file_IO.restore_string_from_file ( &
+					file = i_file &
+					character_set = i_character_set &
+					error_handler = i_error_handler ) &
+					( v_file_content = result &
+					o_error = error )
+				if o_error #r void then
+					exit script
+				end if
+
+				if v_file_content.is_empty then
+					///
+					o_error = fa_invalid_data_error.create ( &
+						description = """The content of file {{i_file}} is empty.""" &
+						data = v_file_content )
+					i_error_handler.handle_system_error ( o_error )
+					exit script
+					end ///
+					o_result = 1
+				else
+					fa_positive32.create_from_string ( &
+						string = v_file_content.to_non_empty_string &
+						error_handler = i_error_handler ) &
+						( o_result = result &
+						o_error = error )
+					if o_error #r void then
+						exit script
+					end if
+				end if
+				
+				o_error = se_text_file_IO.store_string_to_existing_file ( &
+					string = (o_result + 1).to_string &
+					file = i_file &
+					character_set = i_character_set &
+					error_handler = i_error_handler )
+				if o_error #r void then
+					o_result = void
+				end if
+			end if
+		end
+		test
+			script
+				const file file = se_file.create_temporary_file.result ( delete_file_on_exit = no )
+				c_file.delete_on_device ( ask_confirmation_in_system_console = no )
+
+				test file = c_file
+				verify v_result =v 1
+				verify v_error =r void
+
+				test file = c_file
+				verify v_result compare =v 2
+				verify v_error =r void
+
+				test file = c_file
+				verify v_result compare =v 3
+				verify v_error =r void
+
+				c_file.delete_on_device ( ask_confirmation_in_system_console = no )
+			end
+		end
+	end
+
+end service

@@ -1,0 +1,768 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory integer32_value type:integer32_value
+
+	java_header
+		import java.lang.Integer;
+		import java.lang.NumberFormatException;
+
+		import org.obix.obix_core.java.fa_java_exception;
+	end java_header
+
+	java
+		private int java_value ;
+
+		public int java_value() { return java_value; }
+
+		public fa_integer32_value ( int i_java_value ) {
+			this.java_value = i_java_value ;
+		}
+
+		private in_arithmetic_overflow_error co_arithmetic_overflow_error ( String i_command_id, int value_1, int value_2 ) {
+		
+			return fa_arithmetic_overflow_error.co_create_with_defaults_command ( 
+				fa_bug_source_code_location._co_create_java ( _a_RSE_path, _a_RSE_id, i_command_id, i_command_id + "_command", 0, null ), 
+				null, 
+				new fa_non_empty_string ( String.valueOf ( value_1 ) ), 
+				new fa_non_empty_string ( String.valueOf ( value_2 ) ) ) ;
+		}
+	end java
+
+	// extended_comparable
+
+	command is_equal_to
+		script
+			java
+				o_result = (this.java_value == i_other.java_value()) ? fa_yes_no.a_yes : fa_yes_no.a_no ;
+			end java
+		end script
+	end command
+
+	command compare_to
+		script
+			java
+				if ( i_other == this ) {
+					o_result = se_any_type.en_comparator_result_equal ;
+				}
+				else {
+					o_result = ( this.java_value < i_other.java_value() ? se_any_type.en_comparator_result_less : ( this.java_value == i_other.java_value() ? se_any_type.en_comparator_result_equal : se_any_type.en_comparator_result_greater ) ) ;
+				}
+			end java
+		end script
+	end
+
+	command min
+		script
+			java
+				o_result = (this.java_value <= i_other.java_value()) ? this : i_other ;
+			end java
+		end script
+	end command
+
+	command max
+		script
+			java
+				o_result = (this.java_value >= i_other.java_value()) ? this : i_other ;
+			end java
+		end script
+	end command
+
+	command is_between
+		script
+			java
+				o_result = (this.java_value >= i_min.java_value() && this.java_value <= i_max.java_value()) ? fa_yes_no.a_yes : fa_yes_no.a_no ; ;
+			end java
+		end script
+	end command
+
+	// arithmetics
+
+	command add
+		script
+			java
+				long v_result = (long) this.java_value + (long) i_operand.java_value() ;
+				if ( v_result > Integer.MAX_VALUE || v_result < Integer.MIN_VALUE ) {
+					_v_obix_exception = co_arithmetic_overflow_error ( "co_add", this.java_value, i_operand.java_value() ) ;
+				}
+				o_result = new fa_integer32_value ( (int) v_result ) ;
+			end java
+		end script
+		
+		///
+		test
+			script
+				var ty_integer32_value v_test_result
+				v_test_result = se_integer32_value.a_min_value + se_integer32_value.a_min_value on_error:continue
+				verify v_program_error_ #r void
+				v_test_result = se_integer32_value.a_min_value + -1 on_error:continue
+				verify v_program_error_ #r void
+				verify se_integer32_value.a_min_value + 0 =v se_integer32_value.a_min_value
+				verify se_integer32_value.a_min_value + 1 =v -2147483647
+				verify se_integer32_value.a_min_value + se_integer32_value.a_max_value =v -1
+
+				v_test_result = -1 + se_integer32_value.a_min_value on_error:continue
+				verify v_program_error_ #r void
+				verify -1 + -1 =v -2
+				verify -1 + 0 =v -1
+				verify -1 + 1 =v 0
+				verify -1 + se_integer32_value.a_max_value =v 2147483646
+
+				verify 0 + se_integer32_value.a_min_value =v se_integer32_value.a_min_value
+				verify 0 + -1 =v -1
+				verify 0 + 0 =v 0
+				verify 0 + 1 =v 1
+				verify 0 + se_integer32_value.a_max_value =v 2147483647
+
+				verify 1 + se_integer32_value.a_min_value =v -2147483647
+				verify 1 + -1 =v 0
+				verify 1 + 0 =v 1
+				verify 1 + 1 =v 2
+				v_test_result = 1 + se_integer32_value.a_max_value on_error:continue
+				verify v_program_error_ #r void
+
+				verify se_integer32_value.a_max_value + se_integer32_value.a_min_value =v -1
+				verify se_integer32_value.a_max_value + -1 =v 2147483646
+				verify se_integer32_value.a_max_value + 0 =v 2147483647
+				v_test_result = se_integer32_value.a_max_value + 1 on_error:continue
+				verify v_program_error_ #r void
+				v_test_result = se_integer32_value.a_max_value + se_integer32_value.a_max_value on_error:continue
+				verify v_program_error_ #r void
+
+				verify 100 + 100 =v 200
+
+				v_test_result = 2000000000 + 2000000000 on_error: continue
+				verify v_program_error_ #r void
+			end script
+		end test
+		end ///
+	end command
+
+	command subtract
+		script
+			java
+				long v_result = (long) this.java_value - (long) i_operand.java_value() ;
+				if ( v_result > Integer.MAX_VALUE || v_result < Integer.MIN_VALUE ) {
+					_v_obix_exception = co_arithmetic_overflow_error ( "co_subtract", this.java_value, i_operand.java_value() ) ;
+				}
+				o_result = new fa_integer32_value ( (int) v_result ) ;
+			end java
+		end script
+
+		///
+		test
+			script
+				verify se_integer32_value.a_min_value - se_integer32_value.a_min_value =v 0
+				verify se_integer32_value.a_min_value - -1 =v -2147483647
+				verify se_integer32_value.a_min_value - 0 =v se_integer32_value.a_min_value
+				var ty_integer32_value v_test_result
+				v_test_result = se_integer32_value.a_min_value - 1 on_error:continue
+				verify v_program_error_ #r void
+				v_test_result = se_integer32_value.a_min_value - se_integer32_value.a_max_value on_error:continue
+				verify v_program_error_ #r void
+
+				verify -1 - se_integer32_value.a_min_value =v 2147483647
+				verify -1 - -1 =v 0
+				verify -1 - 0 =v -1
+				verify -1 - 1 =v -2
+				verify -1 - se_integer32_value.a_max_value =v se_integer32_value.a_min_value
+
+				v_test_result = 0 - se_integer32_value.a_min_value on_error:continue
+				verify v_program_error_ #r void
+				verify 0 - -1 =v 1
+				verify 0 - 0 =v 0
+				verify 0 - 1 =v -1
+				verify 0 - se_integer32_value.a_max_value =v -2147483647
+
+				v_test_result = 1 - se_integer32_value.a_min_value on_error:continue
+				verify v_program_error_ #r void
+				verify 1 - -1 =v 2
+				verify 1 - 0 =v 1
+				verify 1 - 1 =v 0
+				verify 1 - se_integer32_value.a_max_value =v -2147483646
+
+				v_test_result = se_integer32_value.a_max_value - se_integer32_value.a_min_value on_error:continue
+				verify v_program_error_ #r void
+				v_test_result = se_integer32_value.a_max_value - -1 on_error:continue
+				verify v_program_error_ #r void
+				verify se_integer32_value.a_max_value - 0 =v 2147483647
+				verify se_integer32_value.a_max_value - 1 =v 2147483646
+				verify se_integer32_value.a_max_value - se_integer32_value.a_max_value =v 0
+
+				verify 12 - 10 =v 2
+				verify 20 - 30 =v -10
+
+				v_test_result = -2000000000 - 2000000000 on_error: continue
+				verify v_program_error_ #r void
+			end script
+		end test
+		end ///
+	end command
+
+	command multiply
+		script
+			java
+				long v_result = (long) this.java_value * (long) i_operand.java_value() ;
+				if ( v_result > Integer.MAX_VALUE || v_result < Integer.MIN_VALUE ) {
+					_v_obix_exception = co_arithmetic_overflow_error ( "co_multiply", this.java_value, i_operand.java_value() ) ;
+				}
+				o_result = new fa_integer32_value ( (int) v_result ) ;
+			end java
+		end script
+
+		///
+		test
+			script
+				var ty_integer32_value v_test_result
+				v_test_result = se_integer32_value.a_min_value * se_integer32_value.a_min_value on_error:continue
+				verify v_program_error_ #r void
+				v_test_result = se_integer32_value.a_min_value * -1 on_error:continue
+				verify v_program_error_ #r void
+				verify se_integer32_value.a_min_value * 0 =v 0
+				verify se_integer32_value.a_min_value * 1 =v se_integer32_value.a_min_value
+				v_test_result = se_integer32_value.a_min_value * se_integer32_value.a_max_value on_error:continue
+				verify v_program_error_ #r void
+
+				v_test_result = -1 * se_integer32_value.a_min_value on_error:continue
+				verify v_program_error_ #r void
+				verify -1 * -1 =v 1
+				verify -1 * 0 =v 0
+				verify -1 * 1 =v -1
+				verify -1 * se_integer32_value.a_max_value =v -2147483647
+
+				verify 0 * se_integer32_value.a_min_value =v 0
+				verify 0 * -1 =v 0
+				verify 0 * 0 =v 0
+				verify 0 * 1 =v 0
+				verify 0 * se_integer32_value.a_max_value =v 0
+
+				verify 1 * se_integer32_value.a_min_value =v se_integer32_value.a_min_value
+				verify 1 * -1 =v -1
+				verify 1 * 0 =v 0
+				verify 1 * 1 =v 1
+				verify 1 * se_integer32_value.a_max_value =v 2147483647
+
+				v_test_result = se_integer32_value.a_max_value * se_integer32_value.a_min_value on_error:continue
+				verify v_program_error_ #r void
+				verify se_integer32_value.a_max_value * -1 =v -2147483647
+				verify se_integer32_value.a_max_value * 0 =v 0
+				verify se_integer32_value.a_max_value * 1 =v 2147483647
+				v_test_result = se_integer32_value.a_max_value * se_integer32_value.a_max_value on_error:continue
+				verify v_program_error_ #r void
+
+				verify 7 * 8 =v 56
+				verify -7 * 8 =v -56
+				verify 7 * -8 =v -56
+				verify -7 * -8 =v 56
+
+				v_test_result = 2000000000 * 2000000000 on_error: continue
+				verify v_program_error_ #r void
+			end script
+		end test
+		end ///
+	end command
+
+	command divide
+		script
+			java
+				o_result = new fa_integer32_value ( this.java_value / i_operand.java_value() ) ;
+			end java
+		end script
+
+		///
+		test
+			script
+				verify se_integer32_value.a_min_value / se_integer32_value.a_min_value =v 1
+				var ty_integer32_value v_test_result
+				v_test_result = se_integer32_value.a_min_value / -1 on_error:continue
+				verify v_program_error_ #r void
+				v_test_result = se_integer32_value.a_min_value / 0 on_error:continue
+				verify v_program_error_ #r void
+				verify se_integer32_value.a_min_value / 1 =v se_integer32_value.a_min_value
+				verify se_integer32_value.a_min_value / se_integer32_value.a_max_value =v -1
+
+				verify -1 / se_integer32_value.a_min_value =v 0
+				verify -1 / -1 =v 1
+				v_test_result = -1 / 0 on_error:continue
+				verify v_program_error_ #r void
+				verify -1 / 1 =v -1
+				verify -1 / se_integer32_value.a_max_value =v 0
+
+				verify 0 / se_integer32_value.a_min_value =v 0
+				verify 0 / -1 =v 0
+				v_test_result = 0 / 0 on_error:continue
+				verify v_program_error_ #r void
+				verify 0 / 1 =v 0
+				verify 0 / se_integer32_value.a_max_value =v 0
+
+				verify 1 / se_integer32_value.a_min_value =v 0
+				verify 1 / -1 =v -1
+				v_test_result = 1 / 0 on_error:continue
+				verify v_program_error_ #r void
+				verify 1 / 1 =v 1
+				verify 1 / se_integer32_value.a_max_value =v 0
+
+				verify se_integer32_value.a_max_value / se_integer32_value.a_min_value =v 0
+				verify se_integer32_value.a_max_value / -1 =v -2147483647
+				v_test_result = se_integer32_value.a_max_value / 0 on_error:continue
+				verify v_program_error_ #r void
+				verify se_integer32_value.a_max_value / 1 =v 2147483647
+				verify se_integer32_value.a_max_value / se_integer32_value.a_max_value =v 1
+
+				verify 0 / 10 =v 0
+				verify 1 / 10 =v 0
+				verify 9 / 10 =v 0
+				verify 10 / 10 =v 1
+				verify 11 / 10 =v 1
+				verify 19 / 10 =v 1
+				verify 20 / 10 =v 2
+			end script
+		end test
+		end ///
+	end command
+
+	command remainder
+		script
+			java
+				o_result = new fa_integer32_value ( this.java_value % i_operand.java_value() ) ;
+			end java
+		end script
+
+		///
+		test
+			script
+				verify se_integer32_value.a_min_value.co_remainder(se_integer32_value.a_min_value) =v 0
+				var ty_integer32_value v_test_result
+				v_test_result = se_integer32_value.a_min_value.co_remainder(-1) on_error:continue
+				verify v_program_error_ #r void
+				v_test_result = se_integer32_value.a_min_value.co_remainder(0) on_error:continue
+				verify v_program_error_ #r void
+				verify se_integer32_value.a_min_value.co_remainder(1) =v 0
+				verify se_integer32_value.a_min_value.co_remainder(se_integer32_value.a_max_value) =v -1
+
+				verify -1.co_remainder(se_integer32_value.a_min_value) =v -1
+				verify -1.co_remainder(-1) =v 0
+				v_test_result = -1.co_remainder(0) on_error:continue
+				verify v_program_error_ #r void
+				verify -1.co_remainder(1) =v 0
+				verify -1.co_remainder(se_integer32_value.a_max_value) =v -1
+
+				verify 0.co_remainder(se_integer32_value.a_min_value) =v 0
+				verify 0.co_remainder(-1) =v 0
+				v_test_result = 0.co_remainder(0) on_error:continue
+				verify v_program_error_ #r void
+				verify 0.co_remainder(1) =v 0
+				verify 0.co_remainder(se_integer32_value.a_max_value) =v 0
+
+				verify 1.co_remainder(se_integer32_value.a_min_value) =v 1
+				verify 1.co_remainder(-1) =v 0
+				v_test_result = 1.co_remainder(0) on_error:continue
+				verify v_program_error_ #r void
+				verify 1.co_remainder(1) =v 0
+				verify 1.co_remainder(se_integer32_value.a_max_value) =v 1
+
+				verify se_integer32_value.a_max_value.co_remainder(se_integer32_value.a_min_value) =v 2147483647
+				verify se_integer32_value.a_max_value.co_remainder(-1) =v 0
+				v_test_result = se_integer32_value.a_max_value.co_remainder(0) on_error:continue
+				verify v_program_error_ #r void
+				verify se_integer32_value.a_max_value.co_remainder(1) =v 0
+				verify se_integer32_value.a_max_value.co_remainder(se_integer32_value.a_max_value) =v 0
+
+				verify 0.co_remainder(10) =v 0
+				verify 1.co_remainder(10) =v 1
+				verify 9.co_remainder(10) =v 9
+				verify 10.co_remainder(10) =v 0
+				verify 11.co_remainder(10) =v 1
+				verify 19.co_remainder(10) =v 9
+				verify 20.co_remainder(10) =v 0
+
+				verify 19.co_remainder(-10) =v 9
+				verify -19.co_remainder(10) =v -9
+				verify -19.co_remainder(-10) =v -9
+			end script
+		end test
+		end ///
+	end command
+
+	command unary_minus
+		script
+			java
+				o_result = new fa_integer32_value ( -java_value ) ;
+			end java
+		end script
+
+		///
+		test
+			script
+				var ty_integer32_value v_test_result
+				v_test_result = se_integer32_value.a_min_value.co_unary_minus() on_error:continue
+				verify v_program_error_ #r void
+
+				verify (se_integer32_value.a_min_value + 1).co_unary_minus() =v 2147483647
+				verify (-1).co_unary_minus() =v 1
+				verify 0.co_unary_minus() =v 0
+				verify 1.co_unary_minus() =v -1
+				verify se_integer32_value.a_max_value.co_unary_minus() =v -2147483647
+				verify 1000.co_unary_minus() =v -1000
+				verify (-1000).co_unary_minus() =v 1000
+			end script
+		end test
+		end ///
+	end command
+
+	command abs
+		script
+			java
+				o_result = this.java_value >= 0 ? this : new fa_integer32_value ( -this.java_value ) ;
+			end java
+		end script
+
+		///
+		test
+			script
+				var ty_integer32_value v_test_result
+				v_test_result = se_integer32_value.a_min_value.co_abs() on_error:continue
+				verify v_program_error_ #r void
+
+				verify (se_integer32_value.a_min_value + 1).co_abs() =v 2147483647
+				verify (-1).co_abs() =v 1
+				verify 0.co_abs() =v 0
+				verify 1.co_abs() =v 1
+				verify se_integer32_value.a_max_value.co_abs() =v 2147483647
+				verify 1000.co_abs() =v 1000
+				verify (-1000).co_abs() =v 1000
+			end script
+		end test
+		end ///
+	end command
+	
+	// booleanable
+
+	command and
+		script
+			java
+				o_result = new fa_integer32_value ( this.java_value & i_operand.java_value() ) ;
+			end java
+		end script
+	end
+
+	command or
+		script
+			java
+				o_result = new fa_integer32_value ( this.java_value | i_operand.java_value() ) ;
+			end java
+		end script
+	end
+
+	command xor
+		script
+			java
+				o_result = new fa_integer32_value ( this.java_value ^ i_operand.java_value() ) ;
+			end java
+		end script
+	end
+
+	command not
+		script
+			java
+				o_result = new fa_integer32_value ( ~ this.java_value ) ;
+			end java
+		end script
+	end
+
+	// bitshiftable
+
+	command shift_left
+		script
+			java
+				o_result = new fa_integer32_value ( this.java_value << i_count.getValue().java_value() ) ;
+			end java
+		end script
+	end
+
+	command shift_left_once
+		script
+			java
+				o_result = new fa_integer32_value ( this.java_value << 1 ) ;
+			end java
+		end script
+	end
+
+	command shift_right
+		script
+			java
+				o_result = new fa_integer32_value ( this.java_value >> i_count.getValue().java_value() ) ;
+			end java
+		end script
+	end
+
+	command shift_right_once
+		script
+			java
+				o_result = new fa_integer32_value ( this.java_value >> 1 ) ;
+			end java
+		end script
+	end
+
+	// integer_to_string_converter
+
+	command to_string
+		script
+			java
+				o_result = new fa_non_empty_string ( String.valueOf ( java_value ) ) ;
+			end java
+		end script
+
+		///
+		test
+			script
+				verify se_integer32_value.a_min_value.co_to_string() =v "-2147483648"
+				verify (-1).co_to_string() =v "-1"
+				verify 0.co_to_string() =v "0"
+				verify 1.co_to_string() =v "1"
+				verify se_integer32_value.a_max_value.co_to_string() =v "2147483647"
+				verify 1000.co_to_string() =v "1000"
+				verify (-1000).co_to_string() =v "-1000"
+			end script
+		end test
+		end ///
+	end command
+	
+	command to_hexadecimal_string
+		script
+			java
+				o_result = new fa_non_empty_string ( Integer.toHexString ( java_value ) ) ;
+			end java
+		end script
+
+		///
+		test
+			script
+				verify se_integer32_value.a_min_value.co_to_hexadecimal_string() compare =v "80000000"
+				verify (-1).co_to_hexadecimal_string() compare =v "ffffffff"
+				verify 0.co_to_hexadecimal_string() compare =v "0"
+				verify 1.co_to_hexadecimal_string() compare =v "1"
+				verify se_integer32_value.a_max_value.co_to_hexadecimal_string() compare =v "7fffffff"
+				verify 1000.co_to_hexadecimal_string() compare =v "3e8"
+				verify (-1000).co_to_hexadecimal_string() compare =v "fffffc18"
+			end script
+		end test
+		end ///
+	end command
+
+	command to_octal_string
+		script
+			java
+				o_result = new fa_non_empty_string ( Integer.toOctalString ( java_value ) ) ;
+			end java
+		end script
+
+		///
+		test
+			script
+				verify se_integer32_value.a_min_value.co_to_octal_string() compare =v "20000000000"
+				verify (-1).co_to_octal_string() compare =v "37777777777"
+				verify 0.co_to_octal_string() compare =v "0"
+				verify 1.co_to_octal_string() compare =v "1"
+				verify se_integer32_value.a_max_value.co_to_octal_string() compare =v "17777777777"
+				verify 1000.co_to_octal_string() compare =v "1750"
+				verify (-1000).co_to_octal_string() compare =v "37777776030"
+			end script
+		end test
+		end ///
+	end command
+
+	command to_binary_string
+		script
+			java
+				o_result = new fa_non_empty_string ( Integer.toBinaryString ( java_value ) ) ;
+			end java
+		end script
+
+		///
+		test
+			script
+				verify se_integer32_value.a_min_value.co_to_binary_string() compare =v "10000000000000000000000000000000"
+				verify (-1).co_to_binary_string() compare =v "11111111111111111111111111111111"
+				verify 0.co_to_binary_string() compare =v "0"
+				verify 1.co_to_binary_string() compare =v "1"
+				verify se_integer32_value.a_max_value.co_to_binary_string() compare =v "1111111111111111111111111111111"
+				verify 1000.co_to_binary_string() compare =v "1111101000"
+				verify (-1000).co_to_binary_string() compare =v "11111111111111111111110000011000"
+			end script
+		end test
+		end ///
+	end command
+
+	command to_character
+		script
+			java
+				o_result = new fa_character ( (char) java_value ) ;
+			end java
+		end script
+
+		///
+		test
+			script
+				var ty_integer32_value v_value = -1
+				var ty_character v_character = v_value.co_to_character on_error:continue
+				verify v_program_error_ #r void
+
+				verify 0.co_to_character() compare =v '\u0000'
+				verify 1.co_to_character() compare =v '\u0001'
+				verify se_integer32_value.a_max_value.co_to_character() compare =v '\uffff'
+				verify 65.co_to_character() compare =v 'A'
+				verify 112.co_to_character() compare =v 'p'
+			end script
+		end test
+		end ///
+	end command
+	
+	creator create_from_string
+		in string type:simple_string voidable:yes end
+		in config type:string_to_object_converter_config default:se_string_to_object_converter_config.default_value end
+		%system_error_handler_input_argument
+		
+		%result_or_string_to_object_conversion_error_void_output < integer32_value >
+
+		script
+			co_create_from_string_value ( &
+				value = iif i_string #r void then i_string.value else void end if &
+				config = i_config &
+				error_handler = i_error_handler ) &
+				( o_result = result &
+				o_error = error )
+		end
+		
+		test
+			script
+				test string = "1"
+				verify v_result =v 1~
+
+				test string = "0"
+				verify v_result =v 0~
+
+				test string = "-1"
+				verify v_result =v -1~
+
+				test string = "2147483647"
+				verify v_result =v 2147483647~
+				
+				test string = "-2147483648"
+				verify v_result =v se_integer32_value.min_value
+				
+				test string = "a"
+				verify v_result =r void
+				verify v_error #r void
+				
+				test string = "2147483648"
+				verify v_result =r void
+				verify v_error #r void
+				
+				// void
+
+				const string_to_object_converter_config no_void_config = fa_string_to_object_converter_config.create ( &
+					empty_string_is_void = no &
+					void_value_as_string = void &
+					void_input_allowed = no )
+
+				test string = void
+				verify v_result =r void
+				verify v_error =r void
+				
+				test string = void; config = c_no_void_config
+				verify v_result =r void
+				verify v_error #r void
+				
+				test string = ""
+				verify v_result =r void
+				verify v_error =r void
+				
+				test string = ""; config = c_no_void_config
+				verify v_result =r void
+				verify v_error #r void
+				
+				test string = se_any_type.void_object_as_string
+				verify v_result =r void
+				verify v_error =r void
+				
+				test string = se_any_type.void_object_as_string; config = c_no_void_config
+				verify v_result =r void
+				verify v_error #r void
+			end
+		end
+	end
+
+	creator create_from_string_value
+		in value type:string_value voidable:yes end
+		in config type:string_to_object_converter_config default:se_string_to_object_converter_config.default_value end
+		%system_error_handler_input_argument
+		
+		// %result_xor_string_to_object_conversion_error_output < integer32_value >
+		%result_or_string_to_object_conversion_error_void_output < integer32_value >
+
+		script
+			var yes_no success
+			var java_exception java_exception
+
+			section convert
+				if i_value =r void then
+					exit section
+				end if
+
+				java
+					int int_value = 0;
+					try {
+						int_value = Integer.parseInt ( i_value.java_value() );
+					} catch ( NumberFormatException e ) {
+						v_java_exception = new fa_java_exception ( e );
+					}
+					o_result = new fa_integer32_value ( int_value );
+				end java
+
+				if v_java_exception =r void then
+					exit script
+				end if
+
+				if i_value =v se_string_constants.empty_string.value then
+					if not i_config.empty_string_is_void then
+						v_success = no
+					end if
+					exit section
+				end if
+
+				if i_config.void_value_as_string =r void then
+					v_success = no
+					exit section
+				end if
+				
+				if i_value #v i_config.void_value_as_string.value then
+					v_success = no
+				end if
+			end section
+			
+			if v_success =r void then
+				o_result = void
+				v_success = i_config.void_input_allowed
+			end if
+			
+			if not v_success then
+				o_result = void
+				const string invalid_value = se_any_type.force_object_to_string ( i_value )
+				o_error = fa_string_to_object_conversion_error.create ( &
+					id = "string_to_integer32_conversion_error" &
+					description = """'{{c_invalid_value}}' is not a valid integer number.""" &
+					java_exception = v_java_exception &
+					data = c_invalid_value &
+					type_of_result = "integer32_value" &
+					error_position = void )
+				i_error_handler.handle_system_error ( o_error )
+			end if
+		end
+	end
+
+end factory

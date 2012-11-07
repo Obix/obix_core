@@ -1,0 +1,80 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+template mutable_map_factory_commands
+
+		command add
+			script
+				java
+					try {
+						a_map.put(i_key, i_item);
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+
+		command add_or_replace
+			script
+				java
+					try {
+						a_map.put(i_key, i_item);
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+
+		command replace
+			script
+				java
+					try {
+						a_map.put(i_key, i_new_item);
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+
+		command remove
+			script
+				java
+					try {
+						a_map.remove ( i_key ) ;
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+
+		command remove_all
+			script
+				java
+					try {
+						a_map.clear() ;
+					} catch ( UnsupportedOperationException e ) {
+						se_collection.mutable_operation_violation();
+					}
+				end java
+				
+				o_result = this
+			end
+		end
+
+end template

@@ -1,0 +1,62 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+service date
+
+	java_header
+		import java.text.SimpleDateFormat;
+	end java_header
+
+	java
+		public static SimpleDateFormat a_java_ISO_date_format;
+		static {
+			a_java_ISO_date_format = new SimpleDateFormat ( se_date_constants.getISO_date_format().getValue().java_value() );
+			a_java_ISO_date_format.setLenient(false);
+		}
+	end java
+
+	attribute current_date type:date kind:readonly_variable
+		get
+			script
+				o_current_date = fa_date.create_current_date
+			end
+		end
+	end
+	
+	command is_leap_year
+		in year type:zero_positive32 end
+		
+		out result type:yes_no end
+		
+		script
+			o_result = i_year.remainder ( 4 ) =v 0 and &
+				( i_year.remainder ( 100 ) #v 0 or i_year.remainder ( 400 ) =v 0 )
+		end
+		test
+			script
+				verify is_leap_year ( 2004 )
+				verify not is_leap_year ( 2005 )
+				verify not is_leap_year ( 2006 )
+				verify not is_leap_year ( 2007 )
+				verify is_leap_year ( 2008 )
+				verify not is_leap_year ( 2009 )
+				verify not is_leap_year ( 2010 )
+				verify not is_leap_year ( 2011 )
+				verify is_leap_year ( 2012 )
+
+				// 100
+				verify not is_leap_year ( 1900 )
+				verify is_leap_year ( 2000 )
+				verify not is_leap_year ( 2100 )
+				verify not is_leap_year ( 2200 )
+				verify not is_leap_year ( 2300 )
+				verify is_leap_year ( 2400 )
+			end
+		end
+	end
+
+end service

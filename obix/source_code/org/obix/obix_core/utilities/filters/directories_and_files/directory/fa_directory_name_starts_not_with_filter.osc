@@ -1,0 +1,28 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+factory directory_name_starts_not_with_filter type: directory_filter
+
+	attribute starts_not_with type:string_value private:yes end
+
+	command is_accepted
+		script
+			o_result = not i_object.name.value.starts_with ( a_starts_not_with )
+		end
+	end
+	
+	creator create
+		in starts_not_with type:simple_string end
+		
+		out result type:directory_filter end
+		
+		script
+			o_result.starts_not_with = i_starts_not_with.value
+		end
+	end
+	
+end

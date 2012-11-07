@@ -1,0 +1,84 @@
+///
+   Copyright (C) 2009-2012 Christian Neumanns (www.rps-obix.com)
+   This code can be used under the terms of the 'GNU Afero General Public License version 3'
+   The full text of this license can be found at http://www.gnu.org/licenses/agpl.html
+   THIS CODE IS DISTRIBUTED WITHOUT ANY WARRANTY. See the license for details.
+end ///
+
+type integer32_value
+
+	java
+		public int java_value() ;
+	end java
+
+	inherit scalar_value end
+
+	inherit any_type
+		//command to_string
+		//	out result type:non_empty_string end
+		//end command
+	end inherit
+
+	inherit !extended_comparable<other:integer32_value; min_max_result:integer32_value> end
+
+	// inherit !arithmeticable<operand:integer32_value; result:integer32_value> end
+	
+	inherit !booleanable<operand:integer32_value; result:integer32_value> end
+
+	inherit !bitshiftable<result:integer32_value> end
+
+	inherit integer_to_string_converter end
+
+	command add
+		in operand type:integer32_value end
+
+		out result type:integer32_value end
+	end
+
+	command subtract
+		in operand type:integer32_value end
+
+		out result type:integer32_value end
+	end
+
+	command multiply
+		in operand type:integer32_value end
+
+		out result type:integer32_value end
+	end
+
+	command divide
+		in operand type:integer32_value check: i_operand #v se_integer32_value.a_zero error_message: "Division by zero." error_id: division_by_zero_error end
+		in_check check: not &
+			( i_object_ =v se_integer32_value.a_min_value and i_operand =v se_integer32_value.a_minus_one ) end
+
+		out result type:integer32_value end
+	end
+
+	command remainder
+		in operand type:integer32_value check: i_operand #v se_integer32_value.a_zero error_message: "Division by zero." error_id: division_by_zero_error end
+		in_check check: not &
+			( i_object_ =v se_integer32_value.a_min_value and i_operand =v se_integer32_value.a_minus_one ) end
+
+		out result type:integer32_value end
+	end
+
+	command unary_minus
+		in_check check: i_object_ > se_integer32_value.a_min_value end
+					
+		out result type:integer32_value end
+	end
+
+	command abs
+		in_check check: i_object_ > se_integer32_value.a_min_value end
+					
+		out result type:integer32_value end
+	end
+	
+	command to_character
+		in_check check: i_object_ >= se_integer32_value.a_zero and i_object_ <= se_integer32_value.a_max_value_unsigned16 end
+					
+		out result type:character end
+	end
+
+end type
