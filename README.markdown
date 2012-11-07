@@ -1,4 +1,4 @@
-<h2>Obix core repository (pr_obix)</h2>
+<h2>Obix core libraries (obix_core)</h2>
 
 <p>Welcome!</p>
 
