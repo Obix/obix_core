@@ -17,6 +17,7 @@
 # java_compiler_options = -Xlint -target 6
 # java_compiler_options = -Xlint:-serial
 # java_compiler_options = -Xlint:unchecked
+java_compiler_options = -source 6 -target 6
 
 # The following two parameters define the file names for the Windows and Unix/Linux OS script files that launch your application.
 # The default value for the file name is the project identifier suffix (e.g. 'qwe.bat' and 'qwe.sh' for project 'pr_qwe').

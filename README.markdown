@@ -41,8 +41,10 @@
       <li>Delete the content of your projects <code>work</code> directory. Don't delete the directory itself, just make it empty. The content will be replaced when the remote repository is downloaded.</li>
       <li>Open a Git command window (see Git instructions applying to your operating system)</li>
       <li>Go to the <code>work</code> subdirectory</li>
-      <li>Type (including the space and dot at the end of line):<br />
-        <code>git clone git@github.com:Obix/obix_core.git .</code>
+      <li>Type one of the following commands (including the space and dot at the end of line), depending on the protocol you want to use:<br />
+        <code>git clone https://github.com/Obix/obix_core.git .</code>
+        <code>git clone ssh://git@github.com:Obix/obix_core.git .</code>
+        <code>git clone git://github.com/Obix/obix_core.git .</code>
       </li>
     </ul>
   </li>
